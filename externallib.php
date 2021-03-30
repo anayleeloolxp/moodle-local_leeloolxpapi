@@ -1,0 +1,1589 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * External Web Service Template
+ *
+ * @package local_leeloolxpapi
+ * @copyright  2020 Leeloo LXP (https://leeloolxp.com)
+ * @author Leeloo LXP <info@leeloolxp.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+require_once ($CFG->libdir . "/externallib.php");
+
+class local_leeloolxpapi_external extends external_api {
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function course_sync_parameters() {
+        return new external_function_parameters(
+            array(
+                'course_data' => new external_value(PARAM_RAW, 'Course Data', VALUE_DEFAULT, null),
+                'categories_data' => new external_value(PARAM_RAW, 'Categories Data', VALUE_DEFAULT, null),
+                'grade_data' => new external_value(PARAM_RAW, 'Grade Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function course_sync($reqcoursedata = '', $reqcategoriesdata = '', $reqgradedata = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::course_sync_parameters(),
+            array(
+                'course_data' => $reqcoursedata,
+                'categories_data' => $reqcategoriesdata,
+                'grade_data' => $reqgradedata,
+            )
+        );
+
+        $value = (object) json_decode($reqcoursedata, true);
+
+        $value->summaryformat = 0;
+
+        if (!empty($value->description)) {
+            $value->summaryformat = 1;
+        }
+
+        if (!empty($value->course_image)) {
+            $courseimage = $value->course_image;
+        } else {
+            $courseimage = '';
+        }
+
+        if (empty($value->course_id_number)) {
+            $value->course_id_number = '';
+        }
+
+        $data = [
+            'category' => $value->category,
+            'sortorder' => 10000,
+            'fullname' => $value->project_name,
+            'shortname' => $value->project_sort_name,
+            'idnumber' => $value->course_id_number,
+            'summary' => $value->description,
+            'summaryformat' => $value->summaryformat,
+            'format' => 'topics',
+            'showgrades' => 1,
+            'newsitems' => 5,
+            'startdate' => strtotime($value->start_date),
+            'enddate' => strtotime($value->end_date),
+            'relativedatesmode' => 0,
+            'marker' => 0,
+            'maxbytes' => 0,
+            'legacyfiles' => 0,
+            'showreports' => 0,
+            'visible' => $value->visible,
+            'visibleold' => 1,
+            'groupmode' => 0,
+            'groupmodeforce' => 0,
+            'defaultgroupingid' => 0,
+            'lang' => '',
+            'calendartype' => '',
+            'theme' => '',
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'requested' => 0,
+            'enablecompletion' => 1,
+            'completionnotify' => 0,
+            'cacherev' => 1607419438,
+        ];
+
+        $data = (object) $data;
+
+        $isinsert = 1;
+        if (!empty($value->course_id)) {
+            $isinsert = 0;
+            $data->id = $value->course_id;
+            if (!empty($value->project_sort_name)) {
+                $sql = "SELECT * FROM {course} WHERE shortname = ? AND id != ?";
+                if ($DB->record_exists_sql($sql, [$value->project_sort_name, $value->course_id])) {
+                    return 0;
+                }
+            }
+
+            if (!empty($value->course_id_number)) {
+                $sql = "SELECT * FROM {course} WHERE idnumber = ? AND id != ?";
+                if ($DB->record_exists_sql($sql, [$value->course_id_number, $value->course_id])) {
+                    return 0;
+                }
+            }
+        } else {
+            if (!empty($value->project_sort_name)) {
+                if ($DB->record_exists('course', array('shortname' => $value->project_sort_name))) {
+                    return 0;
+                }
+            }
+
+            if (!empty($value->course_id_number)) {
+                if ($DB->record_exists('course', array('idnumber' => $value->course_id_number))) {
+                    return 0;
+                }
+            }
+        }
+
+        if ($isinsert) {
+            $returnid = $DB->insert_record('course', $data);
+        } else {
+            $DB->update_record('course', $data);
+            $returnid = $value->course_id;
+        }
+
+        $catreturnid = 0;
+        $itemreturnid = 0;
+        $categoriesdata = (object) json_decode($reqcategoriesdata, true);
+        $gradedata = (object) json_decode($reqgradedata, true);
+
+        // If not empty , then insert category  , no need to check for update.
+        if (!empty($categoriesdata)) {
+            /* $tablecat = $CFG->prefix . 'grade_categories';
+            $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?";
+            $autoinc = $DB->get_record_sql($sql, [$CFG->dbname, $tablecat]);
+            $autoinc->auto_increment;
+            $categoriesdata->path = '/' . $autoinc->auto_increment . '/'; */
+            $categoriesdata->path = '/';
+            $categoriesdata->courseid = $returnid;
+            //$catreturnid = $DB->insert_record('grade_categories', $categoriesdata);
+        }
+
+        if (!empty($gradedata) && !empty($catreturnid)) {
+            $gradedata->iteminstance = $catreturnid;
+            $gradedata->courseid = $returnid;
+            //$itemreturnid = $DB->insert_record('grade_items', $gradedata);
+        }
+
+        return $returnid . ',' . $catreturnid . ',' . $itemreturnid;
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function course_sync_returns() {
+        return new external_value(PARAM_TEXT, 'Returns id');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function ar_sync_parameters() {
+        return new external_function_parameters(
+            array(
+                'ar_data' => new external_value(PARAM_RAW, 'A/R Data', VALUE_DEFAULT, null),
+                'tags_data' => new external_value(PARAM_RAW, 'Tags Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function ar_sync($reqardata = '', $reqtagdata = '', $reqemail = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::ar_sync_parameters(),
+            array(
+                'ar_data' => $reqardata,
+                'tags_data' => $reqtagdata,
+                'email' => $reqemail,
+            )
+        );
+
+        $ardata = (object) json_decode($reqardata, true);
+
+        if (isset($reqemail)) {
+            $email = (object) json_decode($reqemail, true);
+        }
+
+        $data = [];
+        $moddata = [];
+
+        if (isset($ardata->task_name)) {
+            $taskname = $ardata->task_name;
+            $moddata['name'] = $taskname;
+        }
+
+        if (isset($ardata->task_description)) {
+            $taskdescription = $ardata->task_description;
+            $moddata['intro'] = $taskdescription;
+        }
+
+        if (isset($ardata->m_showdescription)) {
+            $mshowdescription = $ardata->m_showdescription;
+            $data['showdescription'] = $mshowdescription;
+        }
+
+        if (isset($ardata->m_idnumber)) {
+            $midnumber = $ardata->m_idnumber;
+            $data['idnumber'] = $midnumber;
+        }
+
+        if (isset($ardata->m_completion)) {
+            $mcompletion = $ardata->m_completion;
+            $data['completion'] = $mcompletion;
+        }
+
+        if (isset($ardata->m_completionexpected)) {
+            $mcompletionexpected = $ardata->m_completionexpected;
+            if ($mcompletionexpected != 0) {
+                $mcompletionexpected = $mcompletionexpected + (6 * 60 * 60);
+            }
+            $data['completionexpected'] = $mcompletionexpected;
+        }
+
+        if (isset($ardata->m_visible)) {
+            $mvisible = $ardata->m_visible;
+            $data['visible'] = $mvisible;
+        }
+
+        if (isset($ardata->m_availability)) {
+            $mavailability = $ardata->m_availability;
+            $mavailability = str_ireplace('&lt;', '<', $mavailability);
+            $mavailability = str_ireplace('&gt;', '>', $mavailability);
+            $data['availability'] = $mavailability;
+        }
+
+        if (isset($ardata->m_groupmode)) {
+            $mgroupmode = $ardata->m_groupmode;
+        }
+
+        if (isset($ardata->m_groupingid)) {
+            $mgroupingid = $ardata->m_groupingid;
+        }
+
+        $activityid = $ardata->activity_id;
+
+        $countupdatescm = count($data);
+
+        $data['id'] = $activityid;
+
+        $data = (object) $data;
+
+        if ($activityid != '') {
+            if ($countupdatescm > 0) {
+                $DB->update_record('course_modules', $data);
+            }
+
+            $ararr = $DB->get_record_sql("SELECT module,instance FROM {course_modules} where id = ?", [$activityid]);
+            $module = $ararr->module;
+            $modinstance = $ararr->instance;
+
+            $modarr = $DB->get_record_sql("SELECT name FROM {modules} where id = ?", [$module]);
+            $modulename = $modarr->name;
+
+            $countupdatesmd = count($moddata);
+
+            $moddata['id'] = $modinstance;
+
+            $moddata = (object) $moddata;
+
+            if ($countupdatesmd > 0) {
+                $DB->update_record($modulename, $moddata);
+            }
+
+            if (!empty($email)) {
+                $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
+            }
+
+            if (!empty($userdata)) {
+                $userid = $userdata->id;
+                $tagsreturnarr = [];
+
+                // tags_data
+                if (isset($reqtagdata)) {
+                    $tagsdataarrobj = (object) json_decode($reqtagdata, true);
+                    // echo "<pre>";print_r($tagsdataarrobj);die;
+
+                    if (!empty($tagsdataarrobj)) {
+                        foreach ($tagsdataarrobj as $key => $tagsdata) {
+                            $istagexist = $DB->get_record('tag', ['name' => $tagsdata['name']], 'id');
+
+                            $leelootagid = $tagsdata['id'];
+
+                            if (empty($istagexist)) {
+                                unset($tagsdata['moodleid']);
+                                unset($tagsdata['id']);
+                                unset($tagsdata['task_id']);
+
+                                $tagsdata['tagcollid'] = 1;
+                                $tagsdata['userid'] = $userid;
+                                // echo "<pre>";print_r($tagsdata);die;
+
+                                $returnid = $DB->insert_record('tag', $tagsdata);
+                                array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $returnid]);
+                            } else {
+                                array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $istagexist->id]);
+                            }
+                        }
+                    }
+                }
+
+                // tags_data
+                if (!empty($tagsreturnarr)) {
+                    $tagidsnotdelete = '';
+                    $j = 0;
+
+                    foreach ($tagsreturnarr as $key => $value) {
+                        if ($j == 0) {
+                            $tagidsnotdelete .= $value['moodleid'];
+                        } else {
+                            $tagidsnotdelete .= ',' . $value['moodleid'];
+                        }
+                        $j++;
+
+                        $taginstanceexist = $DB->get_record('tag_instance', ['tagid' => $value['moodleid'], 'itemid' => $activityid], 'id');
+
+                        if (empty($taginstanceexist)) {
+                            $contextdata = $DB->get_record('context', ['instanceid' => $activityid], 'id');
+
+                            if (!empty($contextdata)) {
+                                $contextid = $contextdata->id;
+                            } else {
+                                $contextid = 0;
+                            }
+
+                            $taginstancedata = [
+                                'tagid' => $value['moodleid'],
+                                'component' => 'core',
+                                'itemtype' => 'course_modules',
+                                'itemid' => $activityid,
+                                'contextid' => $contextid,
+                                'tiuserid' => '0',
+                                'ordering' => '1',
+                                'timecreated' => strtotime(date('Y-m-d H:i:s')),
+                                'timemodified' => strtotime(date('Y-m-d H:i:s')),
+                            ];
+
+                            $DB->insert_record('tag_instance', $taginstancedata);
+                        }
+                    }
+
+                    $sql = "SELECT tagid FROM {tag_instance} WHERE itemid = ?";
+                    $tagsfordelete = $DB->get_records_sql($sql, [$activityid]);
+
+                    // $DB->delete_records('tag_instance', ['itemid' => $activityid]);
+
+                    $DB->execute("DELETE FROM {tag_instance} where itemid = ? AND tagid NOT IN (?) ", [$activityid, $tagidsnotdelete]);
+
+                    if (!empty($tagsfordelete)) {
+                        $i = 0;
+
+                        foreach ($tagsfordelete as $key => $value) {
+                            $sql = "SELECT tagid FROM {tag_instance} WHERE tagid = ?";
+                            $istagexistt = $DB->get_record_sql($sql, [$value->tagid]);
+
+                            if (empty($istagexistt)) {
+                                $DB->delete_records('tag', ['id' => $value->tagid, 'isstandard' => '0']);
+                            }
+                        }
+                    }
+                } else {
+
+                    $sql = "SELECT tagid FROM {tag_instance} WHERE itemid = ?";
+                    $tagsfordelete = $DB->get_records_sql($sql, [$activityid]);
+
+                    $DB->delete_records('tag_instance', ['itemid' => $activityid]);
+
+                    if (!empty($tagsfordelete)) {
+                        $i = 0;
+
+                        foreach ($tagsfordelete as $key => $value) {
+                            $sql = "SELECT tagid FROM {tag_instance} WHERE tagid = ?";
+                            $istagexistt = $DB->get_record_sql($sql, [$value->tagid]);
+
+                            if (empty($istagexistt)) {
+                                $DB->delete_records('tag', ['id' => $value->tagid, 'isstandard' => '0']);
+                            }
+                        }
+                    }
+                }
+            } // $userdata end
+        }
+
+        if (!empty($tagsreturnarr)) {
+            return json_encode($tagsreturnarr);
+        }
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function ar_sync_returns() {
+        return new external_value(PARAM_TEXT, 'Returns id');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function standard_tag_sync_parameters() {
+        return new external_function_parameters(
+            array(
+                'standard_tags_data' => new external_value(PARAM_RAW, 'A/R Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function standard_tag_sync($reqstandardtagdata = '', $reqemail = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::standard_tag_sync_parameters(),
+            array(
+                'standard_tags_data' => $reqstandardtagdata,
+                'email' => $reqemail,
+            )
+        );
+
+        if (!empty($reqemail)) {
+            $email = (object) json_decode($reqemail, true);
+            $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
+        }
+
+        if (!empty($userdata)) {
+            $userid = $userdata->id;
+
+            $tagsreturnarr = [];
+
+            $tagsdataarrobj = (object) json_decode($reqstandardtagdata, true);
+            // echo "<pre>";print_r($tagsdataarrobj);die;
+
+            if (!empty($tagsdataarrobj)) {
+                foreach ($tagsdataarrobj as $key => $tagsdata) {
+                    $istagexist = $DB->get_record('tag', ['name' => $tagsdata['name']], 'id');
+
+                    $leelootagid = $tagsdata['id'];
+
+                    if (empty($istagexist)) {
+                        unset($tagsdata['moodleid']);
+                        unset($tagsdata['id']);
+                        unset($tagsdata['task_id']);
+
+                        $tagsdata['tagcollid'] = 1;
+                        $tagsdata['userid'] = $userid;
+                        // echo "<pre>";print_r($tagsdata);die;
+
+                        $returnid = $DB->insert_record('tag', $tagsdata);
+                        array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $returnid]);
+                    } else {
+                        array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $istagexist->id]);
+                    }
+                }
+            }
+        }
+
+        if (!empty($tagsreturnarr)) {
+            return json_encode($tagsreturnarr);
+        }
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function standard_tag_sync_returns() {
+        return new external_value(PARAM_TEXT, 'Returns data');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function delete_tag_parameters() {
+        return new external_function_parameters(
+            array(
+                'deleted_tag_id' => new external_value(PARAM_RAW, 'Tag data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function delete_tag($reqdeletedtagid = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::delete_tag_parameters(),
+            array(
+                'deleted_tag_id' => $reqdeletedtagid,
+            )
+        );
+
+        $id = json_decode($reqdeletedtagid, true);
+        $conditions = array('id' => $id);
+        $DB->delete_records('tag', $conditions);
+        $conditions = array('tagid' => $id);
+        $DB->delete_records('tag_instance', $conditions);
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function delete_tag_returns() {
+        return new external_value(PARAM_TEXT, 'Returns data');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function original_tag_parameters() {
+        return new external_function_parameters(
+            array(
+                'original_tag' => new external_value(PARAM_RAW, 'A/R Data', VALUE_DEFAULT, null),
+                'updated_tags_data' => new external_value(PARAM_RAW, 'Tags Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function original_tag($reqorgtagid = '', $requpdatedtagdata = '', $reqemail = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::original_tag_parameters(),
+            array(
+                'original_tag' => $reqorgtagid,
+                'updated_tags_data' => $requpdatedtagdata,
+                'email' => $reqemail,
+            )
+        );
+
+        $originaltag = json_decode($reqorgtagid, true);
+        $id = $originaltag['id'];
+
+        $istagexist = $DB->get_record('tag', ['id' => $id], 'id');
+
+        if (!empty($istagexist)) {
+            $DB->update_record('tag', $originaltag);
+
+            if (!empty($requpdatedtagdata)) {
+                $tagsdataarrobj = (object) json_decode($requpdatedtagdata, true);
+            }
+
+            if (!empty($reqemail)) {
+                $email = (object) json_decode($reqemail, true);
+                $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
+                $userid = $userdata->id;
+            }
+
+            $tagsreturnarr = [];
+            $tagids = [];
+
+            if (!empty($tagsdataarrobj) && !empty($userid)) {
+                foreach ($tagsdataarrobj as $key => $tagsdata) {
+                    $istagexist = $DB->get_record('tag', ['name' => $tagsdata['name']], 'id');
+
+                    $leelootagid = $tagsdata['id'];
+
+                    if (empty($istagexist)) {
+                        unset($tagsdata['id']);
+                        unset($tagsdata['task_id']);
+
+                        $tagsdata['tagcollid'] = 1;
+                        $tagsdata['userid'] = $userid;
+
+                        $returnid = $DB->insert_record('tag', $tagsdata);
+                        array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $returnid]);
+                    } else {
+                        $returnid = $istagexist->id;
+                        array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $istagexist->id]);
+                    }
+                    array_push($tagids, $returnid);
+
+                    // insert tag instance
+                    $taginstanceexistclock = $DB->get_record('tag_instance', ['tagid' => $id, 'itemid' => $returnid], 'id');
+
+                    $taginstanceexistanticlock = $DB->get_record('tag_instance', ['tagid' => $returnid, 'itemid' => $id], 'id');
+
+                    if (empty($taginstanceexistclock) && empty($taginstanceexistanticlock)) {
+                        $taginstancedata1 = [
+                            'tagid' => $id,
+                            'component' => 'core',
+                            'itemtype' => 'tag',
+                            'itemid' => $returnid,
+                            'contextid' => '1',
+                            'tiuserid' => '0',
+                            'ordering' => '0',
+                            'timecreated' => strtotime(date('Y-m-d H:i:s')),
+                            'timemodified' => strtotime(date('Y-m-d H:i:s')),
+                        ];
+
+                        $taginstancedata2 = [
+                            'tagid' => $returnid,
+                            'component' => 'core',
+                            'itemtype' => 'tag',
+                            'itemid' => $id,
+                            'contextid' => '1',
+                            'tiuserid' => '0',
+                            'ordering' => '0',
+                            'timecreated' => strtotime(date('Y-m-d H:i:s')),
+                            'timemodified' => strtotime(date('Y-m-d H:i:s')),
+                        ];
+
+                        $DB->insert_record('tag_instance', $taginstancedata1);
+                        $DB->insert_record('tag_instance', $taginstancedata2);
+                    }
+                }
+            } //$tagsdataarrobj end
+
+            if (!empty($tagids)) {
+                $tagidsstr = implode(',', $tagids);
+
+                $tagfordelete = $DB->get_records_sql("SELECT tagid FROM {tag_instance} where itemid = ? AND tagid NOT IN (?) ", [$id, $tagidsstr]);
+            } else {
+
+                $tagfordelete = $DB->get_records_sql("SELECT tagid FROM {tag_instance} where itemid = ?", [$id]);
+            }
+
+            if (!empty($tagfordelete)) {
+                foreach ($tagfordelete as $key => $value) {
+                    $sql = "SELECT tagid FROM {tag_instance} WHERE itemid = ? or tagid = ?";
+                    $tagsfordelete = $DB->get_records_sql($sql, [$value->tagid, $value->tagid]);
+
+                    $DB->execute("DELETE FROM {tag_instance} where itemid = ? AND tagid = ?", [$value->tagid, $id]);
+                    $DB->execute("DELETE FROM {tag_instance} where itemid = ? AND tagid = ?", [$id, $value->tagid]);
+
+                    if (!empty($tagsfordelete)) {
+                        $i = 0;
+
+                        foreach ($tagsfordelete as $key => $value) {
+                            $sql = "SELECT tagid FROM {tag_instance} WHERE tagid = ?";
+                            $istagexistt = $DB->get_record_sql($sql, [$value->tagid]);
+
+                            if (empty($istagexistt)) {
+                                $DB->delete_records('tag', ['id' => $value->tagid, 'isstandard' => '0']);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!empty($tagsreturnarr)) {
+                return json_encode($tagsreturnarr);
+            } else {
+                return "0";
+            }
+        }
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function original_tag_returns() {
+        return new external_value(PARAM_TEXT, 'Returns id');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function updated_tag_flag_standard_parameters() {
+        return new external_function_parameters(
+            array(
+                'updated_tag_flag_standard' => new external_value(PARAM_RAW, 'A/R Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function updated_tag_flag_standard($requpdatedtagflag = '', $reqemail = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::updated_tag_flag_standard_parameters(),
+            array(
+                'updated_tag_flag_standard' => $requpdatedtagflag,
+                'email' => $reqemail,
+            )
+        );
+
+        $tagdata = json_decode($requpdatedtagflag, true);
+        $id = $tagdata['id'];
+
+        if (!empty($reqemail)) {
+            $email = (object) json_decode($reqemail, true);
+            $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
+            $userid = $userdata->id;
+        }
+
+        $istagexist = $DB->get_record('tag', ['id' => $id], 'id');
+
+        if (!empty($istagexist) && !empty($userid)) {
+            $DB->update_record('tag', $tagdata);
+        }
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function updated_tag_flag_standard_returns() {
+        return new external_value(PARAM_TEXT, 'Returns id');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function combine_tags_data_parameters() {
+        return new external_function_parameters(
+            array(
+                'combine_tags_data' => new external_value(PARAM_RAW, 'A/R Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function combine_tags_data($reqcombtagdata = '', $reqemail = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::combine_tags_data_parameters(),
+            array(
+                'combine_tags_data' => $reqcombtagdata,
+                'email' => $reqemail,
+            )
+        );
+
+        $tagdata = json_decode($reqcombtagdata, true);
+        $id = $tagdata['updated_id'];
+        $deletedids = $tagdata['deleted_ids'];
+
+        if (!empty($reqemail)) {
+            $email = (object) json_decode($reqemail, true);
+            $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
+            $userid = $userdata->id;
+        }
+
+        $istagexist = $DB->get_record('tag', ['id' => $id], 'id');
+
+        if (!empty($istagexist) && !empty($userid)) {
+            $DB->execute("DELETE FROM {tag} where id != ? AND id IN (?) ", [$id, $deletedids]);
+
+            $sql = "SELECT itemid FROM {tag_instance} WHERE tagid IN (?) GROUP BY itemid ";
+            $tagsforinsert = $DB->get_records_sql($sql, [$deletedids]);
+
+            if (!empty($tagsforinsert)) {
+                foreach ($tagsforinsert as $key => $value) {
+                    $taginstanceexistclock = $DB->get_record('tag_instance', ['tagid' => $id, 'itemid' => $value->itemid], 'id');
+
+                    $taginstanceexistanticlock = $DB->get_record('tag_instance', ['tagid' => $value->itemid, 'itemid' => $id], 'id');
+
+                    if (empty($taginstanceexistclock) && empty($taginstanceexistanticlock)) {
+                        $taginstancedata1 = [
+                            'tagid' => $id,
+                            'component' => 'core',
+                            'itemtype' => 'tag',
+                            'itemid' => $value->itemid,
+                            'contextid' => '1',
+                            'tiuserid' => '0',
+                            'ordering' => '0',
+                            'timecreated' => strtotime(date('Y-m-d H:i:s')),
+                            'timemodified' => strtotime(date('Y-m-d H:i:s')),
+                        ];
+
+                        $taginstancedata2 = [
+                            'tagid' => $value->itemid,
+                            'component' => 'core',
+                            'itemtype' => 'tag',
+                            'itemid' => $id,
+                            'contextid' => '1',
+                            'tiuserid' => '0',
+                            'ordering' => '0',
+                            'timecreated' => strtotime(date('Y-m-d H:i:s')),
+                            'timemodified' => strtotime(date('Y-m-d H:i:s')),
+                        ];
+
+                        $DB->insert_record('tag_instance', $taginstancedata1);
+                        $DB->insert_record('tag_instance', $taginstancedata2);
+                    }
+                }
+            }
+        }
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function combine_tags_data_returns() {
+        return new external_value(PARAM_TEXT, 'Returns id');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function categories_data_delete_parameters() {
+        return new external_function_parameters(
+            array(
+                'categories_data_delete' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function categories_data_delete($reqcatdatadelete = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::categories_data_delete_parameters(),
+            array(
+                'categories_data_delete' => $reqcatdatadelete,
+            )
+        );
+
+        $id = json_decode($reqcatdatadelete, true);
+        $conditions = array('id' => $id);
+        $DB->delete_records('course_categories', $conditions);
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function categories_data_delete_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function categories_data_sync_parameters() {
+        return new external_function_parameters(
+            array(
+                'categories_data' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function categories_data_sync($reqcatsdata = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::categories_data_sync_parameters(),
+            array(
+                'categories_data' => $reqcatsdata,
+            )
+        );
+
+        $value = (object) json_decode($reqcatsdata, true);
+
+        $tablecat = $CFG->prefix . 'course_categories';
+        /* $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?";
+        $autoinc = $DB->get_record_sql($sql, [$CFG->dbname, $tablecat]); */
+        $isinsert = 1;
+
+        if ($value->is_update) {
+            // $autoinc->auto_increment = $value->moodle_cat_id;
+            $returnid = $value->moodle_cat_id;
+
+            $isinsert = 0;
+        }
+        if ($value->depth != '1') {
+            $value->moodle_cat_id = $value->moodle_parent_cat_id;
+        }
+
+        $sql = "SELECT * FROM {course_categories} where id = ?";
+        $catdetail = $DB->get_record_sql($sql, [$value->moodle_cat_id]);
+        $sql = "SELECT * FROM {course_categories} where id = ?";
+        $parentcatdetail = $DB->get_record_sql($sql, [$value->moodle_parent_cat_id]);
+        // echo "<pre>";print_r($parentcatdetail);
+
+        if (!empty($value->moodle_parent_cat_id) && !empty($parentcatdetail)) {
+            // insert/update child cat
+
+            if ($value->depth == 1 || $value->depth == '1') {
+                $value->path = '/' . $catdetail->id;
+                $value->parent = '0';
+            } else {
+                // $value->path = $catdetail->path . '/' . $autoinc->auto_increment;
+                $value->path = $catdetail->path;
+                $value->parent = $value->moodle_cat_id;
+            }
+            if (!empty($returnid)) {
+                // $value->id = $autoinc->auto_increment;
+                $value->id = 1;
+            }
+        } else if (!empty($value->moodle_cat_id) && !empty($catdetail)) {
+            // update cat
+
+            if ($value->depth == 1 || $value->depth == '1') {
+                $value->path = '/' . $catdetail->id;
+                $value->parent = '0';
+            } else {
+                // $value->path = $catdetail->path . '/' . $autoinc->auto_increment;
+                $value->path = $catdetail->path;
+                $value->parent = $value->moodle_cat_id;
+            }
+            $returnid = $value->id = $value->moodle_cat_id;
+
+            $isinsert = 0;
+        } else {
+            // insert top cat
+
+            if ($value->depth == 1 || $value->depth == '1') {
+                // $value->path = '/' . $autoinc->auto_increment;
+                $value->path = '/';
+            } else {
+                if (!empty($catdetail)) {
+                    // $value->path = $catdetail->path . '/' . $autoinc->auto_increment;
+                    $value->path = $catdetail->path;
+                    $value->parent = $value->moodle_cat_id;
+                } else {
+                    // $value->path = '/' . $autoinc->auto_increment;
+                    $value->path = '/';
+                    $value->parent = 0;
+                }
+            }
+        }
+
+        $value->sortorder = 10000;
+        unset($value->moodle_cat_id);
+        unset($value->moodle_parent_cat_id);
+        unset($value->is_update);
+
+        if ($isinsert) {
+            $returnid = $DB->insert_record('course_categories', $value);
+        } else {
+            $DB->update_record('course_categories', $value);
+        }
+
+        return $returnid;
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function categories_data_sync_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function get_moodle_user_id_parameters() {
+        return new external_function_parameters(
+            array(
+                'get_moodle_user_id' => new external_value(PARAM_RAW, 'User email Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'User email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function get_moodle_user_id($reqmoodleuserid = '', $reqemail = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::get_moodle_user_id_parameters(),
+            array(
+                'get_moodle_user_id' => $reqmoodleuserid,
+                'email' => $reqemail,
+            )
+        );
+
+        $email = $reqemail;
+        $sql = "SELECT * FROM {user} where email = ?";
+        $userdetail = $DB->get_record_sql($sql, [$email]);
+        // print_r($userdetail);
+        return $userdetail->id;
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function get_moodle_user_id_returns() {
+        return new external_value(PARAM_TEXT, 'Returns userid');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function get_moodle_user_parameters() {
+        return new external_function_parameters(
+            array(
+                'userid' => new external_value(PARAM_RAW, 'User id', VALUE_DEFAULT, null),
+                'get_moodle_user' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function get_moodle_user($requserid = '', $reqgetmoodleuser = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::get_moodle_user_parameters(),
+            array(
+                'userid' => $requserid,
+                'get_moodle_user' => $reqgetmoodleuser,
+            )
+        );
+
+        $userid = $requserid;
+        $sql = "SELECT * FROM {user} where id = ?";
+        $userdetail = $DB->get_record_sql($sql, [$userid]);
+        // print_r($userdetail);
+        return json_encode($userdetail);
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function get_moodle_user_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function gradeletter1_parameters() {
+        return new external_function_parameters(
+            array(
+                'gradeletter1' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function gradeletter1($reqgradeletter1 = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::gradeletter1_parameters(),
+            array(
+                'gradeletter1' => $reqgradeletter1,
+            )
+        );
+
+        for ($i = 1; $i <= 11; $i++) {
+            $indexl = 'gradeletter' . $i;
+            $indexb = 'gradeboundary' . $i;
+            $lowerboundary = optional_param($indexb, null, PARAM_RAW);
+            $letter = optional_param($indexl, null, PARAM_RAW);
+            $DB->execute("update {grade_letters} set lowerboundary = ?, letter = ? where id = ?", [$lowerboundary, $letter, $i]);
+        }
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function gradeletter1_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function get_userid_parameters() {
+        return new external_function_parameters(
+            array(
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+                'get_userid' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function get_userid($reqemail = '', $reqgetuserid = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::get_userid_parameters(),
+            array(
+                'email' => $reqemail,
+                'get_userid' => $reqgetuserid,
+            )
+        );
+
+        $email = $reqemail;
+        $res = $DB->get_record_sql("SELECT * FROM {user} where email = ?", [$email]);
+        if (!empty($res)) {
+            return $res->id;
+        } else {
+            return $res->id;
+            0;
+        }
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function get_userid_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function leelo_activity_data_parameters() {
+        return new external_function_parameters(
+            array(
+                'leelo_activity_data' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+                'reqcourseid' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function leelo_activity_data($reqleelooactdata = '', $reqcourseid = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::leelo_activity_data_parameters(),
+            array(
+                'leelo_activity_data' => $reqleelooactdata,
+                'course_id' => $reqcourseid,
+            )
+        );
+
+        $courseid = $reqcourseid;
+
+        $activities = json_decode($reqleelooactdata, true);
+
+        if (!empty($activities)) {
+            foreach ($activities as $key => $value) {
+                $activityid = $value['activity_id'];
+
+                $startdate = strtotime($value['start_date']);
+
+                $enddate = strtotime($value['end_date']);
+
+                $type = $value['type'];
+
+                $modulerecords = $DB->get_record_sql("SELECT module,instance FROM {course_modules} where id = ?", [$activityid]);
+
+                $moduleid = $modulerecords->module;
+
+                $isntanceid = $modulerecords->instance;
+
+                $modulenames = $DB->get_record_sql("SELECT name FROM {modules} where id = ?", [$moduleid]);
+
+                $modulename = $modulenames->name;
+
+                if ($modulename == 'lesson') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->deadline = $enddate;
+
+                    $obj->available = $startdate;
+
+                    $DB->update_record('lesson', $obj);
+                } else if ($modulename == 'quiz') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $obj->timeclose = $enddate;
+
+                    $DB->update_record('quiz', $obj);
+                } else if ($modulename == 'assign') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->allowsubmissionsfromdate = $startdate;
+
+                    $obj->duedate = $enddate;
+
+                    $DB->update_record('assign', $obj);
+                } else if ($modulename == 'chat') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->chattime = $startdate;
+
+                    $DB->update_record('chat', $obj);
+                } else if ($modulename == 'choice') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $obj->timeclose = $enddate;
+
+                    $DB->update_record('choice', $obj);
+                } else if ($modulename == 'data') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeavailablefrom = $startdate;
+
+                    $obj->timeavailableto = $enddate;
+
+                    $DB->update_record('data', $obj);
+                } else if ($modulename == 'feedback') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $obj->timeclose = $enddate;
+
+                    $DB->update_record('feedback', $obj);
+                } else if ($modulename == 'forum') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->duedate = $startdate;
+
+                    $obj->cutoffdate = $enddate;
+
+                    $DB->update_record('forum', $obj);
+                } else if ($modulename == 'wespher') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $DB->update_record('wespher', $obj);
+                } else if ($modulename == 'workshop') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->submissionstart = $startdate;
+
+                    $obj->submissionend = $enddate;
+
+                    $DB->update_record('workshop', $obj);
+                } else if ($modulename == 'scorm') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $obj->timeclose = $enddate;
+
+                    $DB->update_record('scorm', $obj);
+                }
+            }
+        }
+
+        return "success";
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function leelo_activity_data_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function leelo_data_parameters() {
+        return new external_function_parameters(
+            array(
+                'leelo_data' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+                'course_id' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+                'project_start_date' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+                'project_end_date' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     * @return string welcome message
+     */
+    public static function leelo_data($reqleeloodata = '', $reqcourseid = '', $reqprojectstartdate = '', $reqprojectenddate = '') {
+
+        global $DB;
+        //Parameter validation
+        //REQUIRED
+        $params = self::validate_parameters(
+            self::leelo_data_parameters(),
+            array(
+                'leelo_data' => $reqleeloodata,
+                'course_id' => $reqcourseid,
+                'project_start_date' => $reqprojectstartdate,
+                'project_end_date' => $reqprojectenddate,
+            )
+        );
+
+        $courseid = $reqcourseid;
+
+        $cobj = new stdClass();
+
+        $cobj->id = $courseid;
+
+        $cobj->startdate = strtotime($reqprojectstartdate);
+
+        $cobj->enddate = strtotime($reqprojectenddate);
+
+        $DB->update_record('course', $cobj);
+
+        $activities = json_decode($reqleeloodata, true);
+
+        if (!empty($activities)) {
+            foreach ($activities as $key => $value) {
+                $activityid = $value['activity_id'];
+
+                $startdate = strtotime($value['start_date']);
+
+                $enddate = strtotime($value['end_date']);
+
+                $type = $value['type'];
+
+                $modulerecords = $DB->get_record_sql("SELECT module,instance FROM {course_modules} where id = ?", [$activityid]);
+
+                $moduleid = $modulerecords->module;
+
+                $isntanceid = $modulerecords->instance;
+
+                $modulenames = $DB->get_record_sql("SELECT name FROM {modules} where id = ?", [$moduleid]);
+
+                $modulename = $modulenames->name;
+
+                $tbl = $modulename;
+
+                if ($modulename == 'lesson') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->deadline = $enddate;
+
+                    $obj->available = $startdate;
+
+                    $DB->update_record('lesson', $obj);
+                } else if ($tbl == 'quiz') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $obj->timeclose = $enddate;
+
+                    $DB->update_record('quiz', $obj);
+                } else if ($tbl == 'assign') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->allowsubmissionsfromdate = $startdate;
+
+                    $obj->duedate = $enddate;
+
+                    $DB->update_record('assign', $obj);
+                } else if ($tbl == 'chat') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->chattime = $startdate;
+
+                    $DB->update_record('chat', $obj);
+                } else if ($tbl == 'choice') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $obj->timeclose = $enddate;
+
+                    $DB->update_record('choice', $obj);
+                } else if ($tbl == 'data') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeavailablefrom = $startdate;
+
+                    $obj->timeavailableto = $enddate;
+
+                    $DB->update_record('data', $obj);
+                } else if ($tbl == 'feedback') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $obj->timeclose = $enddate;
+
+                    $DB->update_record('feedback', $obj);
+                } else if ($tbl == 'forum') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->duedate = $startdate;
+
+                    $obj->cutoffdate = $enddate;
+
+                    $DB->update_record('forum', $obj);
+                } else if ($tbl == 'wespher') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $DB->update_record('wespher', $obj);
+                } else if ($tbl == 'workshop') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->submissionstart = $startdate;
+
+                    $obj->submissionend = $enddate;
+
+                    $DB->update_record('workshop', $obj);
+                } else if ($tbl == 'scorm') {
+                    $obj = new stdClass();
+
+                    $obj->id = $isntanceid;
+
+                    $obj->timeopen = $startdate;
+
+                    $obj->timeclose = $enddate;
+
+                    $DB->update_record('scorm', $obj);
+                }
+            }
+        }
+
+        return "success";
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function leelo_data_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+}
