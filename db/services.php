@@ -141,6 +141,88 @@ $functions = array(
         'description' => 'Sync leeloo data.',
         'type' => 'write',
     ),
+
+    // grades sync
+
+    'local_leeloolxpapi_sync_grade_letter' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'sync_grade_letter',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Grade Letters.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_sync_course_grade_settings' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'sync_course_grade_settings',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Course Grade Settings.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_sync_prefrence_grader_report' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'sync_prefrence_grader_report',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync User Preference Grade report.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_sync_scales' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'sync_scales',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync scales from leeloo to moodle.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_categories_data_grades' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'categories_data_grades',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Grade items and Category.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_delete_grade_item' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'delete_grade_item',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Delete grade item.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_grade_hidden_data' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'grade_hidden_data',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Hide/Show grade item and category.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_grade_duplicate_data' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'grade_duplicate_data',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Duplicate grade item.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_gradeitem_order_change_data' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'gradeitem_order_change_data',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Order grade item.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_delete_grade_category' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'delete_grade_category',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Delete grade category.',
+        'type' => 'write',
+    ),
 );
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
@@ -162,6 +244,17 @@ $services = array(
             'local_leeloolxpapi_get_userid',
             'local_leeloolxpapi_leelo_activity_data',
             'local_leeloolxpapi_leelo_data',
+            'local_leeloolxpapi_sync_grade_letter',
+            'local_leeloolxpapi_sync_course_grade_settings',
+            'local_leeloolxpapi_sync_prefrence_grader_report',
+            'local_leeloolxpapi_sync_scales',
+            'local_leeloolxpapi_categories_data_grades',
+            'local_leeloolxpapi_delete_grade_item',
+            'local_leeloolxpapi_grade_hidden_data',
+            'local_leeloolxpapi_grade_duplicate_data',
+            'local_leeloolxpapi_gradeitem_order_change_data',
+            'local_leeloolxpapi_delete_grade_category',
+
         ),
         'restrictedusers' => 0,
         'enabled' => 1,

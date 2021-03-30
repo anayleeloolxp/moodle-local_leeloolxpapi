@@ -23,9 +23,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$plugin->version = 2021031904;
+$plugin->version = 2021031906;
 $plugin->requires = 2014111001;
 $plugin->cron = 0;
-$plugin->release = '1.0.4';
+$plugin->release = '1.0.0';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->component = 'local_leeloolxpapi';
