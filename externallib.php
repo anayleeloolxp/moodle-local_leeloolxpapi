@@ -1229,7 +1229,7 @@ class local_leeloolxpapi_external extends external_api {
         return new external_function_parameters(
             array(
                 'leelo_activity_data' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
-                'reqcourseid' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
+                'course_id' => new external_value(PARAM_RAW, 'Cat Data', VALUE_DEFAULT, null),
             )
         );
     }
