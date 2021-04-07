@@ -223,6 +223,72 @@ $functions = array(
         'description' => 'Delete grade category.',
         'type' => 'write',
     ),
+
+    // global grades sync
+
+    'local_leeloolxpapi_global_grade_user_settings' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'global_grade_user_settings',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync global user grade settings.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_global_grade_grader_report_settings' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'global_grade_grader_report_settings',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Grader report settings.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_global_scale_delete' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'global_scale_delete',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Scale Delete.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_global_grade_overview' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'global_grade_overview',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Grade Overview.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_global_grade_history' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'global_grade_history',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Grade history.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_global_grade_item_settings' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'global_grade_item_settings',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Grade item settings.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_global_grade_category_settings' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'global_grade_category_settings',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Grade category settings.',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_global_grade_settings' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'global_grade_settings',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Global Grade Settings.',
+        'type' => 'write',
+    ),
 );
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
@@ -254,7 +320,14 @@ $services = array(
             'local_leeloolxpapi_grade_duplicate_data',
             'local_leeloolxpapi_gradeitem_order_change_data',
             'local_leeloolxpapi_delete_grade_category',
-
+            'local_leeloolxpapi_global_grade_user_settings',
+            'local_leeloolxpapi_global_grade_grader_report_settings',
+            'local_leeloolxpapi_global_scale_delete',
+            'local_leeloolxpapi_global_grade_overview',
+            'local_leeloolxpapi_global_grade_history',
+            'local_leeloolxpapi_global_grade_item_settings',
+            'local_leeloolxpapi_global_grade_category_settings',
+            'local_leeloolxpapi_global_grade_settings',
         ),
         'restrictedusers' => 0,
         'enabled' => 1,
