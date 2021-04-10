@@ -157,7 +157,7 @@ class local_leeloolxpapi_external extends external_api {
         $gradedata = (object) json_decode($reqgradedata, true);
 
         // If not empty , then insert category  , no need to check for update.
-        if (!empty($categoriesdata)) { 
+        if (!empty($categoriesdata) && !empty($categoriesdata->courseid)) { 
             $categoriesdata->path = '/';
             $categoriesdata->courseid = $returnid;
             $catreturnid = $DB->insert_record('grade_categories', $categoriesdata);
