@@ -24,3 +24,6 @@
  */
 
 $string['pluginname'] = 'Leeloo LXP API Plugin';
+$string['setting_title'] = 'Leeloo LXP API';
+$string['license_id'] = 'Leeloo LXP License';
+$string['license_id_desc'] = '';
