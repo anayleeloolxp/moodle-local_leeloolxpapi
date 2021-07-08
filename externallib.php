@@ -23,7 +23,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
-require_once ($CFG->libdir . "/externallib.php");
+require_once($CFG->libdir . "/externallib.php");
 
 /**
  * External api for leeloo sync
@@ -1719,8 +1719,7 @@ class local_leeloolxpapi_external extends external_api {
             $contextid = context_course::instance($response->contextid);
             $response->contextid = $contextid->id;
 
-            /*$context_data = $DB->get_record('context', ['contextlevel'=>'50' ,'instanceid' => $response->contextid],'id');
-        echo "<pre>";print_r($context_data);die;*/
+            /*$context_data = $DB->get_record('context', ['contextlevel'=>'50' ,'instanceid' => $response->contextid],'id'); echo "<pre>";print_r($context_data);die;*/
         }
 
         $DB->delete_records('grade_letters', ['contextid' => $response->contextid]);
@@ -2062,7 +2061,7 @@ class local_leeloolxpapi_external extends external_api {
                     $gradesdata->iteminstance = $catreturnedid;
 
                     $itemreturnedid = $DB->insert_record('grade_items', $gradesdata);
-                } elseif (!empty($gradesdata->categoryid)) {
+                } else if (!empty($gradesdata->categoryid)) {
 
                     unset($gradesdata->iteminstance);
 
@@ -2322,7 +2321,7 @@ class local_leeloolxpapi_external extends external_api {
      *
      * @return external_description
      */
-    function change_cate_order($childcats, $currentcat, $depth = null) {
+    public function change_cate_order($childcats, $currentcat, $depth = null) {
         global $DB;
 
         foreach ($childcats as $key => $value) {
@@ -2451,11 +2450,11 @@ class local_leeloolxpapi_external extends external_api {
     /**
      * Sync course from Leeloo to Moodle
      *
-     * @param string $reqglobalgradeusersettings reqglobalgradeusersettings
+     * @param string $reqglograusersettings reqglobalgradeusersettings
      *
      * @return string welcome message
      */
-    public static function global_grade_user_settings($reqglobalgradeusersettings = '') {
+    public static function global_grade_user_settings($reqglograusersettings = '') {
 
         global $DB;
         // Parameter validation.
@@ -2463,24 +2462,24 @@ class local_leeloolxpapi_external extends external_api {
         $params = self::validate_parameters(
             self::global_grade_user_settings_parameters(),
             array(
-                'global_grade_user_settings' => $reqglobalgradeusersettings,
+                'global_grade_user_settings' => $reqglograusersettings,
             )
         );
 
-        $reqglobalgradeusersettings = (object) json_decode($reqglobalgradeusersettings, true);
+        $reqglograusersettings = (object) json_decode($reqglograusersettings, true);
 
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showrank . "' where name = 'grade_report_user_showrank'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showpercentage . "' where name = 'grade_report_user_showpercentage'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showgrade . "' where name = 'grade_report_user_showgrade'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showfeedback . "' where name = 'grade_report_user_showfeedback'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showrange . "' where name = 'grade_report_user_showrange'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showweight . "' where name = 'grade_report_user_showweight'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showaverage . "' where name = 'grade_report_user_showaverage'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showlettergrade . "' where name = 'grade_report_user_showlettergrade'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->rangedecimals . "' where name = 'grade_report_user_rangedecimals'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showhiddenitems . "' where name = 'grade_report_user_showhiddenitems'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showtotalsifcontainhidden . "' where name = 'grade_report_user_showtotalsifcontainhidden'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeusersettings->showcontributiontocoursetotal . "' where name = 'grade_report_user_showcontributiontocoursetotal'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showrank . "' where name = 'grade_report_user_showrank'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showpercentage . "' where name = 'grade_report_user_showpercentage'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showgrade . "' where name = 'grade_report_user_showgrade'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showfeedback . "' where name = 'grade_report_user_showfeedback'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showrange . "' where name = 'grade_report_user_showrange'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showweight . "' where name = 'grade_report_user_showweight'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showaverage . "' where name = 'grade_report_user_showaverage'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showlettergrade . "' where name = 'grade_report_user_showlettergrade'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->rangedecimals . "' where name = 'grade_report_user_rangedecimals'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showhiddenitems . "' where name = 'grade_report_user_showhiddenitems'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showtotalsifcontainhidden . "' where name = 'grade_report_user_showtotalsifcontainhidden'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showcontributiontocoursetotal . "' where name = 'grade_report_user_showcontributiontocoursetotal'");
 
         return '1';
     }
