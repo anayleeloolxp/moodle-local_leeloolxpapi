@@ -120,21 +120,21 @@ function local_leeloolxpapi_before_footer() {
         $PAGE->pagetype == 'mod-workshop-submission' ||
         $PAGE->pagetype == 'course-togglecompletion'
     ) {
-        $table_cat = $CFG->prefix . 'scale';
-        $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$table_cat' ";
-        $auto_inc = $DB->get_record_sql($sql);
-        $auto_increment = $auto_inc->auto_increment;
+        $tablecat = $CFG->prefix . 'scale';
+        $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
+        $autoinc = $DB->get_record_sql($sql);
+        $autoincrement = $autoinc->auto_increment;
 
-        $table_cat = $CFG->prefix . 'course_completions';
-        $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$table_cat' ";
-        $auto_inc = $DB->get_record_sql($sql);
-        $auto_increment_course_completions = $auto_inc->auto_increment;
+        $tablecat = $CFG->prefix . 'course_completions';
+        $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
+        $autoinc = $DB->get_record_sql($sql);
+        $autoincrementcoursecompletions = $autoinc->auto_increment;
 
         $modulerecords = $DB->get_record_sql("SELECT MAX(id) as max_id FROM {scale}");
         if (!empty($modulerecords)) {
-            $scale_max_id = $modulerecords->max_id;
+            $scalemaxid = $modulerecords->max_id;
         } else {
-            $scale_max_id = 0;
+            $scalemaxid = 0;
         }
 
         $workshopgardearsyncid = 0;
@@ -144,7 +144,7 @@ function local_leeloolxpapi_before_footer() {
 
             $maindata = $DB->get_record_sql("SELECT wg.id FROM {workshop_grades}
 
-            as wg JOIN {workshop_assessments} as wa  ON wa.id = wg.assessmentid
+            wg JOIN {workshop_assessments} wa  ON wa.id = wg.assessmentid
 
             WHERE wa.submissionid = ?", [$idid]);
 
@@ -155,18 +155,14 @@ function local_leeloolxpapi_before_footer() {
 
         $PAGE->requires->jquery();
 
-        /*$jscode = 'require(["jquery"], function($) { $(document).ready(function() {var workshopgardearsyncid = "'.$workshopgardearsyncid.'";var teamniourl = "'.$teamniourl.'";var email = "'.base64_encode($useremail).'";var auto_increment_course_completions = "'.$auto_increment_course_completions.'"; var scale_max_id="'.$scale_max_id.'"; var auto_increment = "'.$auto_increment.'"; var course_id = "'.$PAGE->course->id.'"; }); });';
-
-        $PAGE->requires->js_init_code("$jscode");*/
-
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/leeloolxpapi/js/gradesync.js'));
 
         echo '<input type="hidden" id="local_leeloolxpapi_workshopgardearsyncid" value="' . base64_encode($workshopgardearsyncid) . '"/>';
         echo '<input type="hidden" id="local_leeloolxpapi_teamniourl" value="' . base64_encode($teamniourl) . '"/>';
         echo '<input type="hidden" id="local_leeloolxpapi_email" value="' . base64_encode($useremail) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_auto_increment_course_completions" value="' . base64_encode($auto_increment_course_completions) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_scale_max_id" value="' . base64_encode($scale_max_id) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_auto_increment" value="' . base64_encode($auto_increment) . '"/>';
+        echo '<input type="hidden" id="local_leeloolxpapi_auto_increment_course_completions" value="' . base64_encode($autoincrementcoursecompletions) . '"/>';
+        echo '<input type="hidden" id="local_leeloolxpapi_scale_max_id" value="' . base64_encode($scalemaxid) . '"/>';
+        echo '<input type="hidden" id="local_leeloolxpapi_auto_increment" value="' . base64_encode($autoincrement) . '"/>';
         echo '<input type="hidden" id="local_leeloolxpapi_course_id" value="' . base64_encode($PAGE->course->id) . '"/>';
     }
 }

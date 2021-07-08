@@ -22,7 +22,7 @@
  * @author Leeloo LXP <info@leeloolxp.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
+defined('MOODLE_INTERNAL') || die();
 // We defined the web service functions to install.
 $functions = array(
     'local_leeloolxpapi_course_sync' => array(
