@@ -23,7 +23,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
-require_once($CFG->libdir . "/externallib.php");
+require_once ($CFG->libdir . "/externallib.php");
 
 /**
  * External api for leeloo sync
@@ -46,11 +46,11 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqcoursedata reqcoursedata
      * @param string $reqcategoriesdata reqcategoriesdata
      * @param string $reqgradedata reqgradedata
-     * 
+     *
      * @return string welcome message
      */
     public static function course_sync($reqcoursedata = '', $reqcategoriesdata = '', $reqgradedata = '') {
@@ -207,11 +207,11 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqardata reqardata
      * @param string $reqtagdata reqtagdata
      * @param string $reqemail reqemail
-     * 
+     *
      * @return string welcome message
      */
     public static function ar_sync($reqardata = '', $reqtagdata = '', $reqemail = '') {
@@ -467,10 +467,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqstandardtagdata reqstandardtagdata
      * @param string $reqemail reqemail
-     * 
+     *
      * @return string welcome message
      */
     public static function standard_tag_sync($reqstandardtagdata = '', $reqemail = '') {
@@ -550,9 +550,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqdeletedtagid reqdeletedtagid
-     * 
+     *
      * @return string welcome message
      */
     public static function delete_tag($reqdeletedtagid = '') {
@@ -599,11 +599,11 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqorgtagid reqorgtagid
      * @param string $requpdatedtagdata requpdatedtagdata
      * @param string $reqemail reqemail
-     * 
+     *
      * @return string welcome message
      */
     public static function original_tag($reqorgtagid = '', $requpdatedtagdata = '', $reqemail = '') {
@@ -761,10 +761,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $requpdatedtagflag requpdatedtagflag
      * @param string $reqemail reqemail
-     * 
+     *
      * @return string welcome message
      */
     public static function updated_tag_flag_standard($requpdatedtagflag = '', $reqemail = '') {
@@ -820,10 +820,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqcombtagdata reqcombtagdata
      * @param string $reqemail reqemail
-     * 
+     *
      * @return string welcome message
      */
     public static function combine_tags_data($reqcombtagdata = '', $reqemail = '') {
@@ -919,9 +919,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqcatdatadelete reqcatdatadelete
-     * 
+     *
      * @return string welcome message
      */
     public static function categories_data_delete($reqcatdatadelete = '') {
@@ -964,9 +964,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqcatsdata reqcatsdata
-     * 
+     *
      * @return string welcome message
      */
     public static function categories_data_sync($reqcatsdata = '') {
@@ -1030,6 +1030,7 @@ class local_leeloolxpapi_external extends external_api {
             // insert top cat
 
             if ($value->depth == 1 || $value->depth == '1') {
+                $falsevar = 1;
                 // $value->path = '/' . $autoinc->auto_increment;
             } else {
                 if (!empty($catdetail)) {
@@ -1111,10 +1112,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqmoodleuserid reqmoodleuserid
      * @param string $reqemail reqemail
-     * 
+     *
      * @return string welcome message
      */
     public static function get_moodle_user_id($reqmoodleuserid = '', $reqemail = '') {
@@ -1160,10 +1161,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $requserid requserid
      * @param string $reqgetmoodleuser reqgetmoodleuser
-     * 
+     *
      * @return string welcome message
      */
     public static function get_moodle_user($requserid = '', $reqgetmoodleuser = '') {
@@ -1208,9 +1209,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqgradeletter1 reqgradeletter1
-     * 
+     *
      * @return string welcome message
      */
     public static function gradeletter1($reqgradeletter1 = '') {
@@ -1258,10 +1259,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqemail reqemail
      * @param string $reqgetuserid reqgetuserid
-     * 
+     *
      * @return string welcome message
      */
     public static function get_userid($reqemail = '', $reqgetuserid = '') {
@@ -1310,10 +1311,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqleelooactdata reqleelooactdata
      * @param string $reqcourseid reqcourseid
-     * 
+     *
      * @return string welcome message
      */
     public static function leelo_activity_data($reqleelooactdata = '', $reqcourseid = '') {
@@ -1491,12 +1492,12 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqleeloodata reqleeloodata
      * @param string $reqcourseid reqcourseid
      * @param string $reqprojectstartdate reqprojectstartdate
      * @param string $reqprojectenddate reqprojectenddate
-     * 
+     *
      * @return string welcome message
      */
     public static function leelo_data($reqleeloodata = '', $reqcourseid = '', $reqprojectstartdate = '', $reqprojectenddate = '') {
@@ -1685,9 +1686,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqlsyncgradeletter reqlsyncgradeletter
-     * 
+     *
      * @return string welcome message
      */
     public static function sync_grade_letter($reqlsyncgradeletter = '') {
@@ -1776,9 +1777,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqsynccoursegradesettings reqsynccoursegradesettings
-     * 
+     *
      * @return string welcome message
      */
     public static function sync_course_grade_settings($reqsynccoursegradesettings = '') {
@@ -1794,7 +1795,7 @@ class local_leeloolxpapi_external extends external_api {
         );
 
         $response = (object) json_decode($reqsynccoursegradesettings, true);
-        //print_r($response);die;
+        // print_r($response);die;
         $courseid = $response->courseid;
         unset($response->courseid);
         $lastinsertedid = 0;
@@ -1839,9 +1840,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqsyncprefrencegraderreport reqsyncprefrencegraderreport
-     * 
+     *
      * @return string welcome message
      */
     public static function sync_prefrence_grader_report($reqsyncprefrencegraderreport = '') {
@@ -1906,9 +1907,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqsyncscales reqsyncscales
-     * 
+     *
      * @return string welcome message
      */
     public static function sync_scales($reqsyncscales = '') {
@@ -1944,8 +1945,8 @@ class local_leeloolxpapi_external extends external_api {
 
             if (!empty($value->moodle_scale_id)) {
                 $sql = "SELECT * FROM {scale} where id = '$value->moodle_scale_id'";
-                $scale_detail = $DB->get_record_sql($sql);
-                if (!empty($scale_detail)) {
+                $scaledetail = $DB->get_record_sql($sql);
+                if (!empty($scaledetail)) {
                     $data['id'] = $value->moodle_scale_id;
                     $DB->update_record('scale', $data);
                     $returnedid = $value->moodle_scale_id;
@@ -1983,10 +1984,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqcategoriesdata reqcategoriesdata
      * @param string $reqgradedata reqgradedata
-     * 
+     *
      * @return string welcome message
      */
     public static function categories_data_grades($reqcategoriesdata = '', $reqgradedata = '') {
@@ -2095,9 +2096,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqdeletegradeitem reqdeletegradeitem
-     * 
+     *
      * @return string welcome message
      */
     public static function delete_grade_item($reqdeletegradeitem = '') {
@@ -2143,9 +2144,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqhiddendata reqhiddendata
-     * 
+     *
      * @return string welcome message
      */
     public static function grade_hidden_data($reqhiddendata = '') {
@@ -2208,9 +2209,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqduplicatedata reqduplicatedata
-     * 
+     *
      * @return string welcome message
      */
     public static function grade_duplicate_data($reqduplicatedata = '') {
@@ -2265,10 +2266,10 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqgradeitemorderchangedata reqgradeitemorderchangedata
      * @param string $reqcategoryid reqcategoryid
-     * 
+     *
      * @return string welcome message
      */
     public static function gradeitem_order_change_data($reqgradeitemorderchangedata = '', $reqcategoryid = '') {
@@ -2285,19 +2286,19 @@ class local_leeloolxpapi_external extends external_api {
         );
 
         $response = (object) json_decode($reqgradeitemorderchangedata, true);
-        $cat_id = (object) json_decode($reqcategoryid, true);
+        $catid = (object) json_decode($reqcategoryid, true);
 
-        if (!empty($response) && !empty($cat_id->moodle_cat_id)) {
+        if (!empty($response) && !empty($catid->moodle_cat_id)) {
             foreach ($response as $key => $value) {
                 // echo " <pre>";print_r($value['moodle_tbl_id']); die;
 
-                $items_data = ['categoryid' => $cat_id->moodle_cat_id];
+                $itemsdata = ['categoryid' => $catid->moodle_cat_id];
 
-                $items_data = (object) $items_data;
+                $itemsdata = (object) $itemsdata;
 
-                $items_data->id = $value['moodle_tbl_id'];
+                $itemsdata->id = $value['moodle_tbl_id'];
 
-                $DB->update_record('grade_items', $items_data);
+                $DB->update_record('grade_items', $itemsdata);
             }
         }
 
@@ -2314,17 +2315,17 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Function to change category order
-     * 
-     * @param stdclass $child_cats child_cats
+     *
+     * @param stdclass $childcats child_cats
      * @param stdclass $currentcat currentcat
      * @param string $depth depth
-     * 
+     *
      * @return external_description
      */
-    function change_cate_order($child_cats, $currentcat, $depth = null) {
+    function change_cate_order($childcats, $currentcat, $depth = null) {
         global $DB;
 
-        foreach ($child_cats as $key => $value) {
+        foreach ($childcats as $key => $value) {
             $path = str_replace('/' . $currentcat->id, '', $value->path);
 
             if (empty($depth)) {
@@ -2366,9 +2367,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqdeletegradecategory reqdeletegradecategory
-     * 
+     *
      * @return string welcome message
      */
     public static function delete_grade_category($reqdeletegradecategory = '') {
@@ -2394,7 +2395,7 @@ class local_leeloolxpapi_external extends external_api {
                 // change_cate_order($parentcatdata, $currentcat);
             }
 
-            //update parent of grade item
+            // update parent of grade item.
             $sql = "SELECT id FROM {grade_items} WHERE categoryid = '$response->id' ";
             $childitems = $DB->get_records_sql($sql);
             $currentcat = $DB->get_record('grade_categories', ['id' => $response->id], '*');
@@ -2449,9 +2450,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqglobalgradeusersettings reqglobalgradeusersettings
-     * 
+     *
      * @return string welcome message
      */
     public static function global_grade_user_settings($reqglobalgradeusersettings = '') {
@@ -2506,9 +2507,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqgraderreportsettings reqgraderreportsettings
-     * 
+     *
      * @return string welcome message
      */
     public static function global_grade_grader_report_settings($reqgraderreportsettings = '') {
@@ -2570,9 +2571,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqscaledelete reqscaledelete
-     * 
+     *
      * @return string welcome message
      */
     public static function global_scale_delete($reqscaledelete = '') {
@@ -2616,9 +2617,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqglobalgradeoverview reqglobalgradeoverview
-     * 
+     *
      * @return string welcome message
      */
     public static function global_grade_overview($reqglobalgradeoverview = '') {
@@ -2663,9 +2664,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqglobalgradehistory reqglobalgradehistory
-     * 
+     *
      * @return string welcome message
      */
     public static function global_grade_history($reqglobalgradehistory = '') {
@@ -2709,9 +2710,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqgradeitemsettings reqgradeitemsettings
-     * 
+     *
      * @return string welcome message
      */
     public static function global_grade_item_settings($reqgradeitemsettings = '') {
@@ -2761,9 +2762,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqgradecategorysettings reqgradecategorysettings
-     * 
+     *
      * @return string welcome message
      */
     public static function global_grade_category_settings($reqgradecategorysettings = '') {
@@ -2839,9 +2840,9 @@ class local_leeloolxpapi_external extends external_api {
 
     /**
      * Sync course from Leeloo to Moodle
-     * 
+     *
      * @param string $reqglobalgradedata reqglobalgradedata
-     * 
+     *
      * @return string welcome message
      */
     public static function global_grade_settings($reqglobalgradedata = '') {
