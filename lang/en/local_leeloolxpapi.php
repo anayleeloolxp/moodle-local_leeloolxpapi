@@ -27,3 +27,12 @@ $string['pluginname'] = 'Leeloo LXP API Plugin';
 $string['setting_title'] = 'Leeloo LXP API';
 $string['license_id'] = 'Leeloo LXP License';
 $string['license_id_desc'] = '';
+
+$string['privacy:metadata'] = 'In order to integrate with Leeloo LXP, some user
+data need to be sent to the Leeloo LXP client application (remote system).';
+$string['privacy:metadata:leeloolxpapi'] = 'In order to integrate with Leeloo LXP, some user
+data need to be sent to the Leeloo LXP client application (remote system).';
+$string['privacy:metadata:id'] = 'The user ID';
+$string['privacy:metadata:username'] = 'The user\'s username is sent to Leeloo LXP to allow a better user experience.';
+$string['privacy:metadata:email'] = 'The user\'s email is sent to Leeloo LXP to allow a better user experience.';
+$string['privacy:metadata:fullname'] = 'The user\'s full name is sent to Leeloo LXP to allow a better user experience.';
