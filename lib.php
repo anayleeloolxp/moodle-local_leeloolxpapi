@@ -120,8 +120,7 @@ function local_leeloolxpapi_before_footer() {
         $PAGE->pagetype == 'mod-workshop-submission' ||
         $PAGE->pagetype == 'course-togglecompletion'
     ) {
-
-        if( $CFG->dbtype == 'mysqli' ){
+        if ($CFG->dbtype == 'mysqli') {
             $tablecat = $CFG->prefix . 'scale';
             $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
             $autoinc = $DB->get_record_sql($sql);
@@ -131,11 +130,10 @@ function local_leeloolxpapi_before_footer() {
             $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
             $autoinc = $DB->get_record_sql($sql);
             $autoincrementcoursecompletions = $autoinc->auto_increment;
-        }else{
+        } else {
             if (
                 $PAGE->pagetype == 'course-togglecompletion'
             ) {
-
                 $autoincrement = 55290;
 
                 $tablecat = $CFG->prefix . 'course_completions';
@@ -144,7 +142,7 @@ function local_leeloolxpapi_before_footer() {
                 $autoincrementcoursecompletionsless = $autoinc->auto_increment;
 
                 $autoincrementcoursecompletions = $autoincrementcoursecompletionsless + 1;
-            }else if (
+            } else if (
                 $PAGE->pagetype == 'admin-grade-edit-scale-edit' ||
                 $PAGE->pagetype == 'grade-edit-scale-edit'
             ) {
@@ -155,11 +153,10 @@ function local_leeloolxpapi_before_footer() {
                 $autoincrement = $autoincrementless + 1;
 
                 $autoincrementcoursecompletions = 55290;
-            }else{
+            } else {
                 $autoincrement = 55290;
                 $autoincrementcoursecompletions = 55290;
             }
-
         }
 
         $modulerecords = $DB->get_record_sql("SELECT MAX(id) as max_id FROM {scale}");
