@@ -184,7 +184,7 @@ function local_leeloolxpapi_before_footer() {
 
         $PAGE->requires->jquery();
 
-        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/leeloolxpapi/js/gradesync.js'));
+        $PAGE->requires->js(new moodle_url('/local/leeloolxpapi/js/gradesync.js'));
 
         echo '<input type="hidden" id="local_leeloolxpapi_workshopgardearsyncid" value="' . base64_encode($workshopgardearsyncid) . '"/>';
         echo '<input type="hidden" id="local_leeloolxpapi_teamniourl" value="' . base64_encode($teamniourl) . '"/>';
