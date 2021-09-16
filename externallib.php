@@ -954,6 +954,70 @@ class local_leeloolxpapi_external extends external_api {
     /**
      * Returns description of method parameters
      * @return external_function_parameters
+     * course_data_move_sync
+     */
+    public static function course_data_move_sync_parameters() {
+        return new external_function_parameters(
+            array(
+                'course_data' => new external_value(PARAM_RAW, 'Course Data', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     *
+     * @param string $reqcatsdata reqcatsdata
+     *
+     * @return string welcome message
+     */
+    public static function course_data_move_sync($reqcatsdata = '') {
+
+        global $DB;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::course_data_move_sync_parameters(),
+            array(
+                'course_data' => $reqcatsdata,
+            )
+        );
+
+        $value = (object) json_decode($reqcatsdata, true); //(object)
+
+        $values = '';
+        foreach ($value as $catkey => $courseid) {
+            $values .= $catkey.','.$courseid;
+
+            $sql = "SELECT id FROM {course} where id = ?";
+            $coursedetail = $DB->get_record_sql($sql, [$courseid]);
+
+            $sql = "SELECT id FROM {course_categories} where id = ?";
+            $catdetail = $DB->get_record_sql($sql, [$catkey]);
+
+            if (!empty($coursedetail) && !empty($catdetail)) {
+
+                $data->id = $courseid;
+                $data->category = $catkey;
+                $DB->update_record('course', $data);
+            }
+        }
+
+
+        return 1;
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function course_data_move_sync_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
      */
     public static function categories_data_sync_parameters() {
         return new external_function_parameters(
@@ -1044,11 +1108,17 @@ class local_leeloolxpapi_external extends external_api {
             }
         }
 
+        $is_parent_found = 0;
+        if (!empty($value->is_parent)) {
+            $is_parent_found = $value->is_parent;
+            unset($value->is_parent);
+        }
         $value->sortorder = 10000;
         unset($value->moodle_cat_id);
         unset($value->moodle_parent_cat_id);
         unset($value->is_update);
         $value->path = '';
+
 
         if ($isinsert) {
             $returnid = $DB->insert_record('course_categories', $value);
@@ -1083,7 +1153,11 @@ class local_leeloolxpapi_external extends external_api {
             }
         }
 
+
         $updatenewdata = ['path' => $value->path, 'id' => $returnid];
+        if (!empty($is_parent_found)) {
+            $updatenewdata['parent'] = $is_parent_found;
+        }
         $updatenewdata = (object) $updatenewdata;
         $DB->update_record('course_categories', $updatenewdata);
 
