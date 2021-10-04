@@ -1078,6 +1078,12 @@ class local_leeloolxpapi_external extends external_api {
                 // $value->id = $autoinc->auto_increment;
                 $value->id = 1;
             }
+
+            if ($isinsert == 0) {
+                $value->id = $returnid;
+                //return "$value->id = $returnid";die;
+            }
+
         } else if (!empty($value->moodle_cat_id) && !empty($catdetail)) {
             // update cat
 
