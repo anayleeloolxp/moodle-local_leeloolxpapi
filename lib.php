@@ -39,6 +39,9 @@ function local_leeloolxpapi_get_leelooinstall() {
         return $SESSION->apileelooinstall;
     }
 
+    global $CFG;
+    require_once($CFG->dirroot . '/lib/filelib.php');
+
     $configweblogintrack = get_config('local_leeloolxpapi');
     $liacnsekey = $configweblogintrack->gradelicensekey;
     $postdata = array('license_key' => $liacnsekey);
