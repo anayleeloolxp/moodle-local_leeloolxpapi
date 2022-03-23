@@ -295,7 +295,7 @@ $functions = array(
         'methodname' => 'get_analytics_data',
         'classpath' => 'local/leeloolxpapi/externallib.php',
         'description' => 'Get Data for Analytics.',
-        'type' => 'write',
+        'type' => 'read',
     ),
 );
 
