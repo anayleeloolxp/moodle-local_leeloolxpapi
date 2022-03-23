@@ -336,6 +336,7 @@ $services = array(
             'local_leeloolxpapi_global_grade_item_settings',
             'local_leeloolxpapi_global_grade_category_settings',
             'local_leeloolxpapi_global_grade_settings',
+            'local_leeloolxpapi_get_analytics_data',
         ),
         'restrictedusers' => 0,
         'enabled' => 1,
