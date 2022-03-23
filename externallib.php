@@ -2971,4 +2971,66 @@ class local_leeloolxpapi_external extends external_api {
     public static function global_grade_settings_returns() {
         return new external_value(PARAM_TEXT, 'Returns true');
     }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function get_analytics_data_parameters() {
+        return new external_function_parameters(
+            array(
+                'params' => new external_value(PARAM_RAW, 'Params', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Analytics data Moodle to Leeloo
+     *
+     * @param string $reqparams params
+     *
+     * @return string welcome message
+     */
+    public static function get_analytics_data($reqparams = '') {
+
+        global $DB, $CFG;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::get_analytics_data_parameters(),
+            array(
+                'params' => $reqparams,
+            )
+        );
+
+        $params = json_decode($reqparams, true);
+
+        require_once($CFG->dirroot.'/local/leeloolxpapi/classes/analytics_functions.php');
+
+        $functionname = $params['function'];
+
+        if (function_exists($functionname)) {
+            $data = array(
+                'responsestring' => "function_available",
+                'functioname' => $functionname,
+                'response' => $functionname($params)
+            );
+        } else {
+            $data = array(
+                'responsestring' => "function_not_available",
+                'functioname' => $functionname,
+                'response' => ""
+            );
+        }
+
+        return json_encode($data);
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function get_analytics_data_returns() {
+        return new external_value(PARAM_RAW, 'Analytics data');
+    }
 }
