@@ -289,6 +289,14 @@ $functions = array(
         'description' => 'Sync Global Grade Settings.',
         'type' => 'write',
     ),
+
+    'local_leeloolxpapi_get_analytics_data' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'get_analytics_data',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Get Data for Analytics.',
+        'type' => 'write',
+    ),
 );
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
