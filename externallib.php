@@ -31,6 +31,90 @@ require_once($CFG->libdir . "/externallib.php");
  */
 class local_leeloolxpapi_external extends external_api {
 
+
+    /**
+
+     * Returns description of method parameters
+
+     * @return external_function_parameters
+
+     */
+
+    public static function course_visibility_parameters() {
+
+        return new external_function_parameters(
+
+            array(
+
+                'course_data' => new external_value(PARAM_RAW, 'Course Data', VALUE_DEFAULT, null), 
+
+            )
+
+        );
+
+    }
+
+
+    /**
+
+     * Sync course from Leeloo to Moodle
+
+     *
+
+     * @param string $reqcoursedata reqcoursedata
+
+     * @param string $reqcategoriesdata reqcategoriesdata
+
+     * @param string $reqgradedata reqgradedata
+
+     *
+
+     * @return string welcome message
+
+     */
+
+    public static function course_visibility($reqcoursedata = '') {
+
+        global $DB;
+
+
+        // Parameter validation.
+
+        // REQUIRED.
+
+        $params = self::validate_parameters(
+
+            self::course_sync_parameters(),
+
+            array(
+
+                'course_data' => $reqcoursedata, 
+
+            )
+
+        );
+
+        $value = (object) json_decode($reqcoursedata, true);
+        
+        $DB->execute("update {" . $value->table . "} set visible = '" . $value->visible . "' where id =  '".$value->course_id."' ");       
+        return '1'; 
+    }
+
+
+    /**
+
+     * Returns description of method result value
+
+     * @return external_description
+
+     */
+
+    public static function course_visibility_returns() {
+
+        return new external_value(PARAM_TEXT, 'Returns id');
+
+    }
+
     /**
      * Returns description of method parameters
      * @return external_function_parameters

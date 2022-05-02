@@ -297,6 +297,20 @@ $functions = array(
         'description' => 'Get Data for Analytics.',
         'type' => 'read',
     ),
+
+    'local_leeloolxpapi_course_visibility' => array(
+
+        'classname' => 'local_leeloolxpapi_external',
+
+        'methodname' => 'course_visibility',
+
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+
+        'description' => 'sync course visibility',
+
+        'type' => 'write',
+
+    ),
 );
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
@@ -337,6 +351,7 @@ $services = array(
             'local_leeloolxpapi_global_grade_category_settings',
             'local_leeloolxpapi_global_grade_settings',
             'local_leeloolxpapi_get_analytics_data',
+            'local_leeloolxpapi_course_visibility',
         ),
         'restrictedusers' => 0,
         'enabled' => 1,
