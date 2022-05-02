@@ -36,4 +36,14 @@ if ($hassiteconfig) {
             PARAM_TEXT
         )
     );
+    $settings->add(
+        new admin_setting_configtext(
+            'local_leeloolxpapi/leelooapitoken',
+            get_string('leelooapitoken', 'local_leeloolxpapi'),
+            get_string('leelooapitoken_desc',
+                'local_leeloolxpapi'),
+            '0',
+            PARAM_TEXT
+        )
+    );
 }

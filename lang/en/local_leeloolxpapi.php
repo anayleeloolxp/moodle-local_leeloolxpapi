@@ -27,6 +27,8 @@ $string['pluginname'] = 'Leeloo LXP API Plugin';
 $string['setting_title'] = 'Leeloo LXP API';
 $string['license_id'] = 'Leeloo LXP License';
 $string['license_id_desc'] = '';
+$string['leelooapitoken'] = 'Leeloo LXP API Token';
+$string['leelooapitoken_desc'] = '';
 
 $string['privacy:metadata'] = 'In order to integrate with Leeloo LXP, some user
 data need to be sent to the Leeloo LXP client application (remote system).';
