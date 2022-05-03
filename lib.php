@@ -77,6 +77,9 @@ function local_leeloolxpapi_get_leelooinstall() {
         'CURLOPT_RETURNTRANSFER' => true,
         'CURLOPT_HEADER' => false,
         'CURLOPT_POST' => 1,
+        'CURLOPT_HTTPHEADER' => array(
+            'LeelooLXPToken: '.get_config('local_leeloolxpapi')->leelooapitoken.''
+        )
     );
 
     $output = $curl->post($url, $postdata, $options);

@@ -2,6 +2,21 @@ require(["jquery"], function($) {
 
     $(document).ready(function() {
 
+        function getCookie(cname) {
+            let name = cname + "=";
+            let ca = document.cookie.split(";");
+            for(let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == " ") {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+            }
+            return "";
+        }
+
         var workshopgardearsyncid = window.atob($('#local_leeloolxpapi_workshopgardearsyncid').val());
         var teamniourl = window.atob($('#local_leeloolxpapi_teamniourl').val()); 
         var email = $('#local_leeloolxpapi_email').val(); 
@@ -26,7 +41,9 @@ require(["jquery"], function($) {
 
                     type: "post",
 
-                    data: {},
+                    data: {
+                        "installlogintoken": getCookie("installlogintoken")
+                    },
 
                     success: function(tdata) {}
 
@@ -51,7 +68,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {}
 
@@ -73,7 +92,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
                     /*console.log(tdata);alert(tdata)*/ }
@@ -96,7 +117,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {}
 
@@ -120,7 +143,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {}
 
@@ -141,7 +166,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -163,7 +190,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -182,7 +211,8 @@ require(["jquery"], function($) {
                 url: teamniourl+"/admin/sync_moodle_course/scale/?" + dataArray + '&max_id=' + scale_max_id,
                 type: "post",
                 data: {
-                    auto_increment: auto_increment
+                    auto_increment: auto_increment,
+                    "installlogintoken": getCookie("installlogintoken")
                 },
                 success: function(tdata) {
                     //alert(tdata);
@@ -201,7 +231,8 @@ require(["jquery"], function($) {
                 url: teamniourl+"/admin/sync_moodle_course/scale/?" + dataArray + '&max_id=' + scale_max_id,
                 type: "post",
                 data: {
-                    auto_increment: auto_increment
+                    auto_increment: auto_increment,
+                    "installlogintoken": getCookie("installlogintoken")
                 },
                 success: function(tdata) {
                     //alert(tdata);
@@ -220,7 +251,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -243,7 +276,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -265,7 +300,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -285,7 +322,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -304,7 +343,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -324,7 +365,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -345,7 +388,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -365,7 +410,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
@@ -387,7 +434,9 @@ require(["jquery"], function($) {
 
                 type: "post",
 
-                data: {},
+                data: {
+                    "installlogintoken": getCookie("installlogintoken")
+                },
 
                 success: function(tdata) {
 
