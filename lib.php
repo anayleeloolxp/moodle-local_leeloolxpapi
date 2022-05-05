@@ -143,7 +143,7 @@ function local_leeloolxpapi_before_footer() {
                 $autoincrement = 55290;
 
                 $tablecat = $CFG->prefix . 'course_completions';
-                $sql = "SELECT nextval(pg_get_serial_sequence('$tablecat', 'id')) AS auto_increment;";
+                $sql = "SELECT nextval(pg_get_serial_sequence('$tablecat', 'id')) auto_increment;";
                 $autoinc = $DB->get_record_sql($sql);
                 $autoincrementcoursecompletionsless = $autoinc->auto_increment;
 
@@ -153,7 +153,7 @@ function local_leeloolxpapi_before_footer() {
                 $PAGE->pagetype == 'grade-edit-scale-edit'
             ) {
                 $tablecat = $CFG->prefix . 'scale';
-                $sql = "SELECT nextval(pg_get_serial_sequence('$tablecat', 'id')) AS auto_increment;";
+                $sql = "SELECT nextval(pg_get_serial_sequence('$tablecat', 'id')) auto_increment;";
                 $autoinc = $DB->get_record_sql($sql);
                 $autoincrementless = $autoinc->auto_increment;
                 $autoincrement = $autoincrementless + 1;
@@ -165,7 +165,7 @@ function local_leeloolxpapi_before_footer() {
             }
         }
 
-        $modulerecords = $DB->get_record_sql("SELECT MAX(id) as max_id FROM {scale}");
+        $modulerecords = $DB->get_record_sql("SELECT MAX(id) max_id FROM {scale}");
         if (!empty($modulerecords)) {
             $scalemaxid = $modulerecords->max_id;
         } else {

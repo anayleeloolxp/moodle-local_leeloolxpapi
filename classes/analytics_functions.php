@@ -68,39 +68,39 @@ function get_users_course_grade($params) {
 
 
 
-        $query = "SELECT ue.id AS id,
+        $query = "SELECT ue.id id,
 
-        cri.gradepass AS gradepass,
+        cri.gradepass gradepass,
 
-        ue.timecreated as started,
+        ue.timecreated started,
 
-        ROUND((CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END), 0) AS score,
+        ROUND((CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END), 0) score,
 
-        ROUND((CASE WHEN g.rawgrademax > 0 THEN (g.finalgrade/g.rawgrademax)*100 ELSE g.finalgrade END), 0) AS grade_real,
+        ROUND((CASE WHEN g.rawgrademax > 0 THEN (g.finalgrade/g.rawgrademax)*100 ELSE g.finalgrade END), 0) grade_real,
 
-        (SELECT COUNT(DISTINCT cmc.id) FROM {course_modules_completion} cmc, {course_modules} cm WHERE cm.visible = 1 AND cmc.coursemoduleid = cm.id  AND cm.completion > 0 AND cm.course = c.id AND cmc.userid = u.id) AS completed,
+        (SELECT COUNT(DISTINCT cmc.id) FROM {course_modules_completion} cmc, {course_modules} cm WHERE cm.visible = 1 AND cmc.coursemoduleid = cm.id  AND cm.completion > 0 AND cm.course = c.id AND cmc.userid = u.id) completed,
 
-        (SELECT ROUND((CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END), 0) FROM {grade_items} gi, {grade_grades} g WHERE gi.itemtype = 'course' AND g.itemid = gi.id AND g.finalgrade IS NOT NULL AND gi.courseid=c.id LIMIT 1) AS average,
+        (SELECT ROUND((CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END), 0) FROM {grade_items} gi, {grade_grades} g WHERE gi.itemtype = 'course' AND g.itemid = gi.id AND g.finalgrade IS NOT NULL AND gi.courseid=c.id LIMIT 1) average,
 
         (SELECT GROUP_CONCAT(DISTINCT CONCAT(u.firstname,' ',u.lastname) SEPARATOR ', ')
 
-          FROM {role_assignments} AS ra
+          FROM {role_assignments} ra
 
             JOIN {user} u ON ra.userid = u.id
 
-            JOIN {context} AS ctx ON ctx.id = ra.contextid
+            JOIN {context} ctx ON ctx.id = ra.contextid
 
           WHERE ctx.instanceid = c.id AND ctx.contextlevel = 50  
 
-        ) AS teacher,
+        ) teacher,
 
         (SELECT ctx.id
 
-          FROM {context} AS ctx
+          FROM {context} ctx
 
           WHERE ctx.instanceid = c.id AND ctx.contextlevel = 50  
 
-        ) AS ctxid
+        ) ctxid
 
     FROM {user_enrolments} ue
 
@@ -126,7 +126,7 @@ function get_users_course_grade($params) {
 
 
 
-        $queryletter = "SELECT * from {grade_letters} as g where g.contextid = ? and g.lowerboundary < ? order by g.lowerboundary desc";
+        $queryletter = "SELECT * from {grade_letters} g where g.contextid = ? and g.lowerboundary < ? order by g.lowerboundary desc";
 
         $queryletterdata = $DB->get_record_sql($queryletter, array($singledata->ctxid, $singledata->score) );
 
@@ -168,7 +168,7 @@ function get_users_score($params) {
 
         $queryparams = $functiondata;
 
-        $query = "SELECT ROUND(AVG(CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END)) AS grade, COUNT(DISTINCT e.courseid) as courses, COUNT(DISTINCT cc.course) as completed_courses FROM mdlw4_user_enrolments ue LEFT JOIN mdlw4_enrol e ON e.id = ue.enrolid LEFT JOIN mdlw4_course_completions cc ON cc.timecompleted > 0 AND cc.course = e.courseid AND cc.userid = ue.userid LEFT JOIN mdlw4_grade_items gi ON gi.itemtype = 'course' AND gi.courseid = e.courseid LEFT JOIN mdlw4_grade_grades g ON g.userid = ue.userid AND g.itemid = gi.id AND g.finalgrade IS NOT NULL left join {user} u on u.id = ue.userid where u.email = :useremail GROUP BY ue.userid";
+        $query = "SELECT ROUND(AVG(CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END)) grade, COUNT(DISTINCT e.courseid) courses, COUNT(DISTINCT cc.course) completed_courses FROM mdlw4_user_enrolments ue LEFT JOIN mdlw4_enrol e ON e.id = ue.enrolid LEFT JOIN mdlw4_course_completions cc ON cc.timecompleted > 0 AND cc.course = e.courseid AND cc.userid = ue.userid LEFT JOIN mdlw4_grade_items gi ON gi.itemtype = 'course' AND gi.courseid = e.courseid LEFT JOIN mdlw4_grade_grades g ON g.userid = ue.userid AND g.itemid = gi.id AND g.finalgrade IS NOT NULL left join {user} u on u.id = ue.userid where u.email = :useremail GROUP BY ue.userid";
 
         $singledata = $DB->get_record_sql($query, $queryparams);
 
@@ -272,7 +272,7 @@ function get_total_questions_quiz($params) {
 
 
 
-            $query = "SELECT MAX(ql.questions) AS questions FROM {quiz} q  JOIN {course} c ON c.id = q.course  LEFT JOIN {quiz_attempts} qa ON qa.quiz = q.id LEFT JOIN (SELECT quizid, count(*) questions FROM {quiz_slots} GROUP BY quizid) ql ON ql.quizid = q.id  LEFT JOIN {modules} m ON m.name = 'quiz' LEFT JOIN {course_modules} cm ON cm.module = m.id AND cm.course = c.id AND cm.instance = q.id  WHERE q.id = :activityid  AND c.visible = 1 GROUP BY q.id, c.id ";
+            $query = "SELECT MAX(ql.questions) questions FROM {quiz} q  JOIN {course} c ON c.id = q.course  LEFT JOIN {quiz_attempts} qa ON qa.quiz = q.id LEFT JOIN (SELECT quizid, count(*) questions FROM {quiz_slots} GROUP BY quizid) ql ON ql.quizid = q.id  LEFT JOIN {modules} m ON m.name = 'quiz' LEFT JOIN {course_modules} cm ON cm.module = m.id AND cm.course = c.id AND cm.instance = q.id  WHERE q.id = :activityid  AND c.visible = 1 GROUP BY q.id, c.id ";
 
            
 
@@ -320,7 +320,7 @@ function get_quiz_close_date($params) {
 
         $queryparams = $functiondata; 
 
-        $query = "SELECT q.timeclose, GROUP_CONCAT(DISTINCT t.rawname SEPARATOR ', ') as tags, GROUP_CONCAT(DISTINCT t_c.rawname SEPARATOR ', ') as tags_course from {course_modules} cm left JOIN {quiz} q ON q.id = cm.instance left JOIN {course} c ON c.id = cm.course LEFT JOIN {tag_instance} ti ON ti.itemtype = 'course_modules' AND ti.itemid = cm.id LEFT JOIN {tag} t ON t.id = ti.tagid LEFT JOIN {tag_instance} ti_c ON ti_c.itemtype = 'course' AND ti_c.itemid = cm.course LEFT JOIN {tag} t_c ON t_c.id = ti_c.tagid WHERE cm.id = :activityid  ";
+        $query = "SELECT q.timeclose, GROUP_CONCAT(DISTINCT t.rawname SEPARATOR ', ') tags, GROUP_CONCAT(DISTINCT t_c.rawname SEPARATOR ', ') tags_course from {course_modules} cm left JOIN {quiz} q ON q.id = cm.instance left JOIN {course} c ON c.id = cm.course LEFT JOIN {tag_instance} ti ON ti.itemtype = 'course_modules' AND ti.itemid = cm.id LEFT JOIN {tag} t ON t.id = ti.tagid LEFT JOIN {tag_instance} ti_c ON ti_c.itemtype = 'course' AND ti_c.itemid = cm.course LEFT JOIN {tag} t_c ON t_c.id = ti_c.tagid WHERE cm.id = :activityid  ";
 
 
 
@@ -392,7 +392,7 @@ function get_total_questions_attempted($params) {
 
 
 
-                $query = "SELECT COUNT(DISTINCT(qa.id)) as attempted FROM {quiz_attempts} qa WHERE userid = ' $userdata->id'   ";
+                $query = "SELECT COUNT(DISTINCT(qa.id)) attempted FROM {quiz_attempts} qa WHERE userid = ' $userdata->id'   ";
 
                 $singledata = $DB->get_record_sql($query); 
 
@@ -404,7 +404,7 @@ function get_total_questions_attempted($params) {
 
 
 
-            $query = "SELECT COUNT(DISTINCT(qa.id)) as attempted FROM {quiz_attempts} qa, {quiz} q, {course} c  WHERE qa.quiz = q.id AND c.id = q.course  AND c.visible = 1  AND c.id = :courseid  ";
+            $query = "SELECT COUNT(DISTINCT(qa.id)) attempted FROM {quiz_attempts} qa, {quiz} q, {course} c  WHERE qa.quiz = q.id AND c.id = q.course  AND c.visible = 1  AND c.id = :courseid  ";
 
             $singledata = $DB->get_record_sql($query, $paramarr); 
 
@@ -502,7 +502,7 @@ function get_number_of_attempts($params) {
 
             
 
-            $query = "SELECT count(sst.id)  as attempted FROM {course_modules} AS cm JOIN {scorm_scoes_track} AS sst ON sst.scormid=cm.instance WHERE cm.id = '$activityid' AND module = '19' $userquery1 ";
+            $query = "SELECT count(sst.id)  attempted FROM {course_modules} cm JOIN {scorm_scoes_track} sst ON sst.scormid=cm.instance WHERE cm.id = '$activityid' AND module = '19' $userquery1 ";
 
 
 
@@ -518,7 +518,7 @@ function get_number_of_attempts($params) {
 
 
 
-            $query = " SELECT CASE WHEN m.name = 'quiz' THEN (CASE WHEN qat.num_of_attempts IS NULL THEN 0 ELSE qat.num_of_attempts END) WHEN m.name = 'assign' THEN (CASE WHEN asbm.num_of_attempts IS NULL THEN 0 ELSE asbm.num_of_attempts END) WHEN m.name = 'h5pactivity' THEN (CASE WHEN h5patt.num_of_attempts IS NULL THEN 0 ELSE h5patt.num_of_attempts END) ELSE 0 END AS attempted FROM (SELECT MIN(ue1.id) AS id, ue1.userid, e1.courseid, MIN(ue1.status) AS enrol_status, MIN(ue1.timeend) AS timeend FROM mdlw4_user_enrolments ue1 JOIN mdlw4_enrol e1 ON e1.id = ue1.enrolid GROUP BY ue1.userid, e1.courseid ) ue JOIN mdlw4_course c ON c.id = ue.courseid JOIN mdlw4_course_modules cm ON cm.course = c.id JOIN mdlw4_modules m ON m.id = cm.module LEFT JOIN ( SELECT qa.quiz, qa.userid, MAX(qa.attempt) AS num_of_attempts, MIN(qa.timemodified) AS first_completed_date FROM mdlw4_quiz_attempts qa JOIN mdlw4_quiz q ON q.id=qa.quiz GROUP BY qa.quiz, qa.userid ) qat ON qat.userid = ue.userid AND m.name = 'quiz' AND qat.quiz = cm.instance LEFT JOIN ( SELECT asbm1.assignment, asbm1.userid, COUNT(*) AS num_of_attempts, MIN(asbm1.timemodified) AS first_completed_date FROM mdlw4_assign_submission asbm1 JOIN mdlw4_assign a ON a.id=asbm1.assignment GROUP BY asbm1.assignment, asbm1.userid ) asbm ON asbm.userid = ue.userid AND m.name = 'assign' AND asbm.assignment = cm.instance LEFT JOIN (SELECT h5pa.userid, h5pa.h5pactivityid, COUNT(*) AS num_of_attempts  FROM mdlw4_h5pactivity_attempts h5pa JOIN mdlw4_h5pactivity h5p ON h5p.id = h5pa.h5pactivityid GROUP BY h5pa.userid, h5pa.h5pactivityid ) h5patt ON h5patt.userid = ue.userid AND m.name = 'h5pactivity' AND h5patt.h5pactivityid = cm.instance where cm.id = :activityid  $userquery2 ";
+            $query = " SELECT CASE WHEN m.name = 'quiz' THEN (CASE WHEN qat.num_of_attempts IS NULL THEN 0 ELSE qat.num_of_attempts END) WHEN m.name = 'assign' THEN (CASE WHEN asbm.num_of_attempts IS NULL THEN 0 ELSE asbm.num_of_attempts END) WHEN m.name = 'h5pactivity' THEN (CASE WHEN h5patt.num_of_attempts IS NULL THEN 0 ELSE h5patt.num_of_attempts END) ELSE 0 END attempted FROM (SELECT MIN(ue1.id) id, ue1.userid, e1.courseid, MIN(ue1.status) enrol_status, MIN(ue1.timeend) timeend FROM mdlw4_user_enrolments ue1 JOIN mdlw4_enrol e1 ON e1.id = ue1.enrolid GROUP BY ue1.userid, e1.courseid ) ue JOIN mdlw4_course c ON c.id = ue.courseid JOIN mdlw4_course_modules cm ON cm.course = c.id JOIN mdlw4_modules m ON m.id = cm.module LEFT JOIN ( SELECT qa.quiz, qa.userid, MAX(qa.attempt) num_of_attempts, MIN(qa.timemodified) first_completed_date FROM mdlw4_quiz_attempts qa JOIN mdlw4_quiz q ON q.id=qa.quiz GROUP BY qa.quiz, qa.userid ) qat ON qat.userid = ue.userid AND m.name = 'quiz' AND qat.quiz = cm.instance LEFT JOIN ( SELECT asbm1.assignment, asbm1.userid, COUNT(*) num_of_attempts, MIN(asbm1.timemodified) first_completed_date FROM mdlw4_assign_submission asbm1 JOIN mdlw4_assign a ON a.id=asbm1.assignment GROUP BY asbm1.assignment, asbm1.userid ) asbm ON asbm.userid = ue.userid AND m.name = 'assign' AND asbm.assignment = cm.instance LEFT JOIN (SELECT h5pa.userid, h5pa.h5pactivityid, COUNT(*) num_of_attempts  FROM mdlw4_h5pactivity_attempts h5pa JOIN mdlw4_h5pactivity h5p ON h5p.id = h5pa.h5pactivityid GROUP BY h5pa.userid, h5pa.h5pactivityid ) h5patt ON h5patt.userid = ue.userid AND m.name = 'h5pactivity' AND h5patt.h5pactivityid = cm.instance where cm.id = :activityid  $userquery2 ";
 
             }
 
@@ -582,7 +582,7 @@ function get_file_name_first_submission($params) {
 
 
 
-            $query = "SELECT filename FROM {context} con JOIN {files} as f ON f.contextid = con.id WHERE con.instanceid = :activityid AND f.userid = ' $userdata->id' AND f.component='assignsubmission_file' AND f.filearea='submission_files' ORDER BY f.id ASC  ";
+            $query = "SELECT filename FROM {context} con JOIN {files} f ON f.contextid = con.id WHERE con.instanceid = :activityid AND f.userid = ' $userdata->id' AND f.component='assignsubmission_file' AND f.filearea='submission_files' ORDER BY f.id ASC  ";
 
             $singledata = $DB->get_record_sql($query,$paramarr); 
 
@@ -646,7 +646,7 @@ function get_file_name_last_submission($params) {
 
 
 
-            $query = "SELECT filename FROM {context} con JOIN {files} as f ON f.contextid = con.id WHERE con.instanceid = :activityid AND f.userid = ' $userdata->id' AND f.component='assignsubmission_file' AND f.filearea='submission_files' ORDER BY f.id DESC  ";
+            $query = "SELECT filename FROM {context} con JOIN {files} f ON f.contextid = con.id WHERE con.instanceid = :activityid AND f.userid = ' $userdata->id' AND f.component='assignsubmission_file' AND f.filearea='submission_files' ORDER BY f.id DESC  ";
 
             $singledata = $DB->get_record_sql($query,$paramarr); 
 
@@ -744,15 +744,15 @@ function get_wiki_activity_percent($params) {
 
         $query = "SELECT  w.id,
 
-              w.name AS wiki_name,
+              w.name wiki_name,
 
                 cm.id,
 
-              ROUND((COUNT( DISTINCT CASE WHEN log.action='created' AND log.target='comment' THEN log.id ELSE NULL END)*100)/COUNT(DISTINCT log.id),2) AS percent_comment,
+              ROUND((COUNT( DISTINCT CASE WHEN log.action='created' AND log.target='comment' THEN log.id ELSE NULL END)*100)/COUNT(DISTINCT log.id),2) percent_comment,
 
-              ROUND((COUNT( DISTINCT CASE WHEN log.action='viewed' THEN log.id ELSE NULL END)*100)/COUNT(DISTINCT log.id),2) AS percent_viewed,
+              ROUND((COUNT( DISTINCT CASE WHEN log.action='viewed' THEN log.id ELSE NULL END)*100)/COUNT(DISTINCT log.id),2) percent_viewed,
 
-              ROUND((COUNT( DISTINCT CASE WHEN (log.action='created' AND log.target<>'comment') OR log.action='updated' OR log.action='deleted' THEN log.id ELSE NULL END)*100)/COUNT(DISTINCT log.id),2) AS percent_edited
+              ROUND((COUNT( DISTINCT CASE WHEN (log.action='created' AND log.target<>'comment') OR log.action='updated' OR log.action='deleted' THEN log.id ELSE NULL END)*100)/COUNT(DISTINCT log.id),2) percent_edited
 
               
 
@@ -842,13 +842,13 @@ function get_completion_status($params) {
 
 
 
-            $query = "SELECT CONCAT(s.id, '_', u.id, '_', c.id) AS uniquecol,
+            $query = "SELECT CONCAT(s.id, '_', u.id, '_', c.id) uniquecol,
 
                    t.*,
 
-                   u.id AS user_id,
+                   u.id user_id,
 
-                   cm.id as cm_id
+                   cm.id cm_id
 
               FROM mdlw4_scorm s
 
@@ -858,7 +858,7 @@ function get_completion_status($params) {
 
               JOIN mdlw4_course_modules cm ON cm.module = m.id AND cm.instance = s.id
 
-              JOIN (SELECT e.courseid, ue1.userid, MIN(ue1.status) AS status, MIN(ue1.timeend) AS timeend
+              JOIN (SELECT e.courseid, ue1.userid, MIN(ue1.status) status, MIN(ue1.timeend) timeend
 
                       FROM mdlw4_enrol e
 
@@ -870,19 +870,19 @@ function get_completion_status($params) {
 
               JOIN mdlw4_user u ON u.id = ue.userid
 
-         LEFT JOIN (SELECT MIN(sst.id) AS id,
+         LEFT JOIN (SELECT MIN(sst.id) id,
 
                            sst.userid,
 
                            sst.scormid,
 
-                           MAX(sst.timemodified) AS timemodified,
+                           MAX(sst.timemodified) timemodified,
 
-                           MIN(CASE WHEN sst.element = 'x.start.time' THEN sst.value ELSE null END) AS starttime,
+                           MIN(CASE WHEN sst.element = 'x.start.time' THEN sst.value ELSE null END) starttime,
 
-                           SUM( TIME_TO_SEC(CASE WHEN sst.element = 'cmi.core.total_time' THEN sst.value ELSE null END)) AS duration,
+                           SUM( TIME_TO_SEC(CASE WHEN sst.element = 'cmi.core.total_time' THEN sst.value ELSE null END)) duration,
 
-                           GROUP_CONCAT(CASE WHEN sst.attempt = 1 AND sst.element IN ('cmi.completion_status', 'cmi.core.lesson_status') AND sst.value IN ('completed', 'passed') THEN 'completed' ELSE '' END SEPARATOR '') AS first_completion_status,
+                           GROUP_CONCAT(CASE WHEN sst.attempt = 1 AND sst.element IN ('cmi.completion_status', 'cmi.core.lesson_status') AND sst.value IN ('completed', 'passed') THEN 'completed' ELSE '' END SEPARATOR '') first_completion_status,
 
                            GROUP_CONCAT(CASE WHEN sst.attempt = la.last_attempt_number AND
 
@@ -894,13 +894,13 @@ function get_completion_status($params) {
 
                   ELSE ''
 
-            END SEPARATOR '') AS current_completion_status,
+            END SEPARATOR '') current_completion_status,
 
-                           COUNT(DISTINCT(sst.attempt)) as attempts
+                           COUNT(DISTINCT(sst.attempt)) attempts
 
                       FROM mdlw4_scorm_scoes_track sst
 
-                      JOIN (SELECT userid, scormid, MAX(attempt) AS last_attempt_number
+                      JOIN (SELECT userid, scormid, MAX(attempt) last_attempt_number
 
                               FROM mdlw4_scorm_scoes_track
 
@@ -961,12 +961,12 @@ function get_user_activitiy_feedback($params) {
 
         $queryparams = $functiondata; 
 
-        $query = "SELECT assignc.commenttext as filename from {course_modules} cm left JOIN {assignfeedback_comments} assignc ON assignc.assignment = cm.instance   WHERE cm.id = :activityid AND course = :courseid AND module = '1' ";
+        $query = "SELECT assignc.commenttext filename from {course_modules} cm left JOIN {assignfeedback_comments} assignc ON assignc.assignment = cm.instance   WHERE cm.id = :activityid AND course = :courseid AND module = '1' ";
        
 
         $singledata = $DB->get_record_sql($query, $queryparams);
 
-        $query = "SELECT qf.feedbacktext as filename from {course_modules} cm left JOIN {quiz_feedback} qf ON qf.quizid = cm.instance   WHERE cm.id = :activityid AND course = :courseid AND module = '17' AND qf.feedbacktext is not null AND qf.feedbacktext != '' ";
+        $query = "SELECT qf.feedbacktext filename from {course_modules} cm left JOIN {quiz_feedback} qf ON qf.quizid = cm.instance   WHERE cm.id = :activityid AND course = :courseid AND module = '17' AND qf.feedbacktext is not null AND qf.feedbacktext != '' ";
        
 
         $singledata2 = $DB->get_record_sql($query, $queryparams); 
