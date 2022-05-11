@@ -104,7 +104,7 @@ function local_leeloolxpapi_before_footer() {
     global $DB;
     $useremail = $USER->email;
 
-    $PAGE->requires->jquery();
+    // $PAGE->requires->jquery();
     if (
         $PAGE->pagetype == 'admin-setting-gradessettings' ||
         $PAGE->pagetype == 'admin-setting-gradecategorysettings' ||
@@ -188,7 +188,7 @@ function local_leeloolxpapi_before_footer() {
             }
         }
 
-        $PAGE->requires->jquery();
+        // $PAGE->requires->jquery();
 
         $PAGE->requires->js(new moodle_url('/local/leeloolxpapi/js/gradesync.js'));
 
