@@ -162,7 +162,7 @@ function get_users_score($params) {
 
         $queryparams = $functiondata;
 
-        $query = "SELECT ROUND(AVG(CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END)) grade, COUNT(DISTINCT e.courseid) courses, COUNT(DISTINCT cc.course) completed_courses FROM mdlw4_user_enrolments ue LEFT JOIN mdlw4_enrol e ON e.id = ue.enrolid LEFT JOIN mdlw4_course_completions cc ON cc.timecompleted > 0 AND cc.course = e.courseid AND cc.userid = ue.userid LEFT JOIN mdlw4_grade_items gi ON gi.itemtype = 'course' AND gi.courseid = e.courseid LEFT JOIN mdlw4_grade_grades g ON g.userid = ue.userid AND g.itemid = gi.id AND g.finalgrade IS NOT NULL left join {user} u on u.id = ue.userid where u.email = :useremail GROUP BY ue.userid";
+        $query = "SELECT ROUND(AVG(CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END)) grade, COUNT(DISTINCT e.courseid) courses, COUNT(DISTINCT cc.course) completed_courses FROM {user_enrolments} ue LEFT JOIN {enrol} e ON e.id = ue.enrolid LEFT JOIN {course_completions} cc ON cc.timecompleted > 0 AND cc.course = e.courseid AND cc.userid = ue.userid LEFT JOIN {grade_items} gi ON gi.itemtype = 'course' AND gi.courseid = e.courseid LEFT JOIN {grade_grades} g ON g.userid = ue.userid AND g.itemid = gi.id AND g.finalgrade IS NOT NULL left join {user} u on u.id = ue.userid where u.email = :useremail GROUP BY ue.userid";
 
         $singledata = $DB->get_record_sql($query, $queryparams);
 
@@ -489,7 +489,7 @@ function get_number_of_attempts($params) {
 
 
 
-            $query = " SELECT CASE WHEN m.name = 'quiz' THEN (CASE WHEN qat.num_of_attempts IS NULL THEN 0 ELSE qat.num_of_attempts END) WHEN m.name = 'assign' THEN (CASE WHEN asbm.num_of_attempts IS NULL THEN 0 ELSE asbm.num_of_attempts END) WHEN m.name = 'h5pactivity' THEN (CASE WHEN h5patt.num_of_attempts IS NULL THEN 0 ELSE h5patt.num_of_attempts END) ELSE 0 END attempted FROM (SELECT MIN(ue1.id) id, ue1.userid, e1.courseid, MIN(ue1.status) enrol_status, MIN(ue1.timeend) timeend FROM mdlw4_user_enrolments ue1 JOIN mdlw4_enrol e1 ON e1.id = ue1.enrolid GROUP BY ue1.userid, e1.courseid ) ue JOIN mdlw4_course c ON c.id = ue.courseid JOIN mdlw4_course_modules cm ON cm.course = c.id JOIN mdlw4_modules m ON m.id = cm.module LEFT JOIN ( SELECT qa.quiz, qa.userid, MAX(qa.attempt) num_of_attempts, MIN(qa.timemodified) first_completed_date FROM mdlw4_quiz_attempts qa JOIN mdlw4_quiz q ON q.id=qa.quiz GROUP BY qa.quiz, qa.userid ) qat ON qat.userid = ue.userid AND m.name = 'quiz' AND qat.quiz = cm.instance LEFT JOIN ( SELECT asbm1.assignment, asbm1.userid, COUNT(*) num_of_attempts, MIN(asbm1.timemodified) first_completed_date FROM mdlw4_assign_submission asbm1 JOIN mdlw4_assign a ON a.id=asbm1.assignment GROUP BY asbm1.assignment, asbm1.userid ) asbm ON asbm.userid = ue.userid AND m.name = 'assign' AND asbm.assignment = cm.instance LEFT JOIN (SELECT h5pa.userid, h5pa.h5pactivityid, COUNT(*) num_of_attempts  FROM mdlw4_h5pactivity_attempts h5pa JOIN mdlw4_h5pactivity h5p ON h5p.id = h5pa.h5pactivityid GROUP BY h5pa.userid, h5pa.h5pactivityid ) h5patt ON h5patt.userid = ue.userid AND m.name = 'h5pactivity' AND h5patt.h5pactivityid = cm.instance where cm.id = :activityid  $userquery2 ";
+            $query = " SELECT CASE WHEN m.name = 'quiz' THEN (CASE WHEN qat.num_of_attempts IS NULL THEN 0 ELSE qat.num_of_attempts END) WHEN m.name = 'assign' THEN (CASE WHEN asbm.num_of_attempts IS NULL THEN 0 ELSE asbm.num_of_attempts END) WHEN m.name = 'h5pactivity' THEN (CASE WHEN h5patt.num_of_attempts IS NULL THEN 0 ELSE h5patt.num_of_attempts END) ELSE 0 END attempted FROM (SELECT MIN(ue1.id) id, ue1.userid, e1.courseid, MIN(ue1.status) enrol_status, MIN(ue1.timeend) timeend FROM {user_enrolments} ue1 JOIN {enrol} e1 ON e1.id = ue1.enrolid GROUP BY ue1.userid, e1.courseid ) ue JOIN {course} c ON c.id = ue.courseid JOIN {course_modules} cm ON cm.course = c.id JOIN {modules} m ON m.id = cm.module LEFT JOIN ( SELECT qa.quiz, qa.userid, MAX(qa.attempt) num_of_attempts, MIN(qa.timemodified) first_completed_date FROM {quiz_attempts} qa JOIN {quiz} q ON q.id=qa.quiz GROUP BY qa.quiz, qa.userid ) qat ON qat.userid = ue.userid AND m.name = 'quiz' AND qat.quiz = cm.instance LEFT JOIN ( SELECT asbm1.assignment, asbm1.userid, COUNT(*) num_of_attempts, MIN(asbm1.timemodified) first_completed_date FROM {assign_submission} asbm1 JOIN {assign} a ON a.id=asbm1.assignment GROUP BY asbm1.assignment, asbm1.userid ) asbm ON asbm.userid = ue.userid AND m.name = 'assign' AND asbm.assignment = cm.instance LEFT JOIN (SELECT h5pa.userid, h5pa.h5pactivityid, COUNT(*) num_of_attempts  FROM {h5pactivity_attempts} h5pa JOIN {h5pactivity} h5p ON h5p.id = h5pa.h5pactivityid GROUP BY h5pa.userid, h5pa.h5pactivityid ) h5patt ON h5patt.userid = ue.userid AND m.name = 'h5pactivity' AND h5patt.h5pactivityid = cm.instance where cm.id = :activityid  $userquery2 ";
         }
 
         $singledata = $DB->get_record_sql($query, $paramarr);
@@ -716,21 +716,21 @@ function get_wiki_activity_percent($params) {
 
 
 
-            FROM mdlw4_wiki w
+            FROM {wiki} w
 
-              LEFT JOIN mdlw4_course c ON w.course=c.id
+              LEFT JOIN {course} c ON w.course=c.id
 
-              LEFT JOIN mdlw4_context con ON con.contextlevel = 50 AND con.instanceid = c.id
-
-
-
-              JOIN mdlw4_modules m ON m.name='wiki'
-
-              LEFT JOIN mdlw4_course_modules cm ON cm.course=w.course AND cm.instance=w.id AND cm.module=m.id
+              LEFT JOIN {context} con ON con.contextlevel = 50 AND con.instanceid = c.id
 
 
 
-              LEFT JOIN mdlw4_logstore_standard_log log ON log.courseid=w.course AND log.component='mod_wiki' AND log.contextinstanceid=cm.id
+              JOIN {modules} m ON m.name='wiki'
+
+              LEFT JOIN {course_modules} cm ON cm.course=w.course AND cm.instance=w.id AND cm.module=m.id
+
+
+
+              LEFT JOIN {logstore_standard_log} log ON log.courseid=w.course AND log.component='mod_wiki' AND log.contextinstanceid=cm.id
 
 
 
@@ -808,25 +808,25 @@ function get_completion_status($params) {
 
                    cm.id cm_id
 
-              FROM mdlw4_scorm s
+              FROM {scorm} s
 
-              JOIN mdlw4_course c ON c.id = s.course
+              JOIN {course} c ON c.id = s.course
 
-              JOIN mdlw4_modules m ON m.name = 'scorm'
+              JOIN {modules} m ON m.name = 'scorm'
 
-              JOIN mdlw4_course_modules cm ON cm.module = m.id AND cm.instance = s.id
+              JOIN {course_modules} cm ON cm.module = m.id AND cm.instance = s.id
 
               JOIN (SELECT e.courseid, ue1.userid, MIN(ue1.status) status, MIN(ue1.timeend) timeend
 
-                      FROM mdlw4_enrol e
+                      FROM {enrol} e
 
-                      JOIN mdlw4_user_enrolments ue1 ON ue1.enrolid = e.id
+                      JOIN {user_enrolments} ue1 ON ue1.enrolid = e.id
 
                   GROUP BY e.courseid, ue1.userid
 
                    ) ue ON ue.courseid = c.id
 
-              JOIN mdlw4_user u ON u.id = ue.userid
+              JOIN {user} u ON u.id = ue.userid
 
          LEFT JOIN (SELECT MIN(sst.id) id,
 
@@ -856,11 +856,11 @@ function get_completion_status($params) {
 
                            COUNT(DISTINCT(sst.attempt)) attempts
 
-                      FROM mdlw4_scorm_scoes_track sst
+                      FROM {scorm_scoes_track} sst
 
                       JOIN (SELECT userid, scormid, MAX(attempt) last_attempt_number
 
-                              FROM mdlw4_scorm_scoes_track
+                              FROM {scorm_scoes_track}
 
                           GROUP BY userid, scormid
 
