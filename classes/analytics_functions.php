@@ -64,10 +64,6 @@ function get_users_course_grade($params) {
 
         $queryparams = $functiondata;
 
-        //$query = "SELECT ROUND(AVG(CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END)) score FROM {grade_grades} g left join {grade_items} gi on gi.id = g.itemid left join {user} u on u.id = g.userid where u.email = :useremail and gi.courseid = :courseid and gi.`itemtype` = 'course'";
-
-
-
         $query = "SELECT ue.id id,
 
         cri.gradepass gradepass,
@@ -90,7 +86,7 @@ function get_users_course_grade($params) {
 
             JOIN {context} ctx ON ctx.id = ra.contextid
 
-          WHERE ctx.instanceid = c.id AND ctx.contextlevel = 50  
+          WHERE ctx.instanceid = c.id AND ctx.contextlevel = 50
 
         ) teacher,
 
@@ -98,7 +94,7 @@ function get_users_course_grade($params) {
 
           FROM {context} ctx
 
-          WHERE ctx.instanceid = c.id AND ctx.contextlevel = 50  
+          WHERE ctx.instanceid = c.id AND ctx.contextlevel = 50
 
         ) ctxid
 
@@ -128,14 +124,13 @@ function get_users_course_grade($params) {
 
         $queryletter = "SELECT * from {grade_letters} g where g.contextid = ? and g.lowerboundary < ? order by g.lowerboundary desc";
 
-        $queryletterdata = $DB->get_record_sql($queryletter, array($singledata->ctxid, $singledata->score) );
+        $queryletterdata = $DB->get_record_sql($queryletter, array($singledata->ctxid, $singledata->score));
 
 
 
         $functiondataall[$key]['values'] = $singledata;
 
         $functiondataall[$key]['values']->grade_letters = $queryletterdata->letter;
-
     }
 
 
@@ -149,7 +144,6 @@ function get_users_course_grade($params) {
 
 
     return $return;
-
 }
 
 
@@ -175,7 +169,6 @@ function get_users_score($params) {
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -189,7 +182,6 @@ function get_users_score($params) {
 
 
     return $return;
-
 }
 
 
@@ -210,14 +202,13 @@ function get_users_profile($params) {
 
         $query = "SELECT u.id, u.firstname, u.lastname, u.middlename, u.email, u.idnumber, u.username, u.phone1, u.phone2, u.institution, u.department, u.address, u.city, u.country, u.auth, u.confirmed, u.suspended, u.deleted, u.timecreated, u.timemodified, u.firstaccess, u.lastaccess, u.lastlogin, u.currentlogin, u.lastip FROM {user} u WHERE u.email = :useremail";
 
-       
+
 
         $singledata = $DB->get_record_sql($query, $queryparams);
 
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -231,7 +222,6 @@ function get_users_profile($params) {
 
 
     return $return;
-
 }
 
 
@@ -254,11 +244,11 @@ function get_total_questions_quiz($params) {
 
         $query = "SELECT instance FROM {course_modules} u WHERE id = :activityid AND course = :courseid ";
 
-       
+
 
         $activityiddata = $DB->get_record_sql($query, $queryparams);
 
-        
+
 
         $singledata = '';
 
@@ -266,7 +256,7 @@ function get_total_questions_quiz($params) {
 
         if (!empty($activityiddata->instance)) {
 
- 
+
 
             $args = ['activityid' => $activityiddata->instance];
 
@@ -274,16 +264,14 @@ function get_total_questions_quiz($params) {
 
             $query = "SELECT MAX(ql.questions) questions FROM {quiz} q  JOIN {course} c ON c.id = q.course  LEFT JOIN {quiz_attempts} qa ON qa.quiz = q.id LEFT JOIN (SELECT quizid, count(*) questions FROM {quiz_slots} GROUP BY quizid) ql ON ql.quizid = q.id  LEFT JOIN {modules} m ON m.name = 'quiz' LEFT JOIN {course_modules} cm ON cm.module = m.id AND cm.course = c.id AND cm.instance = q.id  WHERE q.id = :activityid  AND c.visible = 1 GROUP BY q.id, c.id ";
 
-           
 
-            $singledata = $DB->get_record_sql($query, $args); 
 
+            $singledata = $DB->get_record_sql($query, $args);
         }
 
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -297,7 +285,6 @@ function get_total_questions_quiz($params) {
 
 
     return $return;
-
 }
 
 
@@ -316,22 +303,21 @@ function get_quiz_close_date($params) {
 
     foreach ($functiondataall as $key => $functiondata) {
 
-        
 
-        $queryparams = $functiondata; 
+
+        $queryparams = $functiondata;
 
         $query = "SELECT q.timeclose, GROUP_CONCAT(DISTINCT t.rawname SEPARATOR ', ') tags, GROUP_CONCAT(DISTINCT t_c.rawname SEPARATOR ', ') tags_course from {course_modules} cm left JOIN {quiz} q ON q.id = cm.instance left JOIN {course} c ON c.id = cm.course LEFT JOIN {tag_instance} ti ON ti.itemtype = 'course_modules' AND ti.itemid = cm.id LEFT JOIN {tag} t ON t.id = ti.tagid LEFT JOIN {tag_instance} ti_c ON ti_c.itemtype = 'course' AND ti_c.itemid = cm.course LEFT JOIN {tag} t_c ON t_c.id = ti_c.tagid WHERE cm.id = :activityid  ";
 
 
 
-       
 
-        $singledata = $DB->get_record_sql($query, $queryparams); 
+
+        $singledata = $DB->get_record_sql($query, $queryparams);
 
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -345,7 +331,6 @@ function get_quiz_close_date($params) {
 
 
     return $return;
-
 }
 
 
@@ -364,11 +349,11 @@ function get_total_questions_attempted($params) {
 
     foreach ($functiondataall as $key => $functiondata) {
 
-        
 
-        $queryparams = $functiondata; 
 
-        $paramarr = $queryparams; 
+        $queryparams = $functiondata;
+
+        $paramarr = $queryparams;
 
 
 
@@ -378,7 +363,7 @@ function get_total_questions_attempted($params) {
 
             $query = "SELECT id FROM {user} WHERE email = :useremail ";
 
-       
+
 
             $userdata = $DB->get_record_sql($query, $queryparams);
 
@@ -388,32 +373,26 @@ function get_total_questions_attempted($params) {
 
 
 
-                $paramarr['uid'] = $userdata->id; 
+                $paramarr['uid'] = $userdata->id;
 
 
 
                 $query = "SELECT COUNT(DISTINCT(qa.id)) attempted FROM {quiz_attempts} qa WHERE userid = ' $userdata->id'   ";
 
-                $singledata = $DB->get_record_sql($query); 
-
+                $singledata = $DB->get_record_sql($query);
             }
-
-
-
         } else {
 
 
 
             $query = "SELECT COUNT(DISTINCT(qa.id)) attempted FROM {quiz_attempts} qa, {quiz} q, {course} c  WHERE qa.quiz = q.id AND c.id = q.course  AND c.visible = 1  AND c.id = :courseid  ";
 
-            $singledata = $DB->get_record_sql($query, $paramarr); 
-
-        } 
+            $singledata = $DB->get_record_sql($query, $paramarr);
+        }
 
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -427,7 +406,6 @@ function get_total_questions_attempted($params) {
 
 
     return $return;
-
 }
 
 
@@ -462,7 +440,7 @@ function get_number_of_attempts($params) {
 
             $query = "SELECT id FROM {user} WHERE email = :useremail ";
 
-       
+
 
             $userdata = $DB->get_record_sql($query, $queryparams);
 
@@ -472,14 +450,10 @@ function get_number_of_attempts($params) {
 
 
 
-                $userquery1 = " AND sst.userid = '$userdata->id' "; 
+                $userquery1 = " AND sst.userid = '$userdata->id' ";
 
-                $userquery2 = " and ue.userid = '$userdata->id' "; 
-
-                
-
+                $userquery2 = " and ue.userid = '$userdata->id' ";
             }
-
         }
 
 
@@ -500,34 +474,29 @@ function get_number_of_attempts($params) {
 
         if (!empty($scormdata)) {
 
-            
+
 
             $query = "SELECT count(sst.id)  attempted FROM {course_modules} cm JOIN {scorm_scoes_track} sst ON sst.scormid=cm.instance WHERE cm.id = '$activityid' AND module = '19' $userquery1 ";
 
 
 
             $scormdata = $DB->get_record_sql($query);
-
-
-
         } else {
 
-            //$paramarr['uid'] = $userdata->id; 
+            //$paramarr['uid'] = $userdata->id;
 
             $paramarr['activityid'] = $queryparams['activityid'];
 
 
 
             $query = " SELECT CASE WHEN m.name = 'quiz' THEN (CASE WHEN qat.num_of_attempts IS NULL THEN 0 ELSE qat.num_of_attempts END) WHEN m.name = 'assign' THEN (CASE WHEN asbm.num_of_attempts IS NULL THEN 0 ELSE asbm.num_of_attempts END) WHEN m.name = 'h5pactivity' THEN (CASE WHEN h5patt.num_of_attempts IS NULL THEN 0 ELSE h5patt.num_of_attempts END) ELSE 0 END attempted FROM (SELECT MIN(ue1.id) id, ue1.userid, e1.courseid, MIN(ue1.status) enrol_status, MIN(ue1.timeend) timeend FROM mdlw4_user_enrolments ue1 JOIN mdlw4_enrol e1 ON e1.id = ue1.enrolid GROUP BY ue1.userid, e1.courseid ) ue JOIN mdlw4_course c ON c.id = ue.courseid JOIN mdlw4_course_modules cm ON cm.course = c.id JOIN mdlw4_modules m ON m.id = cm.module LEFT JOIN ( SELECT qa.quiz, qa.userid, MAX(qa.attempt) num_of_attempts, MIN(qa.timemodified) first_completed_date FROM mdlw4_quiz_attempts qa JOIN mdlw4_quiz q ON q.id=qa.quiz GROUP BY qa.quiz, qa.userid ) qat ON qat.userid = ue.userid AND m.name = 'quiz' AND qat.quiz = cm.instance LEFT JOIN ( SELECT asbm1.assignment, asbm1.userid, COUNT(*) num_of_attempts, MIN(asbm1.timemodified) first_completed_date FROM mdlw4_assign_submission asbm1 JOIN mdlw4_assign a ON a.id=asbm1.assignment GROUP BY asbm1.assignment, asbm1.userid ) asbm ON asbm.userid = ue.userid AND m.name = 'assign' AND asbm.assignment = cm.instance LEFT JOIN (SELECT h5pa.userid, h5pa.h5pactivityid, COUNT(*) num_of_attempts  FROM mdlw4_h5pactivity_attempts h5pa JOIN mdlw4_h5pactivity h5p ON h5p.id = h5pa.h5pactivityid GROUP BY h5pa.userid, h5pa.h5pactivityid ) h5patt ON h5patt.userid = ue.userid AND m.name = 'h5pactivity' AND h5patt.h5pactivityid = cm.instance where cm.id = :activityid  $userquery2 ";
+        }
 
-            }
-
-        $singledata = $DB->get_record_sql($query, $paramarr); 
+        $singledata = $DB->get_record_sql($query, $paramarr);
 
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -541,7 +510,6 @@ function get_number_of_attempts($params) {
 
 
     return $return;
-
 }
 
 
@@ -560,15 +528,15 @@ function get_file_name_first_submission($params) {
 
     foreach ($functiondataall as $key => $functiondata) {
 
-        
 
-        $queryparams = $functiondata;  
+
+        $queryparams = $functiondata;
 
 
 
         $query = "SELECT id FROM {user} WHERE email = :useremail ";
 
-   
+
 
         $userdata = $DB->get_record_sql($query, $queryparams);
 
@@ -578,20 +546,18 @@ function get_file_name_first_submission($params) {
 
 
 
-            $paramarr['activityid'] = $queryparams['activityid'];  
+            $paramarr['activityid'] = $queryparams['activityid'];
 
 
 
             $query = "SELECT filename FROM {context} con JOIN {files} f ON f.contextid = con.id WHERE con.instanceid = :activityid AND f.userid = ' $userdata->id' AND f.component='assignsubmission_file' AND f.filearea='submission_files' ORDER BY f.id ASC  ";
 
-            $singledata = $DB->get_record_sql($query,$paramarr); 
-
-        } 
+            $singledata = $DB->get_record_sql($query, $paramarr);
+        }
 
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -605,7 +571,6 @@ function get_file_name_first_submission($params) {
 
 
     return $return;
-
 }
 
 
@@ -624,15 +589,15 @@ function get_file_name_last_submission($params) {
 
     foreach ($functiondataall as $key => $functiondata) {
 
-        
 
-        $queryparams = $functiondata;  
+
+        $queryparams = $functiondata;
 
 
 
         $query = "SELECT id FROM {user} WHERE email = :useremail ";
 
-   
+
 
         $userdata = $DB->get_record_sql($query, $queryparams);
 
@@ -642,20 +607,18 @@ function get_file_name_last_submission($params) {
 
 
 
-            $paramarr['activityid'] = $queryparams['activityid'];  
+            $paramarr['activityid'] = $queryparams['activityid'];
 
 
 
             $query = "SELECT filename FROM {context} con JOIN {files} f ON f.contextid = con.id WHERE con.instanceid = :activityid AND f.userid = ' $userdata->id' AND f.component='assignsubmission_file' AND f.filearea='submission_files' ORDER BY f.id DESC  ";
 
-            $singledata = $DB->get_record_sql($query,$paramarr); 
-
-        } 
+            $singledata = $DB->get_record_sql($query, $paramarr);
+        }
 
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -669,7 +632,6 @@ function get_file_name_last_submission($params) {
 
 
     return $return;
-
 }
 
 
@@ -688,22 +650,21 @@ function get_user_moodle_idnumber($params) {
 
     foreach ($functiondataall as $key => $functiondata) {
 
-        
 
-        $queryparams = $functiondata;  
+
+        $queryparams = $functiondata;
 
 
 
         $query = "SELECT idnumber FROM {user} WHERE email = :useremail ";
 
-   
+
 
         $singledata = $DB->get_record_sql($query, $queryparams);
 
 
 
-        $functiondataall[$key]['values'] = $singledata; 
-
+        $functiondataall[$key]['values'] = $singledata;
     }
 
 
@@ -717,7 +678,6 @@ function get_user_moodle_idnumber($params) {
 
 
     return $return;
-
 }
 
 
@@ -736,9 +696,9 @@ function get_wiki_activity_percent($params) {
 
     foreach ($functiondataall as $key => $functiondata) {
 
-        
 
-        $queryparams = $functiondata;  
+
+        $queryparams = $functiondata;
 
 
 
@@ -754,7 +714,7 @@ function get_wiki_activity_percent($params) {
 
               ROUND((COUNT( DISTINCT CASE WHEN (log.action='created' AND log.target<>'comment') OR log.action='updated' OR log.action='deleted' THEN log.id ELSE NULL END)*100)/COUNT(DISTINCT log.id),2) percent_edited
 
-              
+
 
             FROM mdlw4_wiki w
 
@@ -774,18 +734,17 @@ function get_wiki_activity_percent($params) {
 
 
 
-            WHERE c.id>1 
+            WHERE c.id>1
 
             GROUP BY w.id,c.id having cm.id = :activityid  ";
 
-   
+
 
         $singledata = $DB->get_record_sql($query, $queryparams);
 
 
 
-        $functiondataall[$key]['values'] = $singledata; 
-
+        $functiondataall[$key]['values'] = $singledata;
     }
 
 
@@ -799,7 +758,6 @@ function get_wiki_activity_percent($params) {
 
 
     return $return;
-
 }
 
 
@@ -818,15 +776,15 @@ function get_completion_status($params) {
 
     foreach ($functiondataall as $key => $functiondata) {
 
-        
 
-        $queryparams = $functiondata;  
+
+        $queryparams = $functiondata;
 
 
 
         $query = "SELECT id FROM {user} WHERE email = :useremail ";
 
-   
+
 
         $userdata = $DB->get_record_sql($query, $queryparams);
 
@@ -836,9 +794,9 @@ function get_completion_status($params) {
 
 
 
-            $paramarr['activityid'] = $queryparams['activityid'];  
+            $paramarr['activityid'] = $queryparams['activityid'];
 
-            $paramarr['uid'] = $userdata->id;  
+            $paramarr['uid'] = $userdata->id;
 
 
 
@@ -908,24 +866,22 @@ function get_completion_status($params) {
 
                            ) la ON la.userid = sst.userid AND la.scormid = sst.scormid
 
-                     WHERE sst.id > 0 
+                     WHERE sst.id > 0
 
                   GROUP BY sst.userid, sst.scormid
 
-                   ) t ON t.scormid = s.id AND t.userid = u.id          
+                   ) t ON t.scormid = s.id AND t.userid = u.id
 
-                   
+
 
             WHERE u.id = :uid and cm.id = :activityid  ";
 
-            $singledata = $DB->get_record_sql($query,$paramarr); 
-
-        } 
+            $singledata = $DB->get_record_sql($query, $paramarr);
+        }
 
 
 
         $functiondataall[$key]['values'] = $singledata;
-
     }
 
 
@@ -939,7 +895,6 @@ function get_completion_status($params) {
 
 
     return $return;
-
 }
 
 
@@ -957,27 +912,26 @@ function get_user_activitiy_feedback($params) {
 
     foreach ($functiondataall as $key => $functiondata) {
 
-        
 
-        $queryparams = $functiondata; 
+
+        $queryparams = $functiondata;
 
         $query = "SELECT assignc.commenttext filename from {course_modules} cm left JOIN {assignfeedback_comments} assignc ON assignc.assignment = cm.instance   WHERE cm.id = :activityid AND course = :courseid AND module = '1' ";
-       
+
 
         $singledata = $DB->get_record_sql($query, $queryparams);
 
         $query = "SELECT qf.feedbacktext filename from {course_modules} cm left JOIN {quiz_feedback} qf ON qf.quizid = cm.instance   WHERE cm.id = :activityid AND course = :courseid AND module = '17' AND qf.feedbacktext is not null AND qf.feedbacktext != '' ";
-       
 
-        $singledata2 = $DB->get_record_sql($query, $queryparams); 
+
+        $singledata2 = $DB->get_record_sql($query, $queryparams);
 
         if (!empty($singledata2)) {
-            $singledata = array_merge($singledata1,$singledata2); 
+            $singledata = array_merge($singledata1, $singledata2);
         }
 
 
-        $functiondataall[$key]['values'] = $singledata; 
-
+        $functiondataall[$key]['values'] = $singledata;
     }
 
 
@@ -990,7 +944,6 @@ function get_user_activitiy_feedback($params) {
 
 
     return $return;
-
 }
 
 
@@ -1002,11 +955,11 @@ function get_all_data($params) {
 
 
 
-    $mainquery = $params['functiondata']; 
+    $mainquery = $params['functiondata'];
 
 
 
-    $query = $mainquery['sql_query']." limit ".$mainquery['start'].','.$mainquery['end'];
+    $query = $mainquery['sql_query'] . " limit " . $mainquery['start'] . ',' . $mainquery['end'];
 
     $singledata = $DB->get_records_sql($query);
 
@@ -1014,13 +967,13 @@ function get_all_data($params) {
 
 
 
-    $query = $mainquery['sql_query']." limit ".$mainquery['start_count'].','.$mainquery['end'];
+    $query = $mainquery['sql_query'] . " limit " . $mainquery['start_count'] . ',' . $mainquery['end'];
 
-    
+
 
     $singledata2 = $DB->get_records_sql($query);
 
-    
+
 
     //$singledata = array_merge($singledata,$singledata2);
 
@@ -1028,9 +981,9 @@ function get_all_data($params) {
 
 
 
-    $functiondataall[$key]['values'] = $singledata;  
+    $functiondataall[$key]['values'] = $singledata;
 
-    $functiondataall[$key]['count'] = $singledata2;  
+    $functiondataall[$key]['count'] = $singledata2;
 
 
 
@@ -1043,5 +996,4 @@ function get_all_data($params) {
 
 
     return $return;
-
 }

@@ -46,12 +46,11 @@ class local_leeloolxpapi_external extends external_api {
 
             array(
 
-                'course_data' => new external_value(PARAM_RAW, 'Course Data', VALUE_DEFAULT, null), 
+                'course_data' => new external_value(PARAM_RAW, 'Course Data', VALUE_DEFAULT, null),
 
             )
 
         );
-
     }
 
 
@@ -88,16 +87,16 @@ class local_leeloolxpapi_external extends external_api {
 
             array(
 
-                'course_data' => $reqcoursedata, 
+                'course_data' => $reqcoursedata,
 
             )
 
         );
 
         $value = (object) json_decode($reqcoursedata, true);
-        
-        $DB->execute("update {" . $value->table . "} set visible = '" . $value->visible . "' where id =  '".$value->course_id."' ");       
-        return '1'; 
+
+        $DB->execute("update {" . $value->table . "} set visible = '" . $value->visible . "' where id =  '" . $value->course_id . "' ");
+        return '1';
     }
 
 
@@ -112,7 +111,6 @@ class local_leeloolxpapi_external extends external_api {
     public static function course_visibility_returns() {
 
         return new external_value(PARAM_TEXT, 'Returns id');
-
     }
 
     /**
@@ -1071,7 +1069,7 @@ class local_leeloolxpapi_external extends external_api {
 
         $values = '';
         foreach ($value as $catkey => $courseid) {
-            $values .= $catkey.','.$courseid;
+            $values .= $catkey . ',' . $courseid;
 
             $sql = "SELECT id FROM {course} where id = ?";
             $coursedetail = $DB->get_record_sql($sql, [$courseid]);
@@ -1167,7 +1165,6 @@ class local_leeloolxpapi_external extends external_api {
                 $value->id = $returnid;
                 //return "$value->id = $returnid";die;
             }
-
         } else if (!empty($value->moodle_cat_id) && !empty($catdetail)) {
             // update cat
 
@@ -2342,7 +2339,7 @@ class local_leeloolxpapi_external extends external_api {
 
                 $DB->update_record('grade_categories', $data);
 
-                $sql = "UPDATE {grade_items} SET `hidden` = '$response->hidden' WHERE `categoryid` = '$response->id' or  `iteminstance` = '$response->id' ";
+                $sql = "UPDATE {grade_items} SET hidden = '$response->hidden' WHERE categoryid = '$response->id' or  iteminstance = '$response->id' ";
 
                 $DB->execute($sql);
             }
@@ -3089,7 +3086,7 @@ class local_leeloolxpapi_external extends external_api {
 
         $params = json_decode($reqparams, true);
 
-        require_once($CFG->dirroot.'/local/leeloolxpapi/classes/analytics_functions.php');
+        require_once($CFG->dirroot . '/local/leeloolxpapi/classes/analytics_functions.php');
 
         $functionname = $params['function'];
 
