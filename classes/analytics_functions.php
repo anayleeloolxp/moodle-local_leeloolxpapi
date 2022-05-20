@@ -53,6 +53,7 @@ defined('MOODLE_INTERNAL') || die();
 function get_users_course_grade($params) {
 
     global $DB;
+    global $CFG;
 
 
 
@@ -63,6 +64,12 @@ function get_users_course_grade($params) {
     foreach ($functiondataall as $key => $functiondata) {
 
         $queryparams = $functiondata;
+
+        if($CFG->dbtype == 'mysqli'){
+            $functype = 'GROUP_CONCAT';
+        } else {
+            $functype = 'array_agg';
+        }
 
         $query = "SELECT ue.id id,
 
@@ -78,7 +85,7 @@ function get_users_course_grade($params) {
 
         (SELECT ROUND((CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END), 0) FROM {grade_items} gi, {grade_grades} g WHERE gi.itemtype = 'course' AND g.itemid = gi.id AND g.finalgrade IS NOT NULL AND gi.courseid=c.id LIMIT 1) average,
 
-        (SELECT GROUP_CONCAT(DISTINCT CONCAT(u.firstname,' ',u.lastname) SEPARATOR ', ')
+        (SELECT $functype(DISTINCT CONCAT(u.firstname,' ',u.lastname))
 
           FROM {role_assignments} ra
 
@@ -162,7 +169,7 @@ function get_users_score($params) {
 
         $queryparams = $functiondata;
 
-        $query = "SELECT ROUND(AVG(CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END)) grade, COUNT(DISTINCT e.courseid) courses, COUNT(DISTINCT cc.course) completed_courses FROM {user_enrolments} ue LEFT JOIN {enrol} e ON e.id = ue.enrolid LEFT JOIN {course_completions} cc ON cc.timecompleted > 0 AND cc.course = e.courseid AND cc.userid = ue.userid LEFT JOIN {grade_items} gi ON gi.itemtype = 'course' AND gi.courseid = e.courseid LEFT JOIN {grade_grades} g ON g.userid = ue.userid AND g.itemid = gi.id AND g.finalgrade IS NOT NULL left join {user} u on u.id = ue.userid where u.email = :useremail GROUP BY ue.userid";
+        $query = "SELECT ROUND(AVG(CASE WHEN (g.rawgrademax-g.rawgrademin) > 0 THEN ((g.finalgrade-g.rawgrademin)/(g.rawgrademax-g.rawgrademin))*100 ELSE g.finalgrade END)) grade, COUNT(DISTINCT e.courseid) courses, COUNT(DISTINCT cc.course) {completed_courses} FROM {user_enrolments} ue LEFT JOIN {enrol} e ON e.id = ue.enrolid LEFT JOIN {course_completions} cc ON cc.timecompleted > 0 AND cc.course = e.courseid AND cc.userid = ue.userid LEFT JOIN {grade_items} gi ON gi.itemtype = 'course' AND gi.courseid = e.courseid LEFT JOIN {grade_grades} g ON g.userid = ue.userid AND g.itemid = gi.id AND g.finalgrade IS NOT NULL left join {user} u on u.id = ue.userid where u.email = :useremail GROUP BY ue.userid";
 
         $singledata = $DB->get_record_sql($query, $queryparams);
 
@@ -294,20 +301,23 @@ function get_quiz_close_date($params) {
 
 
     global $DB;
-
+    global $CFG;
 
 
     $functiondataall = $params['functiondata'];
 
-
+    if($CFG->dbtype == 'mysqli'){
+        $functype = 'GROUP_CONCAT';
+    } else {
+        $functype = 'array_agg';
+    }
 
     foreach ($functiondataall as $key => $functiondata) {
 
 
-
         $queryparams = $functiondata;
 
-        $query = "SELECT q.timeclose, GROUP_CONCAT(DISTINCT t.rawname SEPARATOR ', ') tags, GROUP_CONCAT(DISTINCT t_c.rawname SEPARATOR ', ') tags_course from {course_modules} cm left JOIN {quiz} q ON q.id = cm.instance left JOIN {course} c ON c.id = cm.course LEFT JOIN {tag_instance} ti ON ti.itemtype = 'course_modules' AND ti.itemid = cm.id LEFT JOIN {tag} t ON t.id = ti.tagid LEFT JOIN {tag_instance} ti_c ON ti_c.itemtype = 'course' AND ti_c.itemid = cm.course LEFT JOIN {tag} t_c ON t_c.id = ti_c.tagid WHERE cm.id = :activityid  ";
+        $query = "SELECT q.id,q.timeclose, $functype(DISTINCT t.rawname) tags, $functype(DISTINCT t_c.rawname ) tags_course from {course_modules} cm left JOIN {quiz} q ON q.id = cm.instance left JOIN {course} c ON c.id = cm.course LEFT JOIN {tag_instance} ti ON ti.itemtype = 'course_modules' AND ti.itemid = cm.id LEFT JOIN {tag} t ON t.id = ti.tagid LEFT JOIN {tag_instance} ti_c ON ti_c.itemtype = 'course' AND ti_c.itemid = cm.course LEFT JOIN {tag} t_c ON t_c.id = ti_c.tagid WHERE cm.id = :activityid group by q.id ";
 
 
 
@@ -736,7 +746,7 @@ function get_wiki_activity_percent($params) {
 
             WHERE c.id>1
 
-            GROUP BY w.id,c.id having cm.id = :activityid  ";
+            GROUP BY w.id,c.id,cm.id having cm.id = :activityid  ";
 
 
 
@@ -767,12 +777,18 @@ function get_completion_status($params) {
 
 
     global $DB;
-
+    global $CFG;
 
 
     $functiondataall = $params['functiondata'];
 
-
+    if($CFG->dbtype == 'mysqli'){
+        $functype = 'GROUP_CONCAT';
+        $timefunc = "TIME_TO_SEC(CASE WHEN sst.element = 'cmi.core.total_time' THEN sst.value ELSE null END)";
+    } else {
+        $functype = 'array_agg'; 
+        $timefunc = "EXTRACT(EPOCH FROM CASE WHEN sst.element = 'cmi.core.total_time' THEN sst.value::time ELSE null END)";
+    }
 
     foreach ($functiondataall as $key => $functiondata) {
 
@@ -802,79 +818,79 @@ function get_completion_status($params) {
 
             $query = "SELECT CONCAT(s.id, '_', u.id, '_', c.id) uniquecol,
 
-                   t.*,
+                         t.*,
 
-                   u.id user_id,
+                         u.id user_id,
 
-                   cm.id cm_id
+                         cm.id cm_id
 
-              FROM {scorm} s
+                FROM {scorm} s
 
-              JOIN {course} c ON c.id = s.course
+                JOIN {course} c ON c.id = s.course
 
-              JOIN {modules} m ON m.name = 'scorm'
+                JOIN {modules} m ON m.name = 'scorm'
 
-              JOIN {course_modules} cm ON cm.module = m.id AND cm.instance = s.id
+                JOIN {course_modules} cm ON cm.module = m.id AND cm.instance = s.id
 
-              JOIN (SELECT e.courseid, ue1.userid, MIN(ue1.status) status, MIN(ue1.timeend) timeend
+                JOIN (SELECT e.courseid, ue1.userid, MIN(ue1.status) status, MIN(ue1.timeend) timeend
 
-                      FROM {enrol} e
+                                FROM {enrol} e
 
-                      JOIN {user_enrolments} ue1 ON ue1.enrolid = e.id
+                                JOIN {user_enrolments} ue1 ON ue1.enrolid = e.id
 
-                  GROUP BY e.courseid, ue1.userid
+                        GROUP BY e.courseid, ue1.userid
 
-                   ) ue ON ue.courseid = c.id
+                         ) ue ON ue.courseid = c.id
 
-              JOIN {user} u ON u.id = ue.userid
+                JOIN {user} u ON u.id = ue.userid
 
-         LEFT JOIN (SELECT MIN(sst.id) id,
+                    LEFT JOIN (SELECT MIN(sst.id) id,
 
-                           sst.userid,
+                                                 sst.userid,
 
-                           sst.scormid,
+                                                 sst.scormid,
 
-                           MAX(sst.timemodified) timemodified,
+                                                 MAX(sst.timemodified) timemodified,
 
-                           MIN(CASE WHEN sst.element = 'x.start.time' THEN sst.value ELSE null END) starttime,
+                                                 MIN(CASE WHEN sst.element = 'x.start.time' THEN sst.value ELSE null END) starttime,
 
-                           SUM( TIME_TO_SEC(CASE WHEN sst.element = 'cmi.core.total_time' THEN sst.value ELSE null END)) duration,
+                                                 SUM( $timefunc) duration,
 
-                           GROUP_CONCAT(CASE WHEN sst.attempt = 1 AND sst.element IN ('cmi.completion_status', 'cmi.core.lesson_status') AND sst.value IN ('completed', 'passed') THEN 'completed' ELSE '' END SEPARATOR '') first_completion_status,
+                                                 $functype(CASE WHEN sst.attempt = 1 AND sst.element IN ('cmi.completion_status', 'cmi.core.lesson_status') AND sst.value IN ('completed', 'passed') THEN 'completed' ELSE '' END) first_completion_status,
 
-                           GROUP_CONCAT(CASE WHEN sst.attempt = la.last_attempt_number AND
+                                                 $functype(CASE WHEN sst.attempt = la.last_attempt_number AND
 
-                       sst.element IN ('cmi.completion_status', 'cmi.core.lesson_status') AND
+                                         sst.element IN ('cmi.completion_status', 'cmi.core.lesson_status') AND
 
-                       sst.value IN ('completed', 'passed')
+                                         sst.value IN ('completed', 'passed')
 
-                  THEN 'completed'
+                                THEN 'completed'
 
-                  ELSE ''
+                                ELSE ''
 
-            END SEPARATOR '') current_completion_status,
+                    END) current_completion_status,
 
-                           COUNT(DISTINCT(sst.attempt)) attempts
+                                     COUNT(DISTINCT(sst.attempt)) attempts
 
-                      FROM {scorm_scoes_track} sst
+                            FROM {scorm_scoes_track} sst
 
-                      JOIN (SELECT userid, scormid, MAX(attempt) last_attempt_number
+                            JOIN (SELECT userid, scormid, MAX(attempt) last_attempt_number
 
-                              FROM {scorm_scoes_track}
+                                            FROM {scorm_scoes_track}
 
-                          GROUP BY userid, scormid
+                                    GROUP BY userid, scormid
 
-                           ) la ON la.userid = sst.userid AND la.scormid = sst.scormid
+                                     ) la ON la.userid = sst.userid AND la.scormid = sst.scormid
 
-                     WHERE sst.id > 0
+                         WHERE sst.id > 0
 
-                  GROUP BY sst.userid, sst.scormid
+                    GROUP BY sst.userid, sst.scormid
 
-                   ) t ON t.scormid = s.id AND t.userid = u.id
+                     ) t ON t.scormid = s.id AND t.userid = u.id
 
 
 
-            WHERE u.id = :uid and cm.id = :activityid  ";
+                    WHERE u.id = :uid and cm.id = :activityid  ";
 
             $singledata = $DB->get_record_sql($query, $paramarr);
         }
@@ -957,7 +973,23 @@ function get_all_data($params) {
 
     $mainquery = $params['functiondata'];
 
+    if(strpos($mainquery['sql_query'], 'AS INT') !== false){
+        if($CFG->dbtype != 'mysqli'){
+            $mainquery['sql_query'] = str_replace('AS UNSIGNED', 'AS INT', $mainquery['sql_query']);
+        }
+    }
 
+    if(strpos($mainquery['sql_query'], 'GROUP_CONCAT') !== false){
+        if($CFG->dbtype != 'mysqli'){
+            $mainquery['sql_query'] = str_replace('GROUP_CONCAT', 'array_agg', $mainquery['sql_query']);
+        }
+    }
+
+    if(strpos($mainquery['sql_query'], 'RAND') !== false){
+        if($CFG->dbtype != 'mysqli'){
+            $mainquery['sql_query'] = str_replace('RAND', 'random', $mainquery['sql_query']);
+        }
+    }
 
     $query = $mainquery['sql_query'] . " limit " . $mainquery['start'] . ',' . $mainquery['end'];
 
