@@ -2105,8 +2105,8 @@ class local_leeloolxpapi_external extends external_api {
             $data['timemodified'] = strtotime("now");
 
             if (!empty($value->moodle_scale_id)) {
-                $sql = "SELECT * FROM {scale} where id = '$value->moodle_scale_id'";
-                $scaledetail = $DB->get_record_sql($sql);
+                $sql = "SELECT * FROM {scale} where id = ?";
+                $scaledetail = $DB->get_record_sql($sql, [$value->moodle_scale_id]);
                 if (!empty($scaledetail)) {
                     $data['id'] = $value->moodle_scale_id;
                     $DB->update_record('scale', $data);
@@ -2557,8 +2557,8 @@ class local_leeloolxpapi_external extends external_api {
             }
 
             // update parent of grade item.
-            $sql = "SELECT id FROM {grade_items} WHERE categoryid = '$response->id' ";
-            $childitems = $DB->get_records_sql($sql);
+            $sql = "SELECT id FROM {grade_items} WHERE categoryid = ?";
+            $childitems = $DB->get_records_sql($sql, [$response->id]);
             $currentcat = $DB->get_record('grade_categories', ['id' => $response->id], '*');
 
             if (!empty($childitems)) {
@@ -2575,9 +2575,9 @@ class local_leeloolxpapi_external extends external_api {
             }
 
             // delete category items
-            $sql = "SELECT * FROM {grade_items} WHERE iteminstance = '$response->id' AND itemtype != 'mod' ";
+            $sql = "SELECT * FROM {grade_items} WHERE iteminstance = ? AND itemtype != 'mod' ";
 
-            $result = $DB->get_records_sql($sql);
+            $result = $DB->get_records_sql($sql, [$response->id]);
 
             foreach ($result as $key => $value) {
                 $DB->delete_records('grade_items', ['id' => $value->id]);

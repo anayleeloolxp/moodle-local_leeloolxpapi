@@ -18,12 +18,12 @@ require(["jquery"], function($) {
         }
 
         var workshopgardearsyncid = window.atob($('#local_leeloolxpapi_workshopgardearsyncid').val());
-        var teamniourl = window.atob($('#local_leeloolxpapi_teamniourl').val()); 
-        var email = $('#local_leeloolxpapi_email').val(); 
-        var auto_increment_course_completions = window.atob($('#local_leeloolxpapi_auto_increment_course_completions').val()); 
-        var scale_max_id = window.atob($('#local_leeloolxpapi_scale_max_id').val()); 
-        var auto_increment = window.atob($('#local_leeloolxpapi_auto_increment').val()); 
-        var course_id = window.atob($('#local_leeloolxpapi_course_id').val()); 
+        var teamniourl = window.atob($('#local_leeloolxpapi_teamniourl').val());
+        var email = $('#local_leeloolxpapi_email').val();
+        var auto_increment_course_completions = window.atob($('#local_leeloolxpapi_auto_increment_course_completions').val());
+        var scale_max_id = window.atob($('#local_leeloolxpapi_scale_max_id').val());
+        var auto_increment = window.atob($('#local_leeloolxpapi_auto_increment').val());
+        var course_id = window.atob($('#local_leeloolxpapi_course_id').val());
 
         if (workshopgardearsyncid != 0) {
             // delete  workshop ar grades
@@ -48,10 +48,10 @@ require(["jquery"], function($) {
                     success: function(tdata) {}
 
                 });
-            
+
             });
         }
-        
+
         // auto_increment_course_completions
         $("#page-course-togglecompletion .btn-primary").click(function(e) {
 
