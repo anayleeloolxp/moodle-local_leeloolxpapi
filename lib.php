@@ -104,7 +104,6 @@ function local_leeloolxpapi_before_footer() {
     global $DB;
     $useremail = $USER->email;
 
-    // $PAGE->requires->jquery();
     if (
         $PAGE->pagetype == 'admin-setting-gradessettings' ||
         $PAGE->pagetype == 'admin-setting-gradecategorysettings' ||
@@ -128,12 +127,14 @@ function local_leeloolxpapi_before_footer() {
     ) {
         if ($CFG->dbtype == 'mysqli') {
             $tablecat = $CFG->prefix . 'scale';
-            $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
+            $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES
+            WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
             $autoinc = $DB->get_record_sql($sql);
             $autoincrement = $autoinc->auto_increment;
 
             $tablecat = $CFG->prefix . 'course_completions';
-            $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
+            $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES
+            WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
             $autoinc = $DB->get_record_sql($sql);
             $autoincrementcoursecompletions = $autoinc->auto_increment;
         } else {
@@ -188,14 +189,16 @@ function local_leeloolxpapi_before_footer() {
             }
         }
 
-        // $PAGE->requires->jquery();
-
         $PAGE->requires->js(new moodle_url('/local/leeloolxpapi/js/gradesync.js'));
 
-        echo '<input type="hidden" id="local_leeloolxpapi_workshopgardearsyncid" value="' . base64_encode($workshopgardearsyncid) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_teamniourl" value="' . base64_encode($teamniourl) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_email" value="' . base64_encode($useremail) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_auto_increment_course_completions" value="' . base64_encode($autoincrementcoursecompletions) . '"/>';
+        echo '<input type="hidden" id="local_leeloolxpapi_workshopgardearsyncid"
+        value="' . base64_encode($workshopgardearsyncid) . '"/>';
+        echo '<input type="hidden" id="local_leeloolxpapi_teamniourl"
+        value="' . base64_encode($teamniourl) . '"/>';
+        echo '<input type="hidden" id="local_leeloolxpapi_email"
+        value="' . base64_encode($useremail) . '"/>';
+        echo '<input type="hidden" id="local_leeloolxpapi_auto_increment_course_completions"
+        value="' . base64_encode($autoincrementcoursecompletions) . '"/>';
         echo '<input type="hidden" id="local_leeloolxpapi_scale_max_id" value="' . base64_encode($scalemaxid) . '"/>';
         echo '<input type="hidden" id="local_leeloolxpapi_auto_increment" value="' . base64_encode($autoincrement) . '"/>';
         echo '<input type="hidden" id="local_leeloolxpapi_course_id" value="' . base64_encode($PAGE->course->id) . '"/>';

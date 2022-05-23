@@ -142,8 +142,6 @@ $functions = array(
         'type' => 'write',
     ),
 
-    // grades sync
-
     'local_leeloolxpapi_sync_grade_letter' => array(
         'classname' => 'local_leeloolxpapi_external',
         'methodname' => 'sync_grade_letter',
@@ -223,8 +221,6 @@ $functions = array(
         'description' => 'Delete grade category.',
         'type' => 'write',
     ),
-
-    // global grades sync
 
     'local_leeloolxpapi_global_grade_user_settings' => array(
         'classname' => 'local_leeloolxpapi_external',

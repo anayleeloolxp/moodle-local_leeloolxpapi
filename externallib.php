@@ -76,7 +76,6 @@ class local_leeloolxpapi_external extends external_api {
 
         global $DB;
 
-
         // Parameter validation.
 
         // REQUIRED.
@@ -95,7 +94,9 @@ class local_leeloolxpapi_external extends external_api {
 
         $value = (object) json_decode($reqcoursedata, true);
 
-        $DB->execute("update {" . $value->table . "} set visible = '" . $value->visible . "' where id =  '" . $value->course_id . "' ");
+        $DB->execute("update {" . $value->table . "}
+        set visible = '" . $value->visible . "'
+        where id =  '" . $value->course_id . "' ");
         return '1';
     }
 
@@ -414,7 +415,6 @@ class local_leeloolxpapi_external extends external_api {
                 // Var tags_data.
                 if (isset($reqtagdata)) {
                     $tagsdataarrobj = (object) json_decode($reqtagdata, true);
-                    // Commented echo "<pre>";print_r($tagsdataarrobj);die; .
 
                     if (!empty($tagsdataarrobj)) {
                         foreach ($tagsdataarrobj as $key => $tagsdata) {
@@ -429,7 +429,6 @@ class local_leeloolxpapi_external extends external_api {
 
                                 $tagsdata['tagcollid'] = 1;
                                 $tagsdata['userid'] = $userid;
-                                // echo "<pre>";print_r($tagsdata);die;
 
                                 $returnid = $DB->insert_record('tag', $tagsdata);
                                 array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $returnid]);
@@ -440,7 +439,6 @@ class local_leeloolxpapi_external extends external_api {
                     }
                 }
 
-                // tags_data
                 if (!empty($tagsreturnarr)) {
                     $tagidsnotdelete = '';
                     $j = 0;
@@ -453,7 +451,11 @@ class local_leeloolxpapi_external extends external_api {
                         }
                         $j++;
 
-                        $taginstanceexist = $DB->get_record('tag_instance', ['tagid' => $value['moodleid'], 'itemid' => $activityid], 'id');
+                        $taginstanceexist = $DB->get_record(
+                            'tag_instance',
+                            ['tagid' => $value['moodleid'], 'itemid' => $activityid],
+                            'id'
+                        );
 
                         if (empty($taginstanceexist)) {
                             $contextdata = $DB->get_record('context', ['instanceid' => $activityid], 'id');
@@ -483,9 +485,8 @@ class local_leeloolxpapi_external extends external_api {
                     $sql = "SELECT tagid FROM {tag_instance} WHERE itemid = ?";
                     $tagsfordelete = $DB->get_records_sql($sql, [$activityid]);
 
-                    // $DB->delete_records('tag_instance', ['itemid' => $activityid]);
-
-                    $DB->execute("DELETE FROM {tag_instance} where itemid = ? AND tagid NOT IN (?) ", [$activityid, $tagidsnotdelete]);
+                    $DB->execute("DELETE FROM {tag_instance} where itemid = ?
+                    AND tagid NOT IN (?) ", [$activityid, $tagidsnotdelete]);
 
                     if (!empty($tagsfordelete)) {
                         $i = 0;
@@ -580,7 +581,6 @@ class local_leeloolxpapi_external extends external_api {
             $tagsreturnarr = [];
 
             $tagsdataarrobj = (object) json_decode($reqstandardtagdata, true);
-            // echo "<pre>";print_r($tagsdataarrobj);die;
 
             if (!empty($tagsdataarrobj)) {
                 foreach ($tagsdataarrobj as $key => $tagsdata) {
@@ -595,7 +595,6 @@ class local_leeloolxpapi_external extends external_api {
 
                         $tagsdata['tagcollid'] = 1;
                         $tagsdata['userid'] = $userid;
-                        // echo "<pre>";print_r($tagsdata);die;
 
                         $returnid = $DB->insert_record('tag', $tagsdata);
                         array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $returnid]);
@@ -745,7 +744,6 @@ class local_leeloolxpapi_external extends external_api {
                     }
                     array_push($tagids, $returnid);
 
-                    // insert tag instance
                     $taginstanceexistclock = $DB->get_record('tag_instance', ['tagid' => $id, 'itemid' => $returnid], 'id');
 
                     $taginstanceexistanticlock = $DB->get_record('tag_instance', ['tagid' => $returnid, 'itemid' => $id], 'id');
@@ -784,7 +782,8 @@ class local_leeloolxpapi_external extends external_api {
             if (!empty($tagids)) {
                 $tagidsstr = implode(',', $tagids);
 
-                $tagfordelete = $DB->get_records_sql("SELECT tagid FROM {tag_instance} where itemid = ? AND tagid NOT IN (?) ", [$id, $tagidsstr]);
+                $tagfordelete = $DB->get_records_sql("SELECT tagid FROM {tag_instance}
+                where itemid = ? AND tagid NOT IN (?) ", [$id, $tagidsstr]);
             } else {
 
                 $tagfordelete = $DB->get_records_sql("SELECT tagid FROM {tag_instance} where itemid = ?", [$id]);
@@ -944,7 +943,11 @@ class local_leeloolxpapi_external extends external_api {
                 foreach ($tagsforinsert as $key => $value) {
                     $taginstanceexistclock = $DB->get_record('tag_instance', ['tagid' => $id, 'itemid' => $value->itemid], 'id');
 
-                    $taginstanceexistanticlock = $DB->get_record('tag_instance', ['tagid' => $value->itemid, 'itemid' => $id], 'id');
+                    $taginstanceexistanticlock = $DB->get_record(
+                        'tag_instance',
+                        ['tagid' => $value->itemid, 'itemid' => $id],
+                        'id'
+                    );
 
                     if (empty($taginstanceexistclock) && empty($taginstanceexistanticlock)) {
                         $taginstancedata1 = [
@@ -1065,7 +1068,7 @@ class local_leeloolxpapi_external extends external_api {
             )
         );
 
-        $value = (object) json_decode($reqcatsdata, true); //(object)
+        $value = (object) json_decode($reqcatsdata, true); // Object.
 
         $values = '';
         foreach ($value as $catkey => $courseid) {
@@ -1079,12 +1082,12 @@ class local_leeloolxpapi_external extends external_api {
 
             if (!empty($coursedetail) && !empty($catdetail)) {
 
+                $data = new stdClass();
                 $data->id = $courseid;
                 $data->category = $catkey;
                 $DB->update_record('course', $data);
             }
         }
-
 
         return 1;
     }
@@ -1144,60 +1147,47 @@ class local_leeloolxpapi_external extends external_api {
         $catdetail = $DB->get_record_sql($sql, [$value->moodle_cat_id]);
         $sql = "SELECT * FROM {course_categories} where id = ?";
         $parentcatdetail = $DB->get_record_sql($sql, [$value->moodle_parent_cat_id]);
-        // echo "<pre>";print_r($parentcatdetail);
 
         if (!empty($value->moodle_parent_cat_id) && !empty($parentcatdetail)) {
-            // insert/update child cat
 
             if ($value->depth == 1 || $value->depth == '1') {
-                // $value->path = '/' . $catdetail->id;
                 $value->parent = '0';
             } else {
-                // $value->path = $catdetail->path . '/' . $autoinc->auto_increment;
                 $value->parent = $value->moodle_cat_id;
             }
             if (!empty($returnid)) {
-                // $value->id = $autoinc->auto_increment;
                 $value->id = 1;
             }
 
             if ($isinsert == 0) {
                 $value->id = $returnid;
-                //return "$value->id = $returnid";die;
             }
         } else if (!empty($value->moodle_cat_id) && !empty($catdetail)) {
-            // update cat
 
             if ($value->depth == 1 || $value->depth == '1') {
-                // $value->path = '/' . $catdetail->id;
                 $value->parent = '0';
             } else {
-                // $value->path = $catdetail->path . '/' . $autoinc->auto_increment;
                 $value->parent = $value->moodle_cat_id;
             }
             $returnid = $value->id = $value->moodle_cat_id;
 
             $isinsert = 0;
         } else {
-            // insert top cat
 
             if ($value->depth == 1 || $value->depth == '1') {
                 $falsevar = 1;
-                // $value->path = '/' . $autoinc->auto_increment;
             } else {
                 if (!empty($catdetail)) {
-                    // $value->path = $catdetail->path . '/' . $autoinc->auto_increment;
                     $value->parent = $value->moodle_cat_id;
                 } else {
-                    // $value->path = '/' . $autoinc->auto_increment;
                     $value->parent = 0;
                 }
             }
         }
 
-        $is_parent_found = 0;
+        $isparentfound = 0;
         if (!empty($value->is_parent)) {
-            $is_parent_found = $value->is_parent;
+            $isparentfound = $value->is_parent;
             unset($value->is_parent);
         }
         $value->sortorder = 10000;
@@ -1206,7 +1196,6 @@ class local_leeloolxpapi_external extends external_api {
         unset($value->is_update);
         $value->path = '';
 
-
         if ($isinsert) {
             $returnid = $DB->insert_record('course_categories', $value);
         } else {
@@ -1214,21 +1203,21 @@ class local_leeloolxpapi_external extends external_api {
         }
 
         if (!empty($value->moodle_parent_cat_id) && !empty($parentcatdetail)) {
-            // insert/update child cat
+            // Insert/update child cat.
             if ($value->depth == 1 || $value->depth == '1') {
                 $value->path = '/' . $catdetail->id;
             } else {
                 $value->path = $catdetail->path . '/' . $returnid;
             }
         } else if (!empty($value->moodle_cat_id) && !empty($catdetail)) {
-            // update cat
+            // Update cat.
             if ($value->depth == 1 || $value->depth == '1') {
                 $value->path = '/' . $catdetail->id;
             } else {
                 $value->path = $catdetail->path . '/' . $returnid;
             }
         } else {
-            // insert top cat
+            // Insert top cat.
             if ($value->depth == 1 || $value->depth == '1') {
                 $value->path = '/' . $returnid;
             } else {
@@ -1240,10 +1229,9 @@ class local_leeloolxpapi_external extends external_api {
             }
         }
 
-
         $updatenewdata = ['path' => $value->path, 'id' => $returnid];
-        if (!empty($is_parent_found)) {
-            $updatenewdata['parent'] = $is_parent_found;
+        if (!empty($isparentfound)) {
+            $updatenewdata['parent'] = $isparentfound;
         }
         $updatenewdata = (object) $updatenewdata;
         $DB->update_record('course_categories', $updatenewdata);
@@ -1296,7 +1284,6 @@ class local_leeloolxpapi_external extends external_api {
         $email = $reqemail;
         $sql = "SELECT * FROM {user} where email = ?";
         $userdetail = $DB->get_record_sql($sql, [$email]);
-        // print_r($userdetail);
         return $userdetail->id;
     }
 
@@ -1345,7 +1332,6 @@ class local_leeloolxpapi_external extends external_api {
         $userid = $requserid;
         $sql = "SELECT * FROM {user} where id = ?";
         $userdetail = $DB->get_record_sql($sql, [$userid]);
-        // print_r($userdetail);
         return json_encode($userdetail);
     }
 
@@ -1866,11 +1852,9 @@ class local_leeloolxpapi_external extends external_api {
         );
 
         $response = (object) json_decode($reqlsyncgradeletter, true);
-        // echo "<pre>";print_r($response);die;
 
         $lastinsertedid = 0;
         if (empty($response->contextid)) {
-            // courseid
             $response->contextid = 1;
         }
 
@@ -1880,8 +1864,6 @@ class local_leeloolxpapi_external extends external_api {
         if (!empty($response->contextid) && $response->contextid != 1) {
             $contextid = context_course::instance($response->contextid);
             $response->contextid = $contextid->id;
-
-            /*$context_data = $DB->get_record('context', ['contextlevel'=>'50' ,'instanceid' => $response->contextid],'id'); echo "<pre>";print_r($context_data);die;*/
         }
 
         $DB->delete_records('grade_letters', ['contextid' => $response->contextid]);
@@ -1956,7 +1938,7 @@ class local_leeloolxpapi_external extends external_api {
         );
 
         $response = (object) json_decode($reqsynccoursegradesettings, true);
-        // print_r($response);die;
+
         $courseid = $response->courseid;
         unset($response->courseid);
         $lastinsertedid = 0;
@@ -2019,7 +2001,7 @@ class local_leeloolxpapi_external extends external_api {
         );
 
         $response = (object) json_decode($reqsyncprefrencegraderreport, true);
-        // echo "<pre>";print_r($response); die;
+
         $email = $response->email;
         unset($response->email);
         $lastinsertedid = 0;
@@ -2187,7 +2169,6 @@ class local_leeloolxpapi_external extends external_api {
             } else {
 
                 $categoriedata->path = '';
-                // $parentcatdata->path . $auto_inc->auto_increment . '/';
                 $categoriedata->parent = $moodleparentid;
                 $catreturnedid = $DB->insert_record('grade_categories', $categoriedata);
 
@@ -2208,7 +2189,6 @@ class local_leeloolxpapi_external extends external_api {
             unset($gradesdata->item_moodle_cat_id);
 
             if (!empty($gradesdata->old_item_id)) {
-                // echo "<pre>";print_r($gradesdata);die;
                 $gradesdata->id = $gradesdata->old_item_id;
 
                 unset($gradesdata->old_item_id);
@@ -2339,7 +2319,8 @@ class local_leeloolxpapi_external extends external_api {
 
                 $DB->update_record('grade_categories', $data);
 
-                $sql = "UPDATE {grade_items} SET hidden = '$response->hidden' WHERE categoryid = '$response->id' or  iteminstance = '$response->id' ";
+                $sql = "UPDATE {grade_items} SET hidden = '$response->hidden'
+                WHERE categoryid = '$response->id' or  iteminstance = '$response->id' ";
 
                 $DB->execute($sql);
             }
@@ -2451,7 +2432,6 @@ class local_leeloolxpapi_external extends external_api {
 
         if (!empty($response) && !empty($catid->moodle_cat_id)) {
             foreach ($response as $key => $value) {
-                // echo " <pre>";print_r($value['moodle_tbl_id']); die;
 
                 $itemsdata = ['categoryid' => $catid->moodle_cat_id];
 
@@ -2548,15 +2528,11 @@ class local_leeloolxpapi_external extends external_api {
         $response = (object) json_decode($reqdeletegradecategory, true);
 
         if (!empty($response->id)) {
-            // re-arrenge category parent child relation
             $parentcatdata = $DB->get_records('grade_categories', ['parent' => $response->id]);
 
             if (!empty($parentcatdata)) {
                 $currentcat = $DB->get_record('grade_categories', ['id' => $response->id], '*');
-                // change_cate_order($parentcatdata, $currentcat);
             }
-
-            // update parent of grade item.
             $sql = "SELECT id FROM {grade_items} WHERE categoryid = ?";
             $childitems = $DB->get_records_sql($sql, [$response->id]);
             $currentcat = $DB->get_record('grade_categories', ['id' => $response->id], '*');
@@ -2574,7 +2550,6 @@ class local_leeloolxpapi_external extends external_api {
                 }
             }
 
-            // delete category items
             $sql = "SELECT * FROM {grade_items} WHERE iteminstance = ? AND itemtype != 'mod' ";
 
             $result = $DB->get_records_sql($sql, [$response->id]);
@@ -2630,18 +2605,30 @@ class local_leeloolxpapi_external extends external_api {
 
         $reqglograusersettings = (object) json_decode($reqglograusersettings, true);
 
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showrank . "' where name = 'grade_report_user_showrank'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showpercentage . "' where name = 'grade_report_user_showpercentage'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showgrade . "' where name = 'grade_report_user_showgrade'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showfeedback . "' where name = 'grade_report_user_showfeedback'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showrange . "' where name = 'grade_report_user_showrange'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showweight . "' where name = 'grade_report_user_showweight'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showaverage . "' where name = 'grade_report_user_showaverage'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showlettergrade . "' where name = 'grade_report_user_showlettergrade'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->rangedecimals . "' where name = 'grade_report_user_rangedecimals'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showhiddenitems . "' where name = 'grade_report_user_showhiddenitems'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showtotalsifcontainhidden . "' where name = 'grade_report_user_showtotalsifcontainhidden'");
-        $DB->execute("update {config} set value = '" . $reqglograusersettings->showcontributiontocoursetotal . "' where name = 'grade_report_user_showcontributiontocoursetotal'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showrank . "'
+        where name = 'grade_report_user_showrank'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showpercentage . "'
+        where name = 'grade_report_user_showpercentage'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showgrade . "'
+        where name = 'grade_report_user_showgrade'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showfeedback . "'
+        where name = 'grade_report_user_showfeedback'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showrange . "'
+        where name = 'grade_report_user_showrange'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showweight . "'
+        where name = 'grade_report_user_showweight'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showaverage . "'
+        where name = 'grade_report_user_showaverage'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showlettergrade . "'
+        where name = 'grade_report_user_showlettergrade'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->rangedecimals . "'
+        where name = 'grade_report_user_rangedecimals'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showhiddenitems . "'
+        where name = 'grade_report_user_showhiddenitems'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showtotalsifcontainhidden . "'
+        where name = 'grade_report_user_showtotalsifcontainhidden'");
+        $DB->execute("update {config} set value = '" . $reqglograusersettings->showcontributiontocoursetotal . "'
+        where name = 'grade_report_user_showcontributiontocoursetotal'");
 
         return '1';
     }
@@ -2687,25 +2674,44 @@ class local_leeloolxpapi_external extends external_api {
 
         $reqgraderreportsettings = (object) json_decode($reqgraderreportsettings, true);
 
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_studentsperpage . "' where name = 'grade_report_studentsperpage'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showonlyactiveenrol . "' where name = 'grade_report_showonlyactiveenrol'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_quickgrading . "' where name = 'grade_report_quickgrading'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showquickfeedback . "' where name = 'grade_report_showquickfeedback'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_meanselection . "' where name = 'grade_report_meanselection'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_enableajax . "' where name = 'grade_report_enableajax'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showcalculations . "' where name = 'grade_report_showcalculations'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showeyecons . "' where name = 'grade_report_showeyecons'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showaverages . "' where name = 'grade_report_showaverages'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showlocks . "' where name = 'grade_report_showlocks'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showranges . "' where name = 'grade_report_showranges'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showanalysisicon . "' where name = 'grade_report_showanalysisicon'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showuserimage . "' where name = 'grade_report_showuserimage'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showactivityicons . "' where name = 'grade_report_showactivityicons'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_shownumberofgrades . "' where name = 'grade_report_shownumberofgrades'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_averagesdisplaytype . "' where name = 'grade_report_averagesdisplaytype'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_rangesdisplaytype . "' where name = 'grade_report_rangesdisplaytype'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_averagesdecimalpoints . "' where name = 'grade_report_averagesdecimalpoints'");
-        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_rangesdecimalpoints . "' where name = 'grade_report_rangesdecimalpoints'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_studentsperpage . "'
+        where name = 'grade_report_studentsperpage'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showonlyactiveenrol . "'
+        where name = 'grade_report_showonlyactiveenrol'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_quickgrading . "'
+        where name = 'grade_report_quickgrading'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showquickfeedback . "'
+        where name = 'grade_report_showquickfeedback'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_meanselection . "'
+        where name = 'grade_report_meanselection'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_enableajax . "'
+        where name = 'grade_report_enableajax'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showcalculations . "'
+        where name = 'grade_report_showcalculations'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showeyecons . "'
+        where name = 'grade_report_showeyecons'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showaverages . "'
+        where name = 'grade_report_showaverages'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showlocks . "'
+        where name = 'grade_report_showlocks'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showranges . "'
+        where name = 'grade_report_showranges'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showanalysisicon . "'
+        where name = 'grade_report_showanalysisicon'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showuserimage . "'
+        where name = 'grade_report_showuserimage'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_showactivityicons . "'
+        where name = 'grade_report_showactivityicons'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_shownumberofgrades . "'
+        where name = 'grade_report_shownumberofgrades'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_averagesdisplaytype . "'
+        where name = 'grade_report_averagesdisplaytype'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_rangesdisplaytype . "'
+        where name = 'grade_report_rangesdisplaytype'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_averagesdecimalpoints . "'
+        where name = 'grade_report_averagesdecimalpoints'");
+        $DB->execute("update {config} set value = '" . $reqgraderreportsettings->grade_report_rangesdecimalpoints . "'
+        where name = 'grade_report_rangesdecimalpoints'");
 
         return '1';
     }
@@ -2797,8 +2803,10 @@ class local_leeloolxpapi_external extends external_api {
 
         $reqglobalgradeoverview = (object) json_decode($reqglobalgradeoverview, true);
 
-        $DB->execute("update {config} set value = '" . $reqglobalgradeoverview->showrank . "' where name = 'grade_report_overview_showrank'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradeoverview->showtotalsifcontainhidden . "' where name = 'grade_report_overview_showtotalsifcontainhidden'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradeoverview->showrank . "'
+        where name = 'grade_report_overview_showrank'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradeoverview->showtotalsifcontainhidden . "'
+        where name = 'grade_report_overview_showtotalsifcontainhidden'");
 
         return '1';
     }
@@ -2844,7 +2852,8 @@ class local_leeloolxpapi_external extends external_api {
 
         $reqglobalgradehistory = (object) json_decode($reqglobalgradehistory, true);
 
-        $DB->execute("update {config} set value = '" . $reqglobalgradehistory->pages . "' where name = 'grade_report_historyperpage'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradehistory->pages . "'
+        where name = 'grade_report_historyperpage'");
 
         return '1';
     }
@@ -2940,7 +2949,6 @@ class local_leeloolxpapi_external extends external_api {
             )
         );
         $reqgradecategorysettings = (object) json_decode($reqgradecategorysettings, true);
-        // return $reqgradecategorysettings;die;
 
         $gradehideforcedsettings = $reqgradecategorysettings->grade_hideforcedsettings;
 
@@ -2962,19 +2970,32 @@ class local_leeloolxpapi_external extends external_api {
 
         $gradeoverridecat = $reqgradecategorysettings->grade_overridecat;
 
-        $DB->execute("update {config} set value = '" . $gradehideforcedsettings . "' where name = 'grade_hideforcedsettings'");
-        $DB->execute("update {config} set value = '" . $gradeaggregation . "' where name = 'grade_aggregation'");
-        $DB->execute("update {config} set value = '" . $gradeaggregationflag . "' where name = 'grade_aggregation_flag'");
-        $DB->execute("update {config} set value = '" . $gradeaggregationsvisible . "' where name = 'grade_aggregations_visible'");
-        $DB->execute("update {config} set value = '" . $gradeaggregateonlygraded . "' where name = 'grade_aggregateonlygraded'");
-        $DB->execute("update {config} set value = '" . $gradeaggregateonlygradedflag . "' where name = 'grade_aggregateonlygraded_flag'");
-        $DB->execute("update {config} set value = '" . $gradeaggregateoutcomes . "' where name = 'grade_aggregateoutcomes'");
-        $DB->execute("update {config} set value = '" . $gradeaggregateoutcomesflag . "' where name = 'grade_aggregateoutcomes_flag'");
-        $DB->execute("update {config} set value = '" . $gradekeephigh . "' where name = 'grade_keephigh'");
-        $DB->execute("update {config} set value = '" . $gradekeephighflag . "' where name = 'grade_keephigh_flag'");
-        $DB->execute("update {config} set value = '" . $gradedroplow . "' where name = 'grade_droplow'");
-        $DB->execute("update {config} set value = '" . $gradedroplowflag . "' where name = 'grade_droplow_flag'");
-        $DB->execute("update {config} set value = '" . $gradeoverridecat . "' where name = 'grade_overridecat'");
+        $DB->execute("update {config} set value = '" . $gradehideforcedsettings . "'
+        where name = 'grade_hideforcedsettings'");
+        $DB->execute("update {config} set value = '" . $gradeaggregation . "'
+        where name = 'grade_aggregation'");
+        $DB->execute("update {config} set value = '" . $gradeaggregationflag . "'
+        where name = 'grade_aggregation_flag'");
+        $DB->execute("update {config} set value = '" . $gradeaggregationsvisible . "'
+        where name = 'grade_aggregations_visible'");
+        $DB->execute("update {config} set value = '" . $gradeaggregateonlygraded . "'
+        where name = 'grade_aggregateonlygraded'");
+        $DB->execute("update {config} set value = '" . $gradeaggregateonlygradedflag . "'
+        where name = 'grade_aggregateonlygraded_flag'");
+        $DB->execute("update {config} set value = '" . $gradeaggregateoutcomes . "'
+        where name = 'grade_aggregateoutcomes'");
+        $DB->execute("update {config} set value = '" . $gradeaggregateoutcomesflag . "'
+        where name = 'grade_aggregateoutcomes_flag'");
+        $DB->execute("update {config} set value = '" . $gradekeephigh . "'
+        where name = 'grade_keephigh'");
+        $DB->execute("update {config} set value = '" . $gradekeephighflag . "'
+        where name = 'grade_keephigh_flag'");
+        $DB->execute("update {config} set value = '" . $gradedroplow . "'
+        where name = 'grade_droplow'");
+        $DB->execute("update {config} set value = '" . $gradedroplowflag . "'
+        where name = 'grade_droplow_flag'");
+        $DB->execute("update {config} set value = '" . $gradeoverridecat . "'
+        where name = 'grade_overridecat'");
 
         return '1';
     }
@@ -3020,27 +3041,48 @@ class local_leeloolxpapi_external extends external_api {
 
         $reqglobalgradedata = (object) json_decode($reqglobalgradedata, true);
 
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->bookmoodlerole . "' where name = 'gradebookroles'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_profilereport . "' where name = 'grade_profilereport'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_aggregationposition . "' where name = 'grade_aggregationposition'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_includescalesinaggregation . "' where name = 'grade_includescalesinaggregation'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_displaytype . "' where name = 'grade_export_displaytype'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_decimalpoints . "' where name = 'grade_export_decimalpoints'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_navmethod . "' where name = 'grade_navmethod'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_userprofilefields . "' where name = 'grade_export_userprofilefields'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_customprofilefields . "' where name = 'grade_export_customprofilefields'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradeexport . "' where name = 'gradeexport'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->unlimitedgrades . "' where name = 'unlimitedgrades'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_report_showmin . "' where name = 'grade_report_showmin'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradepointmax . "' where name = 'gradepointmax'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradepointdefault . "' where name = 'gradepointdefault'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_minmaxtouse . "' where name = 'grade_minmaxtouse'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_mygrades_report . "' where name = 'grade_mygrades_report'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->recovergradesdefault . "' where name = 'recovergradesdefault'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradereport_mygradeurl . "' where name = 'gradereport_mygradeurl'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_hiddenasdate . "' where name = 'grade_hiddenasdate'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradepublishing . "' where name = 'gradepublishing'");
-        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_exportfeedback . "' where name = 'grade_export_exportfeedback'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->bookmoodlerole . "'
+        where name = 'gradebookroles'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_profilereport . "'
+        where name = 'grade_profilereport'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_aggregationposition . "'
+        where name = 'grade_aggregationposition'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_includescalesinaggregation . "'
+        where name = 'grade_includescalesinaggregation'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_displaytype . "'
+        where name = 'grade_export_displaytype'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_decimalpoints . "'
+        where name = 'grade_export_decimalpoints'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_navmethod . "'
+        where name = 'grade_navmethod'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_userprofilefields . "'
+        where name = 'grade_export_userprofilefields'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_customprofilefields . "'
+        where name = 'grade_export_customprofilefields'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradeexport . "'
+        where name = 'gradeexport'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->unlimitedgrades . "'
+        where name = 'unlimitedgrades'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_report_showmin . "'
+        where name = 'grade_report_showmin'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradepointmax . "'
+        where name = 'gradepointmax'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradepointdefault . "'
+        where name = 'gradepointdefault'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_minmaxtouse . "'
+        where name = 'grade_minmaxtouse'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_mygrades_report . "'
+        where name = 'grade_mygrades_report'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->recovergradesdefault . "'
+        where name = 'recovergradesdefault'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradereport_mygradeurl . "'
+        where name = 'gradereport_mygradeurl'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_hiddenasdate . "'
+        where name = 'grade_hiddenasdate'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->gradepublishing . "'
+        where name = 'gradepublishing'");
+        $DB->execute("update {config} set value = '" . $reqglobalgradedata->grade_export_exportfeedback . "'
+        where name = 'grade_export_exportfeedback'");
 
         return '1';
     }
