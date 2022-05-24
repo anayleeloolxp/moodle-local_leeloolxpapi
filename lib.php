@@ -78,7 +78,7 @@ function local_leeloolxpapi_get_leelooinstall() {
         'CURLOPT_HEADER' => false,
         'CURLOPT_POST' => 1,
         'CURLOPT_HTTPHEADER' => array(
-            'LeelooLXPToken: ' . get_config('local_leeloolxpapi')->leelooapitoken . ''
+            'Leeloolxptoken: ' . get_config('local_leeloolxpapi')->leelooapitoken . ''
         )
     );
 
