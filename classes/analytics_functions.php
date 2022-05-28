@@ -23,6 +23,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * Get user course grade.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_users_course_grade($params) {
 
     global $DB;
@@ -96,6 +102,12 @@ function get_users_course_grade($params) {
     return $return;
 }
 
+/**
+ * Get user score.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_users_score($params) {
 
     global $DB;
@@ -131,6 +143,12 @@ function get_users_score($params) {
     return $return;
 }
 
+/**
+ * Get user proflie.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_users_profile($params) {
 
     global $DB;
@@ -159,6 +177,12 @@ function get_users_profile($params) {
     return $return;
 }
 
+/**
+ * Get total questions of quiz.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_total_questions_quiz($params) {
 
     global $DB;
@@ -201,6 +225,12 @@ function get_total_questions_quiz($params) {
     return $return;
 }
 
+/**
+ * Get quiz close date.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_quiz_close_date($params) {
 
     global $DB;
@@ -237,6 +267,12 @@ function get_quiz_close_date($params) {
     return $return;
 }
 
+/**
+ * Get total questions attempted.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_total_questions_attempted($params) {
 
     global $DB;
@@ -282,6 +318,12 @@ function get_total_questions_attempted($params) {
     return $return;
 }
 
+/**
+ * Get total number of attempts.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_number_of_attempts($params) {
 
     global $DB;
@@ -371,6 +413,12 @@ function get_number_of_attempts($params) {
     return $return;
 }
 
+/**
+ * Get first filename.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_file_name_first_submission($params) {
 
     global $DB;
@@ -407,6 +455,12 @@ function get_file_name_first_submission($params) {
     return $return;
 }
 
+/**
+ * Get last file name.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_file_name_last_submission($params) {
 
     global $DB;
@@ -443,6 +497,12 @@ function get_file_name_last_submission($params) {
     return $return;
 }
 
+/**
+ * Get user moodle idnumber.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_user_moodle_idnumber($params) {
 
     global $DB;
@@ -467,6 +527,12 @@ function get_user_moodle_idnumber($params) {
     return $return;
 }
 
+/**
+ * Get wiki activity percent.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_wiki_activity_percent($params) {
 
     global $DB;
@@ -507,6 +573,12 @@ function get_wiki_activity_percent($params) {
     return $return;
 }
 
+/**
+ * Get completion status.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_completion_status($params) {
 
     global $DB;
@@ -624,6 +696,13 @@ function get_completion_status($params) {
 
     return $return;
 }
+
+/**
+ * Get user activity feedback.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_user_activitiy_feedback($params) {
 
     global $DB;
@@ -657,6 +736,13 @@ function get_user_activitiy_feedback($params) {
 
     return $return;
 }
+
+/**
+ * Get all data in sql.
+ *
+ * @param array $params params
+ * @return array $data data
+ */
 function get_all_data($params) {
 
     global $DB, $CFG;
