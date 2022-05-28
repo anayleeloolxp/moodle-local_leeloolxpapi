@@ -50,9 +50,6 @@ class local_leeloolxpapi_external extends external_api {
      * Sync course from Leeloo to Moodle
      *
      * @param string $reqcoursedata reqcoursedata
-     * @param string $reqcategoriesdata reqcategoriesdata
-     * @param string $reqgradedata reqgradedata
-     *
      * @return string welcome message
      */
     public static function course_visibility($reqcoursedata = '') {
