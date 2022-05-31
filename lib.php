@@ -99,105 +99,116 @@ function local_leeloolxpapi_before_footer() {
     global $PAGE;
     global $CFG;
     global $DB;
-    $useremail = $USER->email;
 
-    if (
-        $PAGE->pagetype == 'admin-setting-gradessettings' ||
-        $PAGE->pagetype == 'admin-setting-gradecategorysettings' ||
-        $PAGE->pagetype == 'admin-setting-gradeitemsettings' ||
-        $PAGE->pagetype == 'admin-grade-edit-scale-edit' ||
-        $PAGE->pagetype == 'grade-edit-scale-edit' ||
-        $PAGE->pagetype == 'admin-grade-edit-letter-index' ||
-        $PAGE->pagetype == 'grade-edit-letter-index' ||
-        $PAGE->pagetype == 'admin-setting-gradereportgrader' ||
-        $PAGE->pagetype == 'admin-setting-gradereporthistory' ||
-        $PAGE->pagetype == 'admin-setting-gradereportoverview' ||
-        $PAGE->pagetype == 'admin-setting-gradereportuser' ||
-        $PAGE->pagetype == 'grade-edit-settings-index' ||
-        $PAGE->pagetype == 'grade-report-grader-preferences' ||
-        $PAGE->pagetype == 'admin-grade-edit-scale-index' ||
-        $PAGE->pagetype == 'grade-edit-scale-index' ||
-        $PAGE->pagetype == 'grade-edit-tree-index' ||
-        $PAGE->pagetype == 'grade-edit-tree-category' ||
-        $PAGE->pagetype == 'mod-workshop-submission' ||
-        $PAGE->pagetype == 'course-togglecompletion'
-    ) {
-        if ($CFG->dbtype == 'mysqli') {
-            $tablecat = $CFG->prefix . 'scale';
-            $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES
-            WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
-            $autoinc = $DB->get_record_sql($sql);
-            $autoincrement = $autoinc->auto_increment;
+    if (isset($USER->email) && isset($USER->email) != '') {
+        $useremail = $USER->email;
 
-            $tablecat = $CFG->prefix . 'course_completions';
-            $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES
+        if (
+            $PAGE->pagetype == 'admin-setting-gradessettings' ||
+            $PAGE->pagetype == 'admin-setting-gradecategorysettings' ||
+            $PAGE->pagetype == 'admin-setting-gradeitemsettings' ||
+            $PAGE->pagetype == 'admin-grade-edit-scale-edit' ||
+            $PAGE->pagetype == 'grade-edit-scale-edit' ||
+            $PAGE->pagetype == 'admin-grade-edit-letter-index' ||
+            $PAGE->pagetype == 'grade-edit-letter-index' ||
+            $PAGE->pagetype == 'admin-setting-gradereportgrader' ||
+            $PAGE->pagetype == 'admin-setting-gradereporthistory' ||
+            $PAGE->pagetype == 'admin-setting-gradereportoverview' ||
+            $PAGE->pagetype == 'admin-setting-gradereportuser' ||
+            $PAGE->pagetype == 'grade-edit-settings-index' ||
+            $PAGE->pagetype == 'grade-report-grader-preferences' ||
+            $PAGE->pagetype == 'admin-grade-edit-scale-index' ||
+            $PAGE->pagetype == 'grade-edit-scale-index' ||
+            $PAGE->pagetype == 'grade-edit-tree-index' ||
+            $PAGE->pagetype == 'grade-edit-tree-category' ||
+            $PAGE->pagetype == 'mod-workshop-submission' ||
+            $PAGE->pagetype == 'course-togglecompletion'
+        ) {
+            if ($CFG->dbtype == 'mysqli') {
+                $tablecat = $CFG->prefix . 'scale';
+                $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES
             WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
-            $autoinc = $DB->get_record_sql($sql);
-            $autoincrementcoursecompletions = $autoinc->auto_increment;
-        } else {
-            if (
-                $PAGE->pagetype == 'course-togglecompletion'
-            ) {
-                $autoincrement = 55290;
+                $autoinc = $DB->get_record_sql($sql);
+                $autoincrement = $autoinc->auto_increment;
 
                 $tablecat = $CFG->prefix . 'course_completions';
-                $sql = "SELECT nextval(pg_get_serial_sequence('$tablecat', 'id')) auto_increment;";
+                $sql = " SELECT AUTO_INCREMENT FROM information_schema.TABLES
+            WHERE TABLE_SCHEMA = '$CFG->dbname' AND TABLE_NAME = '$tablecat' ";
                 $autoinc = $DB->get_record_sql($sql);
-                $autoincrementcoursecompletionsless = $autoinc->auto_increment;
-
-                $autoincrementcoursecompletions = $autoincrementcoursecompletionsless + 1;
-            } else if (
-                $PAGE->pagetype == 'admin-grade-edit-scale-edit' ||
-                $PAGE->pagetype == 'grade-edit-scale-edit'
-            ) {
-                $tablecat = $CFG->prefix . 'scale';
-                $sql = "SELECT nextval(pg_get_serial_sequence('$tablecat', 'id')) auto_increment;";
-                $autoinc = $DB->get_record_sql($sql);
-                $autoincrementless = $autoinc->auto_increment;
-                $autoincrement = $autoincrementless + 1;
-
-                $autoincrementcoursecompletions = 55290;
+                $autoincrementcoursecompletions = $autoinc->auto_increment;
             } else {
-                $autoincrement = 55290;
-                $autoincrementcoursecompletions = 55290;
+                if (
+                    $PAGE->pagetype == 'course-togglecompletion'
+                ) {
+                    $autoincrement = 55290;
+
+                    $tablecat = $CFG->prefix . 'course_completions';
+                    $sql = "SELECT nextval(pg_get_serial_sequence('$tablecat', 'id')) auto_increment;";
+                    $autoinc = $DB->get_record_sql($sql);
+                    $autoincrementcoursecompletionsless = $autoinc->auto_increment;
+
+                    $autoincrementcoursecompletions = $autoincrementcoursecompletionsless + 1;
+                } else if (
+                    $PAGE->pagetype == 'admin-grade-edit-scale-edit' ||
+                    $PAGE->pagetype == 'grade-edit-scale-edit'
+                ) {
+                    $tablecat = $CFG->prefix . 'scale';
+                    $sql = "SELECT nextval(pg_get_serial_sequence('$tablecat', 'id')) auto_increment;";
+                    $autoinc = $DB->get_record_sql($sql);
+                    $autoincrementless = $autoinc->auto_increment;
+                    $autoincrement = $autoincrementless + 1;
+
+                    $autoincrementcoursecompletions = 55290;
+                } else {
+                    $autoincrement = 55290;
+                    $autoincrementcoursecompletions = 55290;
+                }
             }
-        }
 
-        $modulerecords = $DB->get_record_sql("SELECT MAX(id) max_id FROM {scale}");
-        if (!empty($modulerecords)) {
-            $scalemaxid = $modulerecords->max_id;
-        } else {
-            $scalemaxid = 0;
-        }
-
-        $workshopgardearsyncid = 0;
-
-        if ($PAGE->pagetype == 'mod-workshop-submission') {
-            $idid = $_REQUEST['id'];
-
-            $maindata = $DB->get_record_sql("SELECT wg.id FROM {workshop_grades}
-
-            wg JOIN {workshop_assessments} wa  ON wa.id = wg.assessmentid
-
-            WHERE wa.submissionid = ?", [$idid]);
-
-            if (!empty($maindata) && !empty($maindata->id)) {
-                $workshopgardearsyncid = $maindata->id;
+            $modulerecords = $DB->get_record_sql("SELECT MAX(id) max_id FROM {scale}");
+            if (!empty($modulerecords)) {
+                $scalemaxid = $modulerecords->max_id;
+            } else {
+                $scalemaxid = 0;
             }
+
+            $workshopgardearsyncid = 0;
+
+            if ($PAGE->pagetype == 'mod-workshop-submission') {
+                $idid = $_REQUEST['id'];
+
+                $maindata = $DB->get_record_sql(
+                    "SELECT
+                        wg.id
+                    FROM {workshop_grades} wg
+                    JOIN {workshop_assessments} wa
+                        ON wa.id = wg.assessmentid
+                    WHERE wa.submissionid = ?",
+                    [$idid]
+                );
+
+                if (!empty($maindata) && !empty($maindata->id)) {
+                    $workshopgardearsyncid = $maindata->id;
+                }
+            }
+
+            $PAGE->requires->js(new moodle_url('/local/leeloolxpapi/js/gradesync.js'));
+
+            echo '<input type="hidden" id="local_leeloolxpapi_workshopgardearsyncid" value="' .
+                base64_encode($workshopgardearsyncid) . '"/>';
+
+            echo '<input type="hidden" id="local_leeloolxpapi_teamniourl" value="' . base64_encode($teamniourl) . '"/>';
+
+            echo '<input type="hidden" id="local_leeloolxpapi_email" value="' . base64_encode($useremail) . '"/>';
+
+            echo '<input type="hidden" id="local_leeloolxpapi_auto_increment_course_completions" value="' .
+                base64_encode($autoincrementcoursecompletions) . '"/>';
+
+            echo '<input type="hidden" id="local_leeloolxpapi_scale_max_id" value="' . base64_encode($scalemaxid) . '"/>';
+
+            echo '<input type="hidden" id="local_leeloolxpapi_auto_increment" value="' . base64_encode($autoincrement) . '"/>';
+
+            echo '<input type="hidden" id="local_leeloolxpapi_course_id" value="' . base64_encode($PAGE->course->id) . '"/>';
         }
-
-        $PAGE->requires->js(new moodle_url('/local/leeloolxpapi/js/gradesync.js'));
-
-        echo '<input type="hidden" id="local_leeloolxpapi_workshopgardearsyncid"
-        value="' . base64_encode($workshopgardearsyncid) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_teamniourl"
-        value="' . base64_encode($teamniourl) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_email"
-        value="' . base64_encode($useremail) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_auto_increment_course_completions"
-        value="' . base64_encode($autoincrementcoursecompletions) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_scale_max_id" value="' . base64_encode($scalemaxid) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_auto_increment" value="' . base64_encode($autoincrement) . '"/>';
-        echo '<input type="hidden" id="local_leeloolxpapi_course_id" value="' . base64_encode($PAGE->course->id) . '"/>';
     }
 }
