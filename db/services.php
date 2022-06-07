@@ -295,17 +295,27 @@ $functions = array(
     ),
 
     'local_leeloolxpapi_course_visibility' => array(
-
         'classname' => 'local_leeloolxpapi_external',
-
         'methodname' => 'course_visibility',
-
         'classpath' => 'local/leeloolxpapi/externallib.php',
-
         'description' => 'sync course visibility',
-
         'type' => 'write',
+    ),
 
+    'local_leeloolxpapi_course_enroll' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'course_enroll',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'enroll course after purchase',
+        'type' => 'write',
+    ),
+
+    'local_leeloolxpapi_ar_enroll' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'ar_enroll',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'enroll ar after payment',
+        'type' => 'write',
     ),
 );
 
@@ -348,6 +358,8 @@ $services = array(
             'local_leeloolxpapi_global_grade_settings',
             'local_leeloolxpapi_get_analytics_data',
             'local_leeloolxpapi_course_visibility',
+            'local_leeloolxpapi_course_enroll',
+            'local_leeloolxpapi_ar_enroll',
         ),
         'restrictedusers' => 0,
         'enabled' => 1,

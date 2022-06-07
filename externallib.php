@@ -3122,4 +3122,161 @@ class local_leeloolxpapi_external extends external_api {
     public static function get_analytics_data_returns() {
         return new external_value(PARAM_RAW, 'Analytics data');
     }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function course_enroll_parameters() {
+
+        return new external_function_parameters(
+            array(
+                'product_id' => new external_value(PARAM_RAW, 'Product Id', VALUE_DEFAULT, null),
+                'username' => new external_value(PARAM_RAW, 'Username', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Enroll course on payment.
+     *
+     * @param string $reqproductid reqproductid
+     * @param string $requsername requsername
+     * @return string welcome message
+     */
+    public static function course_enroll($reqproductid = '', $requsername = '') {
+
+        global $DB;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::course_enroll_parameters(),
+            array(
+                'product_id' => $reqproductid,
+                'username' => $requsername,
+            )
+        );
+
+        $productid = $reqproductid;
+        $username = $requsername;
+
+        $courseidarr = $DB->get_record_sql("SELECT courseid FROM {tool_leeloo_courses_sync} Where productid = ?", [$productid]);
+        $courseid = $courseidarr->courseid;
+
+        $useridarr = $DB->get_record_sql("SELECT id FROM {user} Where username = ?", [$username]);
+        $userid = $useridarr->id;
+
+        if ($courseid && $userid) {
+
+            $enrolled = 1;
+
+            $dbuser = $DB->get_record('user', array('id' => $userid, 'deleted' => 0), '*', MUST_EXIST);
+            $course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
+            $context = context_course::instance($course->id);
+            if (!is_enrolled($context, $dbuser)) {
+                $enrol = enrol_get_plugin('manual');
+                if ($enrol === null) {
+                    $enrolled = 0;
+                }
+                $instances = enrol_get_instances($course->id, true);
+                $manualinstance = null;
+                foreach ($instances as $instance) {
+                    if ($instance->enrol == 'manual') {
+                        $manualinstance = $instance;
+                        break;
+                    }
+                }
+                if ($manualinstance == null) {
+                    $instanceid = $enrol->add_default_instance($course);
+                    if ($instanceid === null) {
+                        $instanceid = $enrol->add_instance($course);
+                    }
+                    $manualinstance = $DB->get_record('enrol', array('id' => $instanceid));
+                }
+
+                $DB->execute(
+                    "INSERT INTO {user_enrolments} (status, enrolid, userid) VALUES (?, ?, ?)",
+                    [0, $manualinstance->id, $userid]
+                );
+            }
+        }
+
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function course_enroll_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function ar_enroll_parameters() {
+        return new external_function_parameters(
+            array(
+                'product_id' => new external_value(PARAM_RAW, 'Product Id', VALUE_DEFAULT, null),
+                'username' => new external_value(PARAM_RAW, 'Username', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Enroll AR on payment.
+     *
+     * @param string $reqproductid reqproductid
+     * @param string $requsername requsername
+     * @return string welcome message
+     */
+    public static function ar_enroll($reqproductid = '', $requsername = '') {
+
+        global $DB;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::ar_enroll_parameters(),
+            array(
+                'product_id' => $reqproductid,
+                'username' => $requsername,
+            )
+        );
+
+        $productid = $reqproductid;
+        $username = $requsername;
+
+        $courseidarr = $DB->get_record_sql(
+            "SELECT courseid FROM {tool_leeloo_ar_sync} Where productid = ?",
+            [$productid]
+        );
+        $courseid = $courseidarr->courseid;
+
+        $useridarr = $DB->get_record_sql(
+            "SELECT id FROM {user} Where username = ?",
+            [$username]
+        );
+
+        $userid = $useridarr->id;
+
+        if ($courseid && $userid) {
+            $DB->execute(
+                "INSERT INTO {tool_leeloo_ar_sync_restrict} (arid,userid, productid) VALUES (?, ? , ?)",
+                [$courseid, $userid, $productid]
+            );
+            $enrolled = 1;
+        }
+
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function ar_enroll_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
 }
