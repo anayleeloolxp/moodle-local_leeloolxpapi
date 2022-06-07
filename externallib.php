@@ -3194,6 +3194,15 @@ class local_leeloolxpapi_external extends external_api {
                     $manualinstance = $DB->get_record('enrol', array('id' => $instanceid));
                 }
 
+                $contextdata = $DB->get_record('context', array('contextlevel' => 50, 'instanceid' => $course->id));
+
+                if ($contextdata->id) {
+                    $DB->execute(
+                        "INSERT INTO {role_assignments} (roleid, contextid, userid, modifierid) VALUES (?, ?, ?, ?)",
+                        [5, $contextdata->id, $userid, 2]
+                    );
+                }
+
                 $DB->execute(
                     "INSERT INTO {user_enrolments} (status, enrolid, userid) VALUES (?, ?, ?)",
                     [0, $manualinstance->id, $userid]
