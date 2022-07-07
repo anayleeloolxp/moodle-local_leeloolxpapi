@@ -310,6 +310,11 @@ class local_leeloolxpapi_external extends external_api {
         if (isset($ardata->m_completion)) {
             $mcompletion = $ardata->m_completion;
             $data['completion'] = $mcompletion;
+            if ($mcompletion == 2) {
+                $data['completionview'] = 1;
+            } else {
+                $data['completionview'] = 0;
+            }
         }
 
         if (isset($ardata->m_completionexpected)) {
