@@ -297,6 +297,46 @@ class local_leeloolxpapi_external extends external_api {
             $moddata['intro'] = $taskdescription;
         }
 
+        if (isset($ardata->content)) {
+            $content = $ardata->content;
+            $moddata['content'] = $content;
+        }
+
+        if (isset($ardata->vimeo_video_id)) {
+            $vimeovideoid = $ardata->vimeo_video_id;
+            $moddata['vimeo_video_id'] = $vimeovideoid;
+        }
+
+        if (isset($ardata->quiztype)) {
+            $quiztype = $ardata->quiztype;
+            $moddata['quiztype'] = $quiztype;
+        }
+
+        if (isset($ardata->timeopen)) {
+            $timeopen = $ardata->timeopen;
+            $moddata['timeopen'] = $timeopen;
+        }
+
+        if (isset($ardata->timeclose)) {
+            $timeclose = $ardata->timeclose;
+            $moddata['timeclose'] = $timeclose;
+        }
+
+        /* if (isset($ardata->quiztype)) {
+            $quiztype = $ardata->quiztype;
+            $moddata['quiztype'] = $quiztype;
+        }
+
+        if (isset($ardata->quiztype)) {
+            $quiztype = $ardata->quiztype;
+            $moddata['quiztype'] = $quiztype;
+        }
+
+        if (isset($ardata->quiztype)) {
+            $quiztype = $ardata->quiztype;
+            $moddata['quiztype'] = $quiztype;
+        } */
+
         if (isset($ardata->m_showdescription)) {
             $mshowdescription = $ardata->m_showdescription;
             $data['showdescription'] = $mshowdescription;
