@@ -379,10 +379,12 @@ class local_leeloolxpapi_external extends external_api {
 
         if (isset($ardata->m_groupmode)) {
             $mgroupmode = $ardata->m_groupmode;
+            $data['groupmode'] = $mgroupmode;
         }
 
         if (isset($ardata->m_groupingid)) {
             $mgroupingid = $ardata->m_groupingid;
+            $data['groupingid'] = $mgroupingid;
         }
 
         $activityid = $ardata->activity_id;
