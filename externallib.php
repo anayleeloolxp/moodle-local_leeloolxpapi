@@ -322,21 +322,6 @@ class local_leeloolxpapi_external extends external_api {
             $moddata['timeclose'] = $timeclose;
         }
 
-        /* if (isset($ardata->quiztype)) {
-            $quiztype = $ardata->quiztype;
-            $moddata['quiztype'] = $quiztype;
-        }
-
-        if (isset($ardata->quiztype)) {
-            $quiztype = $ardata->quiztype;
-            $moddata['quiztype'] = $quiztype;
-        }
-
-        if (isset($ardata->quiztype)) {
-            $quiztype = $ardata->quiztype;
-            $moddata['quiztype'] = $quiztype;
-        } */
-
         if (isset($ardata->m_showdescription)) {
             $mshowdescription = $ardata->m_showdescription;
             $data['showdescription'] = $mshowdescription;
@@ -350,11 +335,29 @@ class local_leeloolxpapi_external extends external_api {
         if (isset($ardata->m_completion)) {
             $mcompletion = $ardata->m_completion;
             $data['completion'] = $mcompletion;
-            if ($mcompletion == 2) {
+            /* if ($mcompletion == 0) {
+                $data['completion'] = $mcompletion;
+            } else if ($mcompletion == 1) {
+                $data['completion'] = $mcompletion;
+            } else if ($mcompletion == 2) {
+                $data['completion'] = 2;
                 $data['completionview'] = 1;
-            } else {
-                $data['completionview'] = 0;
-            }
+                $data['completiongradeitemnumber'] = null;
+            } else if ($mcompletion == 3) {
+                $data['completion'] = 2;
+                $data['completiongradeitemnumber'] = 0;
+            } else if ($mcompletion == 4) {
+                $data['completion'] = 2;
+                $data['completiongradeitemnumber'] = 0;
+            } else if ($mcompletion == 5) {
+                $data['completion'] = 2;
+                $data['completiongradeitemnumber'] = 0;
+            } */
+        }
+
+        if (isset($ardata->m_completiongradeitemnumber)) {
+            $completiongradeitemnumber = $ardata->m_completiongradeitemnumber;
+            $data['completiongradeitemnumber'] = $completiongradeitemnumber;
         }
 
         if (isset($ardata->m_completionexpected)) {
@@ -414,6 +417,15 @@ class local_leeloolxpapi_external extends external_api {
 
             $modarr = $DB->get_record_sql("SELECT name FROM {modules} where id = ?", [$module]);
             $modulename = $modarr->name;
+
+            if (isset($ardata->completionattemptsexhausted) && $modulename == 'quiz') {
+                $mcompletionattemptsexhausted = $ardata->completionattemptsexhausted;
+                $moddata['completionattemptsexhausted'] = $mcompletionattemptsexhausted;
+            }
+            if (isset($ardata->completionpass) && $modulename == 'quiz') {
+                $completionpass = $ardata->completionpass;
+                $moddata['completionpass'] = $completionpass;
+            }
 
             $countupdatesmd = count($moddata);
 
