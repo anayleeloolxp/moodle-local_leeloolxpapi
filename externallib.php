@@ -404,6 +404,14 @@ class local_leeloolxpapi_external extends external_api {
             $module = $ararr->module;
             $modinstance = $ararr->instance;
 
+            if (isset($ardata->gradepass)) {
+                $gradepass = $ardata->gradepass;
+                $DB->execute(
+                    "update {grade_items} set gradepass = ? WHERE iteminstance = ? AND itemmodule = ?",
+                    [$gradepass, $modinstance, 'quiz']
+                );
+            }
+
             $modarr = $DB->get_record_sql("SELECT name FROM {modules} where id = ?", [$module]);
             $modulename = $modarr->name;
 
