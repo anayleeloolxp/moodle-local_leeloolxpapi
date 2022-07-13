@@ -335,24 +335,6 @@ class local_leeloolxpapi_external extends external_api {
         if (isset($ardata->m_completion)) {
             $mcompletion = $ardata->m_completion;
             $data['completion'] = $mcompletion;
-            /* if ($mcompletion == 0) {
-                $data['completion'] = $mcompletion;
-            } else if ($mcompletion == 1) {
-                $data['completion'] = $mcompletion;
-            } else if ($mcompletion == 2) {
-                $data['completion'] = 2;
-                $data['completionview'] = 1;
-                $data['completiongradeitemnumber'] = null;
-            } else if ($mcompletion == 3) {
-                $data['completion'] = 2;
-                $data['completiongradeitemnumber'] = 0;
-            } else if ($mcompletion == 4) {
-                $data['completion'] = 2;
-                $data['completiongradeitemnumber'] = 0;
-            } else if ($mcompletion == 5) {
-                $data['completion'] = 2;
-                $data['completiongradeitemnumber'] = 0;
-            } */
         }
 
         if (isset($ardata->m_completiongradeitemnumber)) {
@@ -392,6 +374,8 @@ class local_leeloolxpapi_external extends external_api {
 
         $activityid = $ardata->activity_id;
 
+        $action = $ardata->action;
+
         $countupdatescm = count($data);
 
         $data['id'] = $activityid;
@@ -399,161 +383,172 @@ class local_leeloolxpapi_external extends external_api {
         $data = (object) $data;
 
         if ($activityid != '') {
-            if ($countupdatescm > 0) {
+
+            if ($action == 'edit') {
+                if ($countupdatescm > 0) {
+                    $DB->update_record('course_modules', $data);
+                }
+
+                $ararr = $DB->get_record_sql("SELECT module,instance FROM {course_modules} where id = ?", [$activityid]);
+                $module = $ararr->module;
+                $modinstance = $ararr->instance;
+
+                if (isset($ardata->gradepass)) {
+                    $gradepass = $ardata->gradepass;
+                    $DB->execute(
+                        "update {grade_items} set gradepass = ? WHERE iteminstance = ? AND itemmodule = ?",
+                        [$gradepass, $modinstance, 'quiz']
+                    );
+                }
+
+                $modarr = $DB->get_record_sql("SELECT name FROM {modules} where id = ?", [$module]);
+                $modulename = $modarr->name;
+
+                if (isset($ardata->completionattemptsexhausted) && $modulename == 'quiz') {
+                    $mcompletionattemptsexhausted = $ardata->completionattemptsexhausted;
+                    $moddata['completionattemptsexhausted'] = $mcompletionattemptsexhausted;
+                }
+                if (isset($ardata->completionpass) && $modulename == 'quiz') {
+                    $completionpass = $ardata->completionpass;
+                    $moddata['completionpass'] = $completionpass;
+                }
+
+                $countupdatesmd = count($moddata);
+
+                $moddata['id'] = $modinstance;
+
+                $moddata = (object) $moddata;
+
+                if ($countupdatesmd > 0) {
+                    $DB->update_record($modulename, $moddata);
+                }
+
+                if (!empty($email)) {
+                    $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
+                }
+
+                if (!empty($userdata)) {
+                    $userid = $userdata->id;
+                    $tagsreturnarr = [];
+
+                    // Var tags_data.
+                    if (isset($reqtagdata)) {
+                        $tagsdataarrobj = (object) json_decode($reqtagdata, true);
+
+                        if (!empty($tagsdataarrobj)) {
+                            foreach ($tagsdataarrobj as $key => $tagsdata) {
+                                $istagexist = $DB->get_record('tag', ['name' => $tagsdata['name']], 'id');
+
+                                $leelootagid = $tagsdata['id'];
+
+                                if (empty($istagexist)) {
+                                    unset($tagsdata['moodleid']);
+                                    unset($tagsdata['id']);
+                                    unset($tagsdata['task_id']);
+
+                                    $tagsdata['tagcollid'] = 1;
+                                    $tagsdata['userid'] = $userid;
+
+                                    $returnid = $DB->insert_record('tag', $tagsdata);
+                                    array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $returnid]);
+                                } else {
+                                    array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $istagexist->id]);
+                                }
+                            }
+                        }
+                    }
+
+                    if (!empty($tagsreturnarr)) {
+                        $tagidsnotdelete = '';
+                        $j = 0;
+
+                        foreach ($tagsreturnarr as $key => $value) {
+                            if ($j == 0) {
+                                $tagidsnotdelete .= $value['moodleid'];
+                            } else {
+                                $tagidsnotdelete .= ',' . $value['moodleid'];
+                            }
+                            $j++;
+
+                            $taginstanceexist = $DB->get_record(
+                                'tag_instance',
+                                ['tagid' => $value['moodleid'], 'itemid' => $activityid],
+                                'id'
+                            );
+
+                            if (empty($taginstanceexist)) {
+                                $contextdata = $DB->get_record('context', ['instanceid' => $activityid], 'id');
+
+                                if (!empty($contextdata)) {
+                                    $contextid = $contextdata->id;
+                                } else {
+                                    $contextid = 0;
+                                }
+
+                                $taginstancedata = [
+                                    'tagid' => $value['moodleid'],
+                                    'component' => 'core',
+                                    'itemtype' => 'course_modules',
+                                    'itemid' => $activityid,
+                                    'contextid' => $contextid,
+                                    'tiuserid' => '0',
+                                    'ordering' => '1',
+                                    'timecreated' => strtotime(date('Y-m-d H:i:s')),
+                                    'timemodified' => strtotime(date('Y-m-d H:i:s')),
+                                ];
+
+                                $DB->insert_record('tag_instance', $taginstancedata);
+                            }
+                        }
+
+                        $sql = "SELECT tagid FROM {tag_instance} WHERE itemid = ?";
+                        $tagsfordelete = $DB->get_records_sql($sql, [$activityid]);
+
+                        $DB->execute("DELETE FROM {tag_instance} where itemid = ?
+                        AND tagid NOT IN (?) ", [$activityid, $tagidsnotdelete]);
+
+                        if (!empty($tagsfordelete)) {
+                            $i = 0;
+
+                            foreach ($tagsfordelete as $key => $value) {
+                                $sql = "SELECT tagid FROM {tag_instance} WHERE tagid = ?";
+                                $istagexistt = $DB->get_record_sql($sql, [$value->tagid]);
+
+                                if (empty($istagexistt)) {
+                                    $DB->delete_records('tag', ['id' => $value->tagid, 'isstandard' => '0']);
+                                }
+                            }
+                        }
+                    } else {
+
+                        $sql = "SELECT tagid FROM {tag_instance} WHERE itemid = ?";
+                        $tagsfordelete = $DB->get_records_sql($sql, [$activityid]);
+
+                        $DB->delete_records('tag_instance', ['itemid' => $activityid]);
+
+                        if (!empty($tagsfordelete)) {
+                            $i = 0;
+
+                            foreach ($tagsfordelete as $key => $value) {
+                                $sql = "SELECT tagid FROM {tag_instance} WHERE tagid = ?";
+                                $istagexistt = $DB->get_record_sql($sql, [$value->tagid]);
+
+                                if (empty($istagexistt)) {
+                                    $DB->delete_records('tag', ['id' => $value->tagid, 'isstandard' => '0']);
+                                }
+                            }
+                        }
+                    }
+                } // $userdata end
+            } else if ($action == 'delete') {
+                $data = array();
+                $data['id'] = $activityid;
+                $data['deletioninprogress'] = 1;
+
+                $data = (object) $data;
+
                 $DB->update_record('course_modules', $data);
             }
-
-            $ararr = $DB->get_record_sql("SELECT module,instance FROM {course_modules} where id = ?", [$activityid]);
-            $module = $ararr->module;
-            $modinstance = $ararr->instance;
-
-            if (isset($ardata->gradepass)) {
-                $gradepass = $ardata->gradepass;
-                $DB->execute(
-                    "update {grade_items} set gradepass = ? WHERE iteminstance = ? AND itemmodule = ?",
-                    [$gradepass, $modinstance, 'quiz']
-                );
-            }
-
-            $modarr = $DB->get_record_sql("SELECT name FROM {modules} where id = ?", [$module]);
-            $modulename = $modarr->name;
-
-            if (isset($ardata->completionattemptsexhausted) && $modulename == 'quiz') {
-                $mcompletionattemptsexhausted = $ardata->completionattemptsexhausted;
-                $moddata['completionattemptsexhausted'] = $mcompletionattemptsexhausted;
-            }
-            if (isset($ardata->completionpass) && $modulename == 'quiz') {
-                $completionpass = $ardata->completionpass;
-                $moddata['completionpass'] = $completionpass;
-            }
-
-            $countupdatesmd = count($moddata);
-
-            $moddata['id'] = $modinstance;
-
-            $moddata = (object) $moddata;
-
-            if ($countupdatesmd > 0) {
-                $DB->update_record($modulename, $moddata);
-            }
-
-            if (!empty($email)) {
-                $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
-            }
-
-            if (!empty($userdata)) {
-                $userid = $userdata->id;
-                $tagsreturnarr = [];
-
-                // Var tags_data.
-                if (isset($reqtagdata)) {
-                    $tagsdataarrobj = (object) json_decode($reqtagdata, true);
-
-                    if (!empty($tagsdataarrobj)) {
-                        foreach ($tagsdataarrobj as $key => $tagsdata) {
-                            $istagexist = $DB->get_record('tag', ['name' => $tagsdata['name']], 'id');
-
-                            $leelootagid = $tagsdata['id'];
-
-                            if (empty($istagexist)) {
-                                unset($tagsdata['moodleid']);
-                                unset($tagsdata['id']);
-                                unset($tagsdata['task_id']);
-
-                                $tagsdata['tagcollid'] = 1;
-                                $tagsdata['userid'] = $userid;
-
-                                $returnid = $DB->insert_record('tag', $tagsdata);
-                                array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $returnid]);
-                            } else {
-                                array_push($tagsreturnarr, ['tag_id' => $leelootagid, 'moodleid' => $istagexist->id]);
-                            }
-                        }
-                    }
-                }
-
-                if (!empty($tagsreturnarr)) {
-                    $tagidsnotdelete = '';
-                    $j = 0;
-
-                    foreach ($tagsreturnarr as $key => $value) {
-                        if ($j == 0) {
-                            $tagidsnotdelete .= $value['moodleid'];
-                        } else {
-                            $tagidsnotdelete .= ',' . $value['moodleid'];
-                        }
-                        $j++;
-
-                        $taginstanceexist = $DB->get_record(
-                            'tag_instance',
-                            ['tagid' => $value['moodleid'], 'itemid' => $activityid],
-                            'id'
-                        );
-
-                        if (empty($taginstanceexist)) {
-                            $contextdata = $DB->get_record('context', ['instanceid' => $activityid], 'id');
-
-                            if (!empty($contextdata)) {
-                                $contextid = $contextdata->id;
-                            } else {
-                                $contextid = 0;
-                            }
-
-                            $taginstancedata = [
-                                'tagid' => $value['moodleid'],
-                                'component' => 'core',
-                                'itemtype' => 'course_modules',
-                                'itemid' => $activityid,
-                                'contextid' => $contextid,
-                                'tiuserid' => '0',
-                                'ordering' => '1',
-                                'timecreated' => strtotime(date('Y-m-d H:i:s')),
-                                'timemodified' => strtotime(date('Y-m-d H:i:s')),
-                            ];
-
-                            $DB->insert_record('tag_instance', $taginstancedata);
-                        }
-                    }
-
-                    $sql = "SELECT tagid FROM {tag_instance} WHERE itemid = ?";
-                    $tagsfordelete = $DB->get_records_sql($sql, [$activityid]);
-
-                    $DB->execute("DELETE FROM {tag_instance} where itemid = ?
-                    AND tagid NOT IN (?) ", [$activityid, $tagidsnotdelete]);
-
-                    if (!empty($tagsfordelete)) {
-                        $i = 0;
-
-                        foreach ($tagsfordelete as $key => $value) {
-                            $sql = "SELECT tagid FROM {tag_instance} WHERE tagid = ?";
-                            $istagexistt = $DB->get_record_sql($sql, [$value->tagid]);
-
-                            if (empty($istagexistt)) {
-                                $DB->delete_records('tag', ['id' => $value->tagid, 'isstandard' => '0']);
-                            }
-                        }
-                    }
-                } else {
-
-                    $sql = "SELECT tagid FROM {tag_instance} WHERE itemid = ?";
-                    $tagsfordelete = $DB->get_records_sql($sql, [$activityid]);
-
-                    $DB->delete_records('tag_instance', ['itemid' => $activityid]);
-
-                    if (!empty($tagsfordelete)) {
-                        $i = 0;
-
-                        foreach ($tagsfordelete as $key => $value) {
-                            $sql = "SELECT tagid FROM {tag_instance} WHERE tagid = ?";
-                            $istagexistt = $DB->get_record_sql($sql, [$value->tagid]);
-
-                            if (empty($istagexistt)) {
-                                $DB->delete_records('tag', ['id' => $value->tagid, 'isstandard' => '0']);
-                            }
-                        }
-                    }
-                }
-            } // $userdata end
         }
 
         if (!empty($tagsreturnarr)) {
