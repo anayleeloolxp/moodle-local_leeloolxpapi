@@ -3350,4 +3350,131 @@ class local_leeloolxpapi_external extends external_api {
     public static function ar_enroll_returns() {
         return new external_value(PARAM_TEXT, 'Returns true');
     }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function section_sync_parameters() {
+        return new external_function_parameters(
+            array(
+                'section_data' => new external_value(PARAM_RAW, 'Section Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course section from Leeloo to Moodle
+     *
+     * @param string $reqardata reqardata
+     * @param string $reqemail reqemail
+     *
+     * @return string welcome message
+     */
+    public static function section_sync($reqardata = '', $reqemail = '') {
+
+        global $DB;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::section_sync_parameters(),
+            array(
+                'section_data' => $reqardata,
+                'email' => $reqemail,
+            )
+        );
+
+        $ardata = (object) json_decode($reqardata, true);
+
+        if (isset($reqemail)) {
+            $email = (object) json_decode($reqemail, true);
+        }
+
+        if (isset($ardata->action)) {
+            $courseid = $ardata->course_id;
+            $action = $ardata->action;
+            $sectionname = $ardata->sectionname;
+            $parentsectionid = $ardata->parentsectionid;
+            if ($action == 'addsection') {
+                $coursedata = $DB->get_record('course', ['id' => $courseid]);
+
+                $sectionlast = $DB->get_record_sql(
+                    "SELECT max(section) as lastsection FROM {course_sections} WHERE course = ?",
+                    [$courseid]
+                );
+
+                $lastsection = $sectionlast->lastsection;
+                $newsection = $lastsection + 1;
+
+                $sectiondata = array();
+                $sectiondata['course'] = $courseid;
+                $sectiondata['section'] = $newsection;
+                $sectiondata['name'] = $sectionname;
+                $sectiondata['summaryformat'] = 1;
+                $sectiondata['sequence'] = '';
+                $sectiondata['visible'] = 1;
+                $sectiondata['availability'] = null;
+                $sectiondata['timemodified'] = time();
+
+                $sectiondata = (object) $sectiondata;
+
+                $sectionid = $DB->insert_record('course_sections', $sectiondata);
+
+                if ($coursedata->format == 'flexsections') {
+
+                    $courseformatdata = array();
+                    $courseformatdata['courseid'] = $courseid;
+                    $courseformatdata['format'] = 'flexsections';
+                    $courseformatdata['sectionid'] = $sectionid;
+                    $courseformatdata['name'] = 'collapsed';
+                    $courseformatdata['value'] = 0;
+
+                    $courseformatdata = (object) $courseformatdata;
+
+                    $DB->insert_record('course_format_options', $courseformatdata);
+
+                    $sectioniddata = $DB->get_record('course_sections', ['id' => $parentsectionid]);
+
+                    if ($sectioniddata->section) {
+                        $sectionparent = $sectioniddata->section;
+                    } else {
+                        $sectionparent = 0;
+                    }
+
+                    $courseformatdata = array();
+                    $courseformatdata['courseid'] = $courseid;
+                    $courseformatdata['format'] = 'flexsections';
+                    $courseformatdata['sectionid'] = $sectionid;
+                    $courseformatdata['name'] = 'parent';
+                    $courseformatdata['value'] = $sectionparent;
+
+                    $courseformatdata = (object) $courseformatdata;
+
+                    $DB->insert_record('course_format_options', $courseformatdata);
+
+                    $courseformatdata = array();
+                    $courseformatdata['courseid'] = $courseid;
+                    $courseformatdata['format'] = 'flexsections';
+                    $courseformatdata['sectionid'] = $sectionid;
+                    $courseformatdata['name'] = 'visibleold';
+                    $courseformatdata['value'] = 1;
+
+                    $courseformatdata = (object) $courseformatdata;
+
+                    $DB->insert_record('course_format_options', $courseformatdata);
+                }
+
+                return $sectionid;
+            }
+        }
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function section_sync_returns() {
+        return new external_value(PARAM_TEXT, 'Returns id');
+    }
 }

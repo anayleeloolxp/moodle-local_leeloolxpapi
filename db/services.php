@@ -39,6 +39,13 @@ $functions = array(
         'description' => 'Sync A/R from Leeloo to Moodle.',
         'type' => 'write',
     ),
+    'local_leeloolxpapi_section_sync' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'section_sync',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Sync Section from Leeloo to Moodle.',
+        'type' => 'write',
+    ),
     'local_leeloolxpapi_standard_tag_sync' => array(
         'classname' => 'local_leeloolxpapi_external',
         'methodname' => 'standard_tag_sync',
@@ -325,6 +332,7 @@ $services = array(
         'functions' => array(
             'local_leeloolxpapi_course_sync',
             'local_leeloolxpapi_ar_sync',
+            'local_leeloolxpapi_section_sync',
             'local_leeloolxpapi_standard_tag_sync',
             'local_leeloolxpapi_delete_tag',
             'local_leeloolxpapi_original_tag',
