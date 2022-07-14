@@ -3466,6 +3466,12 @@ class local_leeloolxpapi_external extends external_api {
                 }
 
                 return $sectionid;
+            } else if ($action == 'delete') {
+                $sectionid = $ardata->section_id;
+
+                $DB->delete_records('course_sections', ['id' => $sectionid]);
+                $DB->delete_records('course_format_options', ['sectionid' => $sectionid]);
+                return 1;
             }
         }
     }
