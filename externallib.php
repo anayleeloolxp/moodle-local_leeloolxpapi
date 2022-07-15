@@ -3472,6 +3472,13 @@ class local_leeloolxpapi_external extends external_api {
                 $DB->delete_records('course_sections', ['id' => $sectionid]);
                 $DB->delete_records('course_format_options', ['sectionid' => $sectionid]);
                 return 1;
+            } else if ($action == 'editsection') {
+                $sectionid = $ardata->section_id;
+                $sectionname = $ardata->sectionname;
+                $updatenewdata = ['name' => $sectionname, 'id' => $sectionid];
+                $updatenewdata = (object) $updatenewdata;
+                $DB->update_record('course_sections', $updatenewdata);
+                return 1;
             }
         }
     }
