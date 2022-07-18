@@ -548,6 +548,126 @@ class local_leeloolxpapi_external extends external_api {
                 $data = (object) $data;
 
                 $DB->update_record('course_modules', $data);
+            } else if ($action == 'add') {
+                $courseid = $ardata->course_id;
+                $artype = $ardata->artype;
+                $arname = $ardata->arname;
+                $section = $ardata->sectionid;
+
+                $modulesdata = $DB->get_record('modules', ['name' => $artype]);
+                if ($modulesdata->id) {
+
+                    if ($artype == 'page') {
+                        $sectiondata = array();
+                        $sectiondata['course'] = $courseid;
+                        $sectiondata['name'] = $arname;
+                        $sectiondata['intro'] = '';
+                        $sectiondata['introformat'] = 1;
+                        $sectiondata['content'] = '';
+                        $sectiondata['contentformat'] = 1;
+                        $sectiondata['legacyfiles'] = 0;
+                        $sectiondata['legacyfileslast'] = null;
+                        $sectiondata['display'] = 5;
+                        $sectiondata['displayoptions'] = 'a:3:{s:12:"printheading";s:1:"1";s:10:"printintro";s:1:"0";s:17:"printlastmodified";s:1:"1";}';
+                        $sectiondata['revision'] = 1;
+                        $sectiondata['timemodified'] = time();
+
+                        $sectiondata = (object) $sectiondata;
+
+                        $instance = $DB->insert_record('page', $sectiondata);
+                    } else if ($artype == 'leeloolxpvimeo') {
+                        $sectiondata = array();
+                        $sectiondata['course'] = $courseid;
+                        $sectiondata['name'] = $arname;
+                        $sectiondata['intro'] = '';
+                        $sectiondata['introformat'] = 1;
+                        $sectiondata['vimeo_video_id'] = $ardata->vimeo_video_id;
+                        $sectiondata['vimeo_token'] = '';
+                        $sectiondata['width'] = 640;
+                        $sectiondata['height'] = 320;
+                        $sectiondata['border'] = 0;
+                        $sectiondata['allow'] = '';
+                        $sectiondata['content'] = '';
+                        $sectiondata['contentformat'] = 1;
+                        $sectiondata['legacyfiles'] = 0;
+                        $sectiondata['legacyfileslast'] = null;
+                        $sectiondata['display'] = 5;
+                        $sectiondata['displayoptions'] = 'a:3:{s:12:"printheading";s:1:"1";s:10:"printintro";s:1:"0";s:17:"printlastmodified";s:1:"1";}';
+                        $sectiondata['revision'] = 1;
+                        $sectiondata['timemodified'] = time();
+
+                        $sectiondata = (object) $sectiondata;
+
+                        $instance = $DB->insert_record('page', $sectiondata);
+                    } else if ($artype == 'quiz') {
+                        $sectiondata = array();
+                        $sectiondata['course'] = $courseid;
+                        $sectiondata['name'] = $arname;
+                        $sectiondata['intro'] = '';
+                        $sectiondata['introformat'] = 1;
+                        $sectiondata['timeopen'] = $ardata->vimeo_video_id;
+                        $sectiondata['timeclose'] = '';
+                        $sectiondata['timelimit'] = 0;
+                        $sectiondata['overduehandling'] = 'autosubmit';
+                        $sectiondata['graceperiod'] = 0;
+                        $sectiondata['preferredbehaviour'] = 'deferredfeedback';
+                        $sectiondata['canredoquestions'] = 0;
+                        $sectiondata['attempts'] = 0;
+                        $sectiondata['attemptonlast'] = 0;
+                        $sectiondata['grademethod'] = 1;
+                        $sectiondata['decimalpoints'] = 2;
+                        $sectiondata['questiondecimalpoints'] = '-1';
+                        $sectiondata['reviewattempt'] = 69888;
+                        $sectiondata['reviewcorrectness'] = 0;
+                        $sectiondata['reviewmarks'] = 0;
+                        $sectiondata['reviewspecificfeedback'] = 0;
+                        $sectiondata['reviewgeneralfeedback'] = 0;
+                        $sectiondata['reviewrightanswer'] = 0;
+                        $sectiondata['reviewoverallfeedback'] = 0;
+                        $sectiondata['questionsperpage'] = 1;
+                        $sectiondata['navmethod'] = 'free';
+                        $sectiondata['shuffleanswers'] = 1;
+                        $sectiondata['sumgrades'] = '10.00000';
+                        $sectiondata['grade'] = '10.00000';
+                        $sectiondata['timecreated'] = time();
+                        $sectiondata['timemodified'] = time();
+                        $sectiondata['password'] = '';
+                        $sectiondata['subnet'] = '';
+                        $sectiondata['browsersecurity'] = '-';
+                        $sectiondata['delay1'] = 0;
+                        $sectiondata['delay2'] = 0;
+                        $sectiondata['showuserpicture'] = 0;
+                        $sectiondata['showblocks'] = 0;
+                        $sectiondata['completionattemptsexhausted'] = 0;
+                        $sectiondata['completionpass'] = 0;
+                        $sectiondata['allowofflineattempts'] = 0;
+                        $sectiondata['quiztype'] = $ardata->quiztype;
+
+                        $sectiondata = (object) $sectiondata;
+
+                        $instance = $DB->insert_record('quiz', $sectiondata);
+                    }
+
+                    if ($instance) {
+                        $sectiondata = array();
+                        $sectiondata['course'] = $courseid;
+                        $sectiondata['module'] = $modulesdata->id;
+                        $sectiondata['instance'] = $instance;
+                        $sectiondata['section'] = $section;
+                        $sectiondata['idnumber'] = '';
+                        $sectiondata['added'] = time();
+                        $sectiondata['score'] = 0;
+                        $sectiondata['indent'] = 0;
+                        $sectiondata['visible'] = 1;
+                        $sectiondata['visibleoncoursepage'] = 1;
+                        $sectiondata['visibleold'] = 1;
+                        $sectiondata['availability'] = '';
+
+                        $sectiondata = (object) $sectiondata;
+
+                        return $instance = $DB->insert_record('course_modules', $sectiondata);
+                    }
+                }
             }
         }
 
