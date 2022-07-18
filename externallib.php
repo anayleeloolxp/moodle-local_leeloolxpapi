@@ -661,11 +661,31 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['visible'] = 1;
                         $sectiondata['visibleoncoursepage'] = 1;
                         $sectiondata['visibleold'] = 1;
-                        $sectiondata['availability'] = '';
+                        $sectiondata['availability'] = null;
 
                         $sectiondata = (object) $sectiondata;
 
-                        return $instance = $DB->insert_record('course_modules', $sectiondata);
+                        $coursemodulesinstance = $DB->insert_record('course_modules', $sectiondata);
+
+                        $sectiondata = $DB->get_record('course_sections', ['id' => $section], 'sequence');
+
+                        $sectionsequence = $sectiondata->sequence;
+
+                        if ($sectionsequence != '') {
+                            $newsectionsequence = $sectionsequence . ', ' . $coursemodulesinstance;
+                        } else {
+                            $newsectionsequence = $coursemodulesinstance;
+                        }
+
+                        $data = array();
+                        $data['id'] = $section;
+                        $data['sequence'] = $newsectionsequence;
+
+                        $data = (object) $data;
+
+                        $DB->update_record('course_sections', $data);
+
+                        return $coursemodulesinstance;
                     }
                 }
             }
