@@ -337,6 +337,13 @@ class local_leeloolxpapi_external extends external_api {
             $data['completion'] = $mcompletion;
         }
 
+        if (isset($ardata->m_completionview)) {
+            $mcompletionview = $ardata->m_completionview;
+            $data['completionview'] = $mcompletionview;
+        } else {
+            $mcompletionview = 0;
+        }
+
         if (isset($ardata->m_completiongradeitemnumber)) {
             $completiongradeitemnumber = $ardata->m_completiongradeitemnumber;
             $data['completiongradeitemnumber'] = $completiongradeitemnumber;
@@ -563,7 +570,7 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['name'] = $arname;
                         $sectiondata['intro'] = '';
                         $sectiondata['introformat'] = 1;
-                        $sectiondata['content'] = '';
+                        $sectiondata['content'] = $content;
                         $sectiondata['contentformat'] = 1;
                         $sectiondata['legacyfiles'] = 0;
                         $sectiondata['legacyfileslast'] = null;
@@ -587,7 +594,7 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['height'] = 320;
                         $sectiondata['border'] = 0;
                         $sectiondata['allow'] = '';
-                        $sectiondata['content'] = '';
+                        $sectiondata['content'] = $content;
                         $sectiondata['contentformat'] = 1;
                         $sectiondata['legacyfiles'] = 0;
                         $sectiondata['legacyfileslast'] = null;
@@ -598,14 +605,14 @@ class local_leeloolxpapi_external extends external_api {
 
                         $sectiondata = (object) $sectiondata;
 
-                        $instance = $DB->insert_record('page', $sectiondata);
+                        $instance = $DB->insert_record('leeloolxpvimeo', $sectiondata);
                     } else if ($artype == 'quiz') {
                         $sectiondata = array();
                         $sectiondata['course'] = $courseid;
                         $sectiondata['name'] = $arname;
                         $sectiondata['intro'] = '';
                         $sectiondata['introformat'] = 1;
-                        $sectiondata['timeopen'] = $ardata->vimeo_video_id;
+                        $sectiondata['timeopen'] = $ardata->timeopen;
                         $sectiondata['timeclose'] = '';
                         $sectiondata['timelimit'] = 0;
                         $sectiondata['overduehandling'] = 'autosubmit';
@@ -646,6 +653,18 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata = (object) $sectiondata;
 
                         $instance = $DB->insert_record('quiz', $sectiondata);
+
+                        $sectiondata = array();
+                        $sectiondata['courseid'] = $courseid;
+                        $sectiondata['categoryid'] = null;
+                        $sectiondata['itemname'] = $arname;
+                        $sectiondata['itemtype'] = 'mod';
+                        $sectiondata['itemmodule'] = 'quiz';
+                        $sectiondata['iteminstance'] = $instance;
+                        $sectiondata['itemnumber'] = 0;
+
+                        $sectiondata = (object) $sectiondata;
+                        $DB->insert_record('grade_items', $sectiondata);
                     }
 
                     if ($instance) {
@@ -662,6 +681,7 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['visibleoncoursepage'] = 1;
                         $sectiondata['visibleold'] = 1;
                         $sectiondata['availability'] = null;
+                        $sectiondata['completionview'] = $mcompletionview;
 
                         $sectiondata = (object) $sectiondata;
 
@@ -672,7 +692,7 @@ class local_leeloolxpapi_external extends external_api {
                         $sectionsequence = $sectiondata->sequence;
 
                         if ($sectionsequence != '') {
-                            $newsectionsequence = $sectionsequence . ', ' . $coursemodulesinstance;
+                            $newsectionsequence = $sectionsequence . ',' . $coursemodulesinstance;
                         } else {
                             $newsectionsequence = $coursemodulesinstance;
                         }
@@ -685,7 +705,7 @@ class local_leeloolxpapi_external extends external_api {
 
                         $DB->update_record('course_sections', $data);
 
-                        return $coursemodulesinstance;
+                        return $coursemodulesinstance . '--' . $instance;
                     }
                 }
             }
