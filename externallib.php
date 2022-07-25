@@ -3639,6 +3639,37 @@ class local_leeloolxpapi_external extends external_api {
                 $updatenewdata = (object) $updatenewdata;
                 $DB->update_record('course_sections', $updatenewdata);
                 return 1;
+            } else if ($action == 'ordersection') {
+                $courseid = $ardata->course_id;
+                $order = $ardata->order;
+
+                $allsectiondata = $DB->get_records('course_sections', ['course' => $courseid]);
+
+                if (!empty($allsectiondata)) {
+                    $time = time();
+                    $count = 1;
+                    foreach ($allsectiondata as $key => $section) {
+                        $updatesectionorder = ['section' => $time + $count, 'id' => $section->id];
+                        $updatesectionorder = (object) $updatesectionorder;
+                        $DB->update_record('course_sections', $updatesectionorder);
+                        $count++;
+                    }
+                }
+
+                if (!empty($order)) {
+                    foreach ($order as $key => $section) {
+
+                        $checksectiondata = $DB->get_record('course_sections', ['course' => $courseid, 'section' => $key]);
+
+                        if (!$checksectiondata) {
+                            $updatesectionorder = ['section' => $key, 'id' => $section];
+                            $updatesectionorder = (object) $updatesectionorder;
+                            $DB->update_record('course_sections', $updatesectionorder);
+                        }
+                    }
+                }
+
+                return 1;
             }
         }
     }
