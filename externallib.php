@@ -3670,6 +3670,52 @@ class local_leeloolxpapi_external extends external_api {
                 }
 
                 return 1;
+            } else if ($action == 'orderflexsection') {
+                $courseid = $ardata->course_id;
+                $parentsdata = $ardata->parent;
+                $orderdata = $ardata->order;
+
+                $time = time();
+                $count = 1;
+                foreach ($orderdata as $thissection => $sectionval) {
+                    $DB->execute(
+                        "update {course_sections} set section = ? WHERE id = ?",
+                        [$time + $count, $thissection]
+                    );
+                    $count++;
+                }
+
+                foreach ($orderdata as $thissection => $sectionval) {
+                    $DB->execute(
+                        "update {course_sections} set section = ? WHERE id = ?",
+                        [$sectionval, $thissection]
+                    );
+                }
+
+                $secarr = $DB->get_record_sql("SELECT MIN(section) minsection, id FROM {course_sections} WHERE course = ?", [$courseid]);
+                $minsection = $secarr->minsection;
+                $minsectionid = $secarr->id;
+                if ($minsection != 0) {
+                    $updatesectionorder = ['section' => 0, 'id' => $minsectionid];
+                    $updatesectionorder = (object) $updatesectionorder;
+                    $DB->update_record('course_sections', $updatesectionorder);
+                }
+
+                foreach ($parentsdata as $thissection => $parent) {
+                    $flexparentsectionid = $DB->get_record('course_sections', ['id' => $parent]);
+
+                    $flexparentsection = $flexparentsectionid->section;
+                    if (!$flexparentsection) {
+                        $flexparentsection = 0;
+                    }
+
+                    $DB->execute(
+                        "update {course_format_options} set value = ? WHERE sectionid = ? AND name = ?",
+                        [$flexparentsection, $thissection, 'parent']
+                    );
+                }
+
+                return 1;
             }
         }
     }
