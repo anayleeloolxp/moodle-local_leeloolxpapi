@@ -3670,36 +3670,10 @@ class local_leeloolxpapi_external extends external_api {
                 }
 
                 return 1;
-            } else if ($action == 'orderflexsection') {
+            } else if ($action == 'parentflexsection') {
                 $courseid = $ardata->course_id;
                 $parentsdata = $ardata->parent;
                 $orderdata = $ardata->order;
-
-                $time = time();
-                $count = 1;
-                foreach ($orderdata as $thissection => $sectionval) {
-                    $DB->execute(
-                        "update {course_sections} set section = ? WHERE id = ?",
-                        [$time + $count, $thissection]
-                    );
-                    $count++;
-                }
-
-                foreach ($orderdata as $thissection => $sectionval) {
-                    $DB->execute(
-                        "update {course_sections} set section = ? WHERE id = ?",
-                        [$sectionval, $thissection]
-                    );
-                }
-
-                $secarr = $DB->get_record_sql("SELECT MIN(section) minsection, id FROM {course_sections} WHERE course = ?", [$courseid]);
-                $minsection = $secarr->minsection;
-                $minsectionid = $secarr->id;
-                if ($minsection != 0) {
-                    $updatesectionorder = ['section' => 0, 'id' => $minsectionid];
-                    $updatesectionorder = (object) $updatesectionorder;
-                    $DB->update_record('course_sections', $updatesectionorder);
-                }
 
                 foreach ($parentsdata as $thissection => $parent) {
                     $flexparentsectionid = $DB->get_record('course_sections', ['id' => $parent]);
@@ -3713,6 +3687,54 @@ class local_leeloolxpapi_external extends external_api {
                         "update {course_format_options} set value = ? WHERE sectionid = ? AND name = ?",
                         [$flexparentsection, $thissection, 'parent']
                     );
+                }
+
+                return 1;
+            } else if ($action == 'syncflexorder') {
+                $courseid = $ardata->course_id;
+                $orderdata = $ardata->order;
+
+                $allsectiondata = $DB->get_records('course_sections', ['course' => $courseid]);
+
+                if (!empty($allsectiondata)) {
+                    $time = time();
+                    $count = 1;
+                    foreach ($allsectiondata as $key => $section) {
+
+
+                        $coursesectionold = $DB->get_record('course_sections', ['id' => $section->id]);
+                        $coursesectionoldsection = $coursesectionold->section;
+
+                        $DB->execute(
+                            "update {course_sections} set section = ? WHERE id = ?",
+                            [$time + $count, $section->id]
+                        );
+
+                        $DB->execute(
+                            "update {course_format_options} set value = ? WHERE courseid = ? AND name = ? AND value = ?",
+                            [$time + $count, $courseid, 'parent', $coursesectionoldsection]
+                        );
+
+                        $count++;
+                    }
+                }
+
+                if (!empty($orderdata)) {
+                    foreach ($orderdata as $key => $section) {
+
+                        $coursesectionold = $DB->get_record('course_sections', ['id' => $section]);
+                        $coursesectionoldsection = $coursesectionold->section;
+
+                        $DB->execute(
+                            "update {course_sections} set section = ? WHERE id = ?",
+                            [$key, $section]
+                        );
+
+                        $DB->execute(
+                            "update {course_format_options} set value = ? WHERE courseid = ? AND name = ? AND value = ?",
+                            [$key, $courseid, 'parent', $coursesectionoldsection]
+                        );
+                    }
                 }
 
                 return 1;
