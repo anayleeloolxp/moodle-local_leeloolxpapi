@@ -612,8 +612,8 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['name'] = $arname;
                         $sectiondata['intro'] = '';
                         $sectiondata['introformat'] = 1;
-                        $sectiondata['timeopen'] = $ardata->timeopen;
-                        $sectiondata['timeclose'] = '';
+                        $sectiondata['timeopen'] = 0;
+                        $sectiondata['timeclose'] = 0;
                         $sectiondata['timelimit'] = 0;
                         $sectiondata['overduehandling'] = 'autosubmit';
                         $sectiondata['graceperiod'] = 0;
@@ -625,16 +625,16 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['decimalpoints'] = 2;
                         $sectiondata['questiondecimalpoints'] = '-1';
                         $sectiondata['reviewattempt'] = 69888;
-                        $sectiondata['reviewcorrectness'] = 0;
-                        $sectiondata['reviewmarks'] = 0;
-                        $sectiondata['reviewspecificfeedback'] = 0;
-                        $sectiondata['reviewgeneralfeedback'] = 0;
-                        $sectiondata['reviewrightanswer'] = 0;
-                        $sectiondata['reviewoverallfeedback'] = 0;
+                        $sectiondata['reviewcorrectness'] = 4352;
+                        $sectiondata['reviewmarks'] = 4352;
+                        $sectiondata['reviewspecificfeedback'] = 4352;
+                        $sectiondata['reviewgeneralfeedback'] = 4352;
+                        $sectiondata['reviewrightanswer'] = 4352;
+                        $sectiondata['reviewoverallfeedback'] = 4352;
                         $sectiondata['questionsperpage'] = 1;
                         $sectiondata['navmethod'] = 'free';
                         $sectiondata['shuffleanswers'] = 1;
-                        $sectiondata['sumgrades'] = '10.00000';
+                        $sectiondata['sumgrades'] = '0.00000';
                         $sectiondata['grade'] = '10.00000';
                         $sectiondata['timecreated'] = time();
                         $sectiondata['timemodified'] = time();
@@ -655,13 +655,45 @@ class local_leeloolxpapi_external extends external_api {
                         $instance = $DB->insert_record('quiz', $sectiondata);
 
                         $sectiondata = array();
+                        $sectiondata['quizid'] = $instance;
+                        $sectiondata['firstslot'] = 1;
+                        $sectiondata['heading'] = '';
+                        $sectiondata['shufflequestions'] = 0;
+
+                        $sectiondata = (object) $sectiondata;
+                        $DB->insert_record('quiz_sections', $sectiondata);
+
+                        $sectiondata = array();
                         $sectiondata['courseid'] = $courseid;
-                        $sectiondata['categoryid'] = null;
+                        $sectiondata['categoryid'] = 1;
                         $sectiondata['itemname'] = $arname;
                         $sectiondata['itemtype'] = 'mod';
                         $sectiondata['itemmodule'] = 'quiz';
                         $sectiondata['iteminstance'] = $instance;
                         $sectiondata['itemnumber'] = 0;
+                        $sectiondata['iteminfo'] = null;
+                        $sectiondata['idnumber'] = null;
+                        $sectiondata['calculation'] = null;
+                        $sectiondata['gradetype'] = 1;
+                        $sectiondata['grademax'] = '10.00000';
+                        $sectiondata['grademin'] = '0.00000';
+                        $sectiondata['scaleid'] = null;
+                        $sectiondata['outcomeid'] = null;
+                        $sectiondata['gradepass'] = '0.00000';
+                        $sectiondata['multfactor'] = '1.00000';
+                        $sectiondata['plusfactor'] = '0.00000';
+                        $sectiondata['aggregationcoef'] = '0.00000';
+                        $sectiondata['aggregationcoef2'] = '0.01538';
+                        $sectiondata['sortorder'] = 1;
+                        $sectiondata['display'] = 0;
+                        $sectiondata['decimals'] = null;
+                        $sectiondata['hidden'] = 0;
+                        $sectiondata['locked'] = 0;
+                        $sectiondata['locktime'] = 0;
+                        $sectiondata['needsupdate'] = 0;
+                        $sectiondata['weightoverride'] = 0;
+                        $sectiondata['timecreated'] = time();
+                        $sectiondata['timemodified'] = time();
 
                         $sectiondata = (object) $sectiondata;
                         $DB->insert_record('grade_items', $sectiondata);
@@ -680,6 +712,13 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['visible'] = 1;
                         $sectiondata['visibleoncoursepage'] = 1;
                         $sectiondata['visibleold'] = 1;
+                        $sectiondata['groupmode'] = 0;
+                        $sectiondata['groupingid'] = 0;
+                        $sectiondata['completion'] = 0;
+                        $sectiondata['completiongradeitemnumber'] = null;
+                        $sectiondata['completionexpected'] = 0;
+                        $sectiondata['showdescription'] = 0;
+                        $sectiondata['deletioninprogress'] = 0;
                         $sectiondata['availability'] = null;
                         $sectiondata['completionview'] = $mcompletionview;
 
