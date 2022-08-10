@@ -3788,4 +3788,108 @@ class local_leeloolxpapi_external extends external_api {
     public static function section_sync_returns() {
         return new external_value(PARAM_TEXT, 'Returns id');
     }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function questionsync_parameters() {
+        return new external_function_parameters(
+            array(
+                'questions_data' => new external_value(PARAM_RAW, 'Question Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Questions sync.
+     *
+     * @param string $reqquestiondata reqquestiondata
+     * @param string $reqemail reqemail
+     * @return string welcome message
+     */
+    public static function questionsync($reqquestiondata = '', $reqemail = '') {
+
+        global $DB;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::questionsync_parameters(),
+            array(
+                'questions_data' => $reqquestiondata,
+                'email' => $reqemail,
+            )
+        );
+
+        $questiondata = (object) json_decode($reqquestiondata, true);
+
+        file_put_contents(dirname(__FILE__) . '/test.txt', print_r($questiondata, true));
+
+        if (isset($reqemail)) {
+            $email = (object) json_decode($reqemail, true);
+        }
+
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function questionsync_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function structurecreator_parameters() {
+        return new external_function_parameters(
+            array(
+                'structure_data' => new external_value(PARAM_RAW, 'Structure Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Structure Create.
+     *
+     * @param string $reqstructuredata reqstructuredata
+     * @param string $reqemail reqemail
+     * @return string welcome message
+     */
+    public static function structurecreator($reqstructuredata = '', $reqemail = '') {
+
+        global $DB;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::structurecreator_parameters(),
+            array(
+                'structure_data' => $reqstructuredata,
+                'email' => $reqemail,
+            )
+        );
+
+        $structuredata = (object) json_decode($reqstructuredata, true);
+
+        file_put_contents(dirname(__FILE__) . '/structurecreator.txt', print_r($structuredata, true));
+
+        if (isset($reqemail)) {
+            $email = (object) json_decode($reqemail, true);
+        }
+
+        return '1';
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function structurecreator_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
 }
