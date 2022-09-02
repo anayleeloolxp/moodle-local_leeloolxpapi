@@ -143,7 +143,7 @@ class local_leeloolxpapi_external extends external_api {
             'idnumber' => $value->course_id_number,
             'summary' => $value->description,
             'summaryformat' => $value->summaryformat,
-            'format' => 'topics',
+            'format' => 'flexsections',
             'showgrades' => 1,
             'newsitems' => 5,
             'startdate' => strtotime($value->start_date),
@@ -209,13 +209,19 @@ class local_leeloolxpapi_external extends external_api {
             $returnid = $value->course_id;
         }
 
+        $DB->execute("INSERT INTO {tool_leeloolxp_sync}
+
+        ( courseid, sectionid, activityid, enabled, teamnio_task_id, is_quiz)
+
+        VALUES ( ?, ?, ?, '1', ?,'0')", [$returnid, '0', '0', '0']);
+
         $catreturnid = 0;
         $itemreturnid = 0;
         $categoriesdata = (object) json_decode($reqcategoriesdata, true);
         $gradedata = (object) json_decode($reqgradedata, true);
 
         // If not empty , then insert category  , no need to check for update.
-        if (!empty($categoriesdata) && !empty($categoriesdata->courseid)) {
+        if (!empty($categoriesdata) && $isinsert) {
             $categoriesdata->path = '/';
             $categoriesdata->courseid = $returnid;
             $catreturnid = $DB->insert_record('grade_categories', $categoriesdata);
@@ -227,6 +233,7 @@ class local_leeloolxpapi_external extends external_api {
         if (!empty($gradedata) && !empty($catreturnid)) {
             $gradedata->iteminstance = $catreturnid;
             $gradedata->courseid = $returnid;
+            $gradedata->categoryid = $catreturnid;
             $itemreturnid = $DB->insert_record('grade_items', $gradedata);
         }
 
@@ -635,7 +642,7 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['navmethod'] = 'free';
                         $sectiondata['shuffleanswers'] = 1;
                         $sectiondata['sumgrades'] = '0.00000';
-                        $sectiondata['grade'] = '10.00000';
+                        $sectiondata['grade'] = '0.00000';
                         $sectiondata['timecreated'] = time();
                         $sectiondata['timemodified'] = time();
                         $sectiondata['password'] = '';
@@ -663,9 +670,17 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata = (object) $sectiondata;
                         $DB->insert_record('quiz_sections', $sectiondata);
 
+                        $gradecategory = $DB->get_record('grade_categories', ['courseid' => $courseid], 'id');
+
+                        if (!empty($gradecategory)) {
+                            $gradecategoryid = $gradecategory->id;
+                        } else {
+                            $gradecategoryid = '1';
+                        }
+
                         $sectiondata = array();
                         $sectiondata['courseid'] = $courseid;
-                        $sectiondata['categoryid'] = 1;
+                        $sectiondata['categoryid'] = $gradecategoryid;
                         $sectiondata['itemname'] = $arname;
                         $sectiondata['itemtype'] = 'mod';
                         $sectiondata['itemmodule'] = 'quiz';
@@ -2427,7 +2442,8 @@ class local_leeloolxpapi_external extends external_api {
             } else {
 
                 if (!empty($catreturnedid)) {
-                    $gradesdata->iteminstance = $catreturnedid;
+                    $gradesdata->categoryid = $gradesdata->iteminstance = $catreturnedid;
+
 
                     $itemreturnedid = $DB->insert_record('grade_items', $gradesdata);
                 } else if (!empty($gradesdata->categoryid)) {
@@ -3826,11 +3842,307 @@ class local_leeloolxpapi_external extends external_api {
 
         file_put_contents(dirname(__FILE__) . '/test.txt', print_r($questiondata, true));
 
+        $userid = '2';
         if (isset($reqemail)) {
             $email = (object) json_decode($reqemail, true);
+            $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
+            if (!empty($userdata)) {
+                $userid = $userdata->id;
+            }
         }
 
-        return '1';
+        $questionidsarr = [];
+        $answeridsarr = [];
+
+        $action = $questiondata->action;
+
+        if ($action == 'add') {
+
+            if (!empty($questiondata->activity_data)) {
+
+                foreach ($questiondata->activity_data as $keyactivity => $valueactivity) {
+
+                    $activityid = $valueactivity['activity_id'];
+
+                    if (!empty($activityid) && !empty($questiondata->questions_data[$keyactivity])) {
+
+                        $modulesdata = $DB->get_record('course_modules', ['id' => $activityid]);
+
+                        if (!empty($modulesdata)) {
+
+                            $tempdata = $DB->get_record_sql("SELECT shortname,category FROM {course} where id = ? ", [$questiondata->course_id]);
+                            $contextdata = $DB->get_record('context', ['instanceid' => $questiondata->course_id, 'depth' => '3']);
+
+                            if (empty($contextdata)) {
+
+                                $coursecatid = $tempdata->category;
+                                $contextdata2 = $DB->get_record('context', ['instanceid' => $coursecatid, 'depth' => '2', 'contextlevel' => '40'], 'id');
+                                $path_context = '/1/' . $contextdata2->id;
+                                $catnewdata = array();
+                                $catnewdata['contextlevel'] = '50';
+                                $catnewdata['instanceid'] = $questiondata->course_id;
+                                $catnewdata['path'] = $path_context;
+                                $catnewdata['locked'] = 0;
+                                $catnewdata['depth'] = '3';
+                                $catnewdata = (object) $catnewdata;
+                                $lastiddtemp = $DB->insert_record('context', $catnewdata);
+
+                                $catnewdata = array();
+                                $catnewdata['path'] = $path_context . '/' . $lastiddtemp;
+                                $catnewdata = (object) $catnewdata;
+                                $catnewdata->id = $lastiddtemp;
+                                $DB->update_record('context', $catnewdata);
+                                $contextdata = $DB->get_record('context', ['instanceid' => $questiondata->course_id, 'depth' => '3']);
+                            }
+
+                            if (!empty($contextdata)) {
+
+                                $qcdata = $DB->get_record_sql("SELECT id FROM {question_categories} where contextid = ? ORDER BY `id` DESC", [$contextdata->id]);
+
+                                if (empty($qcdata)) {
+
+                                    $catnewdata = array();
+                                    $catnewdata['name'] = 'top';
+                                    $catnewdata['contextid'] = $contextdata->id;
+                                    $catnewdata['info'] = "The default category for questions shared in context '$tempdata->shortname'. ";
+                                    $catnewdata['infoformat'] = 0;
+                                    $catnewdata['stamp'] = $_SERVER['HTTP_HOST'];
+                                    $catnewdata['parent'] = 0;
+                                    $catnewdata['sortorder'] = 0;
+                                    $catnewdata['idnumber'] = null;
+                                    $catnewdata = (object) $catnewdata;
+                                    $lastidd = $DB->insert_record('question_categories', $catnewdata);
+
+                                    $catnewdata2 = array();
+                                    $catnewdata2['name'] = 'Default for ' . $tempdata->shortname;
+                                    $catnewdata2['contextid'] = $contextdata->id;
+                                    $catnewdata2['info'] = "The default category for questions shared in context '$tempdata->shortname'. ";
+                                    $catnewdata2['infoformat'] = 0;
+                                    $catnewdata2['stamp'] = $_SERVER['HTTP_HOST'] . '+' . $lastidd;
+                                    $catnewdata2['parent'] = $lastidd;
+                                    $catnewdata2['sortorder'] = 0;
+                                    $catnewdata2['idnumber'] = null;
+                                    $catnewdata2 = (object) $catnewdata2;
+
+                                    $DB->insert_record('question_categories', $catnewdata2);
+
+                                    $qcdata = $DB->get_record_sql("SELECT id FROM {question_categories} where contextid = ? ORDER BY `id` DESC", [$contextdata->id]);
+                                }
+
+                                if (!empty($qcdata)) {
+
+                                    $quizdataa = $DB->get_record('quiz', ['course' => $questiondata->course_id, 'name' => $valueactivity['task_name'], 'quiztype' => $valueactivity['quiztype']]);
+
+                                    if (!empty($quizdataa)) {
+
+                                        $quizid = $modulesdata->instance;
+                                        $questionsdata = $questiondata->questions_data[$keyactivity];
+                                        $questionsid = $questiondata->questionsid;
+
+                                        foreach ($questionsdata as $keyss => $valuess) {
+
+                                            $sectiondata = array();
+                                            $sectiondata['penalty'] = '0.3333333';
+                                            if ($valuess['qtype'] == 'truefalse') {
+                                                $sectiondata['penalty'] = '1.0000000';
+                                            }
+
+                                            $sectiondata['category'] = $qcdata->id;
+                                            $sectiondata['parent'] = 0;
+                                            $sectiondata['name'] = $valuess['name'];
+                                            $sectiondata['questiontext'] = $valuess['questiontext'];
+                                            $sectiondata['questiontextformat'] = 1;
+                                            $sectiondata['generalfeedback'] = $valuess['generalfeedback'];
+                                            $sectiondata['generalfeedbackformat'] = 1;
+                                            $sectiondata['qtype'] = $valuess['qtype'];
+                                            $sectiondata['length'] = '1';
+                                            $sectiondata['stamp'] = '1';
+                                            $sectiondata['version'] = '1';
+                                            $sectiondata['hidden'] = '0';
+                                            $sectiondata['timecreated'] = time();
+                                            $sectiondata['timemodified'] = time();
+                                            $sectiondata['createdby'] = $userid;
+                                            $sectiondata['modifiedby'] = $userid;
+                                            $sectiondata['idnumber'] = null;
+
+
+                                            $sectiondata = (object) $sectiondata;
+
+                                            if (empty($valuess['mid'])) {
+
+                                                $mqid = $DB->insert_record('question', $sectiondata);
+                                                if ($valuess['qtype'] == 'shortanswer') {
+                                                    $tempdata = [];
+                                                    $tempdata['usecase'] = 0;
+                                                    $tempdata['questionid'] = $mqid;
+                                                    $DB->insert_record('qtype_shortanswer_options', $tempdata);
+                                                } elseif ($valuess['qtype'] == 'multichoice') {
+                                                    $tempdata = [];
+
+                                                    $tempdata['questionid'] = $mqid;
+                                                    $tempdata['layout'] = 0;
+                                                    $tempdata['single'] = 1;
+                                                    $tempdata['shuffleanswers'] = 1;
+                                                    $tempdata['correctfeedback'] = 'Your answer is correct.';
+                                                    $tempdata['correctfeedbackformat'] = 1;
+                                                    $tempdata['partiallycorrectfeedback'] = 'Your answer is partially correct.';
+                                                    $tempdata['partiallycorrectfeedbackformat'] = 1;
+                                                    $tempdata['incorrectfeedback'] = 'Your answer is incorrect.';
+                                                    $tempdata['incorrectfeedbackformat'] = 1;
+                                                    $tempdata['answernumbering'] = 'abc';
+                                                    $tempdata['shownumcorrect'] = 1;
+                                                    $tempdata['showstandardinstruction'] = 1;
+                                                    $DB->insert_record('qtype_multichoice_options', $tempdata);
+                                                }
+
+                                                $leelooids = explode(',', $valuess['id']);
+
+                                                $questionidsarr[] = [$leelooids[0] => $mqid];
+
+                                                $quizslotsdata = $DB->get_record_sql("SELECT * FROM {quiz_slots} where quizid = ? ORDER BY `id` DESC", [$quizid]);
+                                                $slott = 1;
+                                                if (!empty($quizslotsdata)) {
+                                                    $slott = $quizslotsdata->page + 1;
+                                                }
+                                                $answersdata = array();
+                                                $answersdata['slot'] = $slott;
+                                                $answersdata['quizid'] = $quizid;
+                                                $answersdata['page'] = $slott;
+                                                $answersdata['requireprevious'] = 0;
+                                                $answersdata['questionid'] = $mqid;
+                                                $answersdata['questioncategoryid'] = null;
+                                                $answersdata['includingsubcategories'] = null;
+                                                $answersdata['maxmark'] = '1.0000000';
+                                                $DB->insert_record('quiz_slots', $answersdata);
+
+                                                if (!empty($valuess['video_id'])) {
+                                                    $sectiondata->name = $valuess['name'] . ' - vimeo';
+                                                    $sectiondata->questiontext = $valuess['description'];
+                                                    $sectiondata->parent = 0;
+                                                    $sectiondata->qtype = 'description';
+                                                    $lasttidd = $DB->insert_record('question', $sectiondata);
+                                                    $questionidsarr[] = [$leelooids[1] => $lasttidd];
+                                                    $slott++;
+
+                                                    $answersdata = array();
+                                                    $answersdata['slot'] = $slott;
+                                                    $answersdata['quizid'] = $quizid;
+                                                    $answersdata['page'] = $slott;
+                                                    $answersdata['requireprevious'] = 0;
+                                                    $answersdata['questionid'] = $lasttidd;
+                                                    $answersdata['questioncategoryid'] = null;
+                                                    $answersdata['includingsubcategories'] = null;
+                                                    $answersdata['maxmark'] = '1.0000000';
+                                                    $DB->insert_record('quiz_slots', $answersdata);
+
+                                                    $extradatainsert = array();
+                                                    $extradatainsert['vimeoid'] = $valuess['video_id'];
+                                                    $extradatainsert['questionid'] = $lasttidd;
+                                                    $extradatainsert['difficulty'] = '1';
+                                                    $DB->insert_record('local_leeloolxptrivias_qd', $extradatainsert);
+                                                }
+                                            } else {
+
+                                                $leelooids = explode(',', $valuess['mid']);
+                                                $mqid = $sectiondata->id = $leelooids[0];
+                                                $DB->update_record('question', $sectiondata);
+
+                                                if (!empty($valuess['video_id'])) {
+
+                                                    $tempid = $leelooids[1];
+                                                    $sectiondata->name = $valuess['name'] . ' - vimeo';
+                                                    $sectiondata->questiontext = $valuess['description'];
+                                                    $sectiondata->parent = 0;
+                                                    $sectiondata->qtype = 'description';
+                                                    $sectiondata->id = $tempid;
+                                                    $lasttidd = $DB->update_record('question', $sectiondata);
+
+                                                    $tempdata = $DB->get_record_sql("SELECT id FROM {local_leeloolxptrivias_qd} where questionid = ? ", [$tempid]);
+                                                    $extradatainsert = array();
+                                                    $extradatainsert['vimeoid'] = $valuess['video_id'];
+                                                    $extradatainsert = (object) $extradatainsert;
+                                                    $extradatainsert->id = $tempdata->id;
+                                                    $DB->update_record('local_leeloolxptrivias_qd', $extradatainsert);
+                                                }
+                                            }
+
+
+
+                                            if (!empty($valuess['answers'])) {
+
+                                                $trueid = 0;
+                                                $falseid = 0;
+
+                                                foreach ($valuess['answers'] as $keyanswers => $valueanswers) {
+
+                                                    $answersdata = array();
+                                                    $answersdata['question'] = $mqid;
+                                                    $answersdata['answer'] = $valueanswers['answer'];
+                                                    $answersdata['answerformat'] = '1';
+                                                    $answersdata['fraction'] = $valueanswers['fraction'];
+                                                    $answersdata['feedback'] = $valueanswers['feedback'];
+                                                    $answersdata['feedbackformat'] = '1';
+                                                    $answersdata = (object) $answersdata;
+                                                    if (empty($valueanswers['mid'])) {
+                                                        $lastidanswer = $maid = $DB->insert_record('question_answers', $answersdata);
+                                                        $answeridsarr[] = [$valueanswers['id'] => $maid];
+                                                    } else {
+                                                        $lastidanswer = $answersdata->id = $valueanswers['mid'];
+                                                        $DB->update_record('question_answers', $answersdata);
+                                                    }
+
+                                                    if ($valueanswers['answer'] == 'True') {
+                                                        $trueid = $lastidanswer;
+                                                    }
+
+                                                    if ($valueanswers['answer'] == 'False') {
+                                                        $falseid = $lastidanswer;
+                                                    }
+                                                }
+
+                                                if (!empty($falseid) && !empty($trueid) && empty($valuess['mid'])) {
+                                                    $answersdata = array();
+                                                    $answersdata['question'] = $mqid;
+                                                    $answersdata['trueanswer'] = $trueid;
+                                                    $answersdata['falseanswer'] = $falseid;
+                                                    $DB->insert_record('question_truefalse', $answersdata);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            $questionid = $questiondata->questionid;
+
+            $questionidarr = explode(',', $questionid);
+
+            if (!empty($questionidarr)) {
+
+                foreach ($questionidarr as $key => $questionid) {
+                    if (!empty($questionid)) {
+                        $DB->delete_records('quiz_slots', ['questionid' => $questionid]);
+                        $DB->delete_records('question', ['id' => $questionid]);
+                        $DB->delete_records('question', ['parent' => $questionid]);
+                        $DB->delete_records('qtype_shortanswer_options', ['questionid' => $questionid]);
+                        $DB->delete_records('question_answers', ['question' => $questionid]);
+                        $DB->delete_records('question_truefalse', ['question' => $questionid]);
+                        $DB->delete_records('local_leeloolxptrivias_qd', ['questionid' => $questionid]);
+                    }
+                }
+            }
+
+            return 1;
+        }
+        $returndataarr = [
+            'questionidsarr' => $questionidsarr,
+            'answeridsarr' => $answeridsarr,
+        ];
+        return json_encode($returndataarr);
     }
 
     /**
@@ -3852,6 +4164,202 @@ class local_leeloolxpapi_external extends external_api {
                 'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
             )
         );
+    }
+
+    public static function save_ar_data($sectionid, $valueskills, $leelooidstring, $arcount, $courseid, $quiztype) {
+
+        global $DB;
+
+        $leelooidarr = explode(',', $leelooidstring);
+        $returnarr = [];
+        $artype = 'quiz';
+        $arname = $valueskills;
+        $section = $sectionid;
+
+        for ($i = 0; $i < $arcount; $i++) {
+
+            if (!empty($leelooidarr[$i])) {
+
+                $data = [];
+                $moddata = [];
+                $moddata['name'] = $valueskills;
+                $moddata['intro'] = '';
+                $moddata['content'] = '';
+                $moddata['vimeo_video_id'] = '';
+                $moddata['quiztype'] = $quiztype;
+                $moddata['timeopen'] = '';
+                $moddata['timeclose'] = '';
+                $data['showdescription'] = 0;
+                $data['idnumber'] = '';
+                $data['completion'] = '';
+                $mcompletionview = $data['completionview'] = 0;
+                $data['completiongradeitemnumber'] = 0;
+                $mcompletionexpected = $data['completionexpected'] = 0;
+                $data['visible'] = 0;
+                $data['availability'] = '';
+                $data['groupmode'] = 0;
+                $data['groupingid'] = 0;
+
+                $modulesdata = $DB->get_record('modules', ['name' => $artype]);
+
+                if ($modulesdata->id) {
+
+                    $sectiondata = array();
+                    $sectiondata['course'] = $courseid;
+                    $sectiondata['name'] = $arname;
+                    $sectiondata['intro'] = '';
+                    $sectiondata['introformat'] = 1;
+                    $sectiondata['timeopen'] = 0;
+                    $sectiondata['timeclose'] = 0;
+                    $sectiondata['timelimit'] = 0;
+                    $sectiondata['overduehandling'] = 'autosubmit';
+                    $sectiondata['graceperiod'] = 0;
+                    $sectiondata['preferredbehaviour'] = 'deferredfeedback';
+                    $sectiondata['canredoquestions'] = 0;
+                    $sectiondata['attempts'] = 0;
+                    $sectiondata['attemptonlast'] = 0;
+                    $sectiondata['grademethod'] = 1;
+                    $sectiondata['decimalpoints'] = 2;
+                    $sectiondata['questiondecimalpoints'] = '-1';
+                    $sectiondata['reviewattempt'] = 69888;
+                    $sectiondata['reviewcorrectness'] = 4352;
+                    $sectiondata['reviewmarks'] = 4352;
+                    $sectiondata['reviewspecificfeedback'] = 4352;
+                    $sectiondata['reviewgeneralfeedback'] = 4352;
+                    $sectiondata['reviewrightanswer'] = 4352;
+                    $sectiondata['reviewoverallfeedback'] = 4352;
+                    $sectiondata['questionsperpage'] = 1;
+                    $sectiondata['navmethod'] = 'free';
+                    $sectiondata['shuffleanswers'] = 1;
+                    $sectiondata['sumgrades'] = '0.00000';
+                    $sectiondata['grade'] = '0.00000';
+                    $sectiondata['timecreated'] = time();
+                    $sectiondata['timemodified'] = time();
+                    $sectiondata['password'] = '';
+                    $sectiondata['subnet'] = '';
+                    $sectiondata['browsersecurity'] = '-';
+                    $sectiondata['delay1'] = 0;
+                    $sectiondata['delay2'] = 0;
+                    $sectiondata['showuserpicture'] = 0;
+                    $sectiondata['showblocks'] = 0;
+                    $sectiondata['completionattemptsexhausted'] = 0;
+                    $sectiondata['completionpass'] = 0;
+                    $sectiondata['allowofflineattempts'] = 0;
+                    $sectiondata['quiztype'] = $quiztype;
+
+                    $sectiondata = (object) $sectiondata;
+
+                    $instance = $DB->insert_record('quiz', $sectiondata);
+
+                    $sectiondata = array();
+                    $sectiondata['quizid'] = $instance;
+                    $sectiondata['firstslot'] = 1;
+                    $sectiondata['heading'] = '';
+                    $sectiondata['shufflequestions'] = 0;
+
+                    $sectiondata = (object) $sectiondata;
+                    $DB->insert_record('quiz_sections', $sectiondata);
+
+                    $gradecategory = $DB->get_record('grade_categories', ['courseid' => $courseid], 'id');
+
+                    if (!empty($gradecategory)) {
+                        $gradecategoryid = $gradecategory->id;
+                    } else {
+                        $gradecategoryid = '1';
+                    }
+
+                    $sectiondata = array();
+                    $sectiondata['courseid'] = $courseid;
+                    $sectiondata['categoryid'] = $gradecategoryid;
+                    $sectiondata['itemname'] = $arname;
+                    $sectiondata['itemtype'] = 'mod';
+                    $sectiondata['itemmodule'] = 'quiz';
+                    $sectiondata['iteminstance'] = $instance;
+                    $sectiondata['itemnumber'] = 0;
+                    $sectiondata['iteminfo'] = null;
+                    $sectiondata['idnumber'] = null;
+                    $sectiondata['calculation'] = null;
+                    $sectiondata['gradetype'] = 1;
+                    $sectiondata['grademax'] = '10.00000';
+                    $sectiondata['grademin'] = '0.00000';
+                    $sectiondata['scaleid'] = null;
+                    $sectiondata['outcomeid'] = null;
+                    $sectiondata['gradepass'] = '0.00000';
+                    $sectiondata['multfactor'] = '1.00000';
+                    $sectiondata['plusfactor'] = '0.00000';
+                    $sectiondata['aggregationcoef'] = '0.00000';
+                    $sectiondata['aggregationcoef2'] = '0.01538';
+                    $sectiondata['sortorder'] = 1;
+                    $sectiondata['display'] = 0;
+                    $sectiondata['decimals'] = null;
+                    $sectiondata['hidden'] = 0;
+                    $sectiondata['locked'] = 0;
+                    $sectiondata['locktime'] = 0;
+                    $sectiondata['needsupdate'] = 0;
+                    $sectiondata['weightoverride'] = 0;
+                    $sectiondata['timecreated'] = time();
+                    $sectiondata['timemodified'] = time();
+
+                    $sectiondata = (object) $sectiondata;
+                    $DB->insert_record('grade_items', $sectiondata);
+
+                    if ($instance) {
+                        $sectiondata = array();
+                        $sectiondata['course'] = $courseid;
+                        $sectiondata['module'] = $modulesdata->id;
+                        $sectiondata['instance'] = $instance;
+                        $sectiondata['section'] = $section;
+                        $sectiondata['idnumber'] = '';
+                        $sectiondata['added'] = time();
+                        $sectiondata['score'] = 0;
+                        $sectiondata['indent'] = 0;
+                        $sectiondata['visible'] = 1;
+                        $sectiondata['visibleoncoursepage'] = 1;
+                        $sectiondata['visibleold'] = 1;
+                        $sectiondata['groupmode'] = 0;
+                        $sectiondata['groupingid'] = 0;
+                        $sectiondata['completion'] = 0;
+                        $sectiondata['completiongradeitemnumber'] = null;
+                        $sectiondata['completionexpected'] = 0;
+                        $sectiondata['showdescription'] = 0;
+                        $sectiondata['deletioninprogress'] = 0;
+                        $sectiondata['availability'] = null;
+                        $sectiondata['completionview'] = $mcompletionview;
+
+                        $sectiondata = (object) $sectiondata;
+
+                        $coursemodulesinstance = $DB->insert_record('course_modules', $sectiondata);
+
+                        $sectiondata = $DB->get_record('course_sections', ['id' => $section], 'sequence');
+
+                        $sectionsequence = $sectiondata->sequence;
+
+                        if ($sectionsequence != '') {
+                            $newsectionsequence = $sectionsequence . ',' . $coursemodulesinstance;
+                        } else {
+                            $newsectionsequence = $coursemodulesinstance;
+                        }
+
+                        $data = array();
+                        $data['id'] = $section;
+                        $data['sequence'] = $newsectionsequence;
+
+                        $data = (object) $data;
+
+                        $DB->update_record('course_sections', $data);
+
+                        $DB->execute("INSERT INTO {tool_leeloolxp_sync}
+
+                        ( courseid, sectionid, activityid, enabled, teamnio_task_id, is_quiz)
+
+                        VALUES ( ?, ?, ?, '1', ?,'0')", [$courseid, $sectionid, $coursemodulesinstance, $leelooidarr[$i]]);
+
+                        $returnarr[] = [$leelooidarr[$i] => $coursemodulesinstance];
+                    }
+                }
+            }
+        }
+        return $returnarr;
     }
 
     /**
@@ -3876,13 +4384,403 @@ class local_leeloolxpapi_external extends external_api {
 
         $structuredata = (object) json_decode($reqstructuredata, true);
 
+
         file_put_contents(dirname(__FILE__) . '/structurecreator.txt', print_r($structuredata, true));
 
         if (isset($reqemail)) {
             $email = (object) json_decode($reqemail, true);
         }
 
-        return '1';
+        $courseid = $structuredata->courseid;
+        $action = $structuredata->action;
+
+        if ($action == 'addstructure') {
+
+            // Check if course entry exist , if not then insert one.
+            $coursexist = $DB->get_record('course_sections', ['course' => $courseid]);
+
+            $gradecategory = $DB->get_record('grade_categories', ['courseid' => $courseid], 'id');
+
+            if (empty($gradecategory)) {
+                $$categoriesdata = [];
+                $categoriesdata = (object) $categoriesdata;
+                $categoriesdata->path = '/';
+                $categoriesdata->courseid = $courseid;
+                $categoriesdata->depth = 0;
+                $categoriesdata->fullname = '?';
+                $categoriesdata->timecreated = time();
+                $categoriesdata->timemodified = time();
+                $catreturnid = $DB->insert_record('grade_categories', $categoriesdata);
+                $updatenewdata = ['path' => '/' . $catreturnid . '/', 'id' => $catreturnid];
+                $updatenewdata = (object) $updatenewdata;
+                $DB->update_record('grade_categories', $updatenewdata);
+
+                $sectiondata = array();
+                $sectiondata['courseid'] = $courseid;
+                $sectiondata['categoryid'] = $catreturnid;
+                $sectiondata['itemtype'] = 'course';
+                $sectiondata['iteminstance'] = $catreturnid;
+                $sectiondata['itemnumber'] = 0;
+                $sectiondata['iteminfo'] = null;
+                $sectiondata['idnumber'] = null;
+                $sectiondata['calculation'] = null;
+                $sectiondata['gradetype'] = 1;
+                $sectiondata['grademax'] = '100.00000';
+                $sectiondata['grademin'] = '0.00000';
+                $sectiondata['scaleid'] = null;
+                $sectiondata['outcomeid'] = null;
+                $sectiondata['gradepass'] = '0.00000';
+                $sectiondata['multfactor'] = '1.00000';
+                $sectiondata['plusfactor'] = '0.00000';
+                $sectiondata['aggregationcoef'] = '0.00000';
+                $sectiondata['aggregationcoef2'] = '0.01538';
+                $sectiondata['sortorder'] = 1;
+                $sectiondata['display'] = 0;
+                $sectiondata['decimals'] = null;
+                $sectiondata['hidden'] = 0;
+                $sectiondata['locked'] = 0;
+                $sectiondata['locktime'] = 0;
+                $sectiondata['needsupdate'] = 0;
+                $sectiondata['weightoverride'] = 0;
+                $sectiondata['timecreated'] = time();
+                $sectiondata['timemodified'] = time();
+
+                $sectiondata = (object) $sectiondata;
+                $DB->insert_record('grade_items', $sectiondata);
+            }
+
+            if (empty($coursexist)) {
+
+                $tempdata = array();
+                $tempdata['course'] = $courseid;
+                $tempdata['section'] = '0';
+                $tempdata['name'] = null;
+                $tempdata['summaryformat'] = 1;
+                $tempdata['sequence'] = '';
+                $tempdata['visible'] = 1;
+                $tempdata['availability'] = null;
+                $tempdata['timemodified'] = time();
+
+                $tempdata = (object) $tempdata;
+
+                $DB->insert_record('course_sections', $tempdata);
+                $sectionorder = 0;
+            } else {
+                $sectionorder = -1;
+            }
+
+            $skillsets = $structuredata->skillsets;
+            $skillsetsleelooid = $structuredata->skillsetsid;
+            $skillsetmoodleid = $structuredata->skillsetmoodleid;
+            $skills = $structuredata->skills;
+            $skillsleelooid = $structuredata->skillsid;
+            $skillmoodleid = $structuredata->skillmoodleid;
+            $units = $structuredata->units;
+            $unitsleelooid = $structuredata->unitsid;
+            $unitmoodleid = $structuredata->unitmoodleid;
+
+            $returnidsarray = [];
+            $returnarids = [];
+
+
+            if (!empty($skillsets)) {
+
+                foreach ($skillsets as $keyss => $valuess) {
+                    if (!empty($valuess)) {
+                        $sectiondata = array();
+
+                        $sectiondata['course'] = $courseid;
+                        $sectiondata['name'] = $valuess;
+                        $sectiondata['summaryformat'] = 1;
+                        $sectiondata['visible'] = 1;
+                        $sectiondata['availability'] = null;
+                        $sectiondata['timemodified'] = time();
+
+                        $sectionorder++;
+                        $sectionorderskillset = $sectionorder;
+                        if (empty($skillsetmoodleid[$keyss])) {
+                            $sectiondata['section'] = $sectionorder;
+                            $sectiondata['sequence'] = '';
+                            $sectiondata = (object) $sectiondata;
+                            $sectionid = $DB->insert_record('course_sections', $sectiondata);
+                            $returnidsarray[] = [$skillsetsleelooid[$keyss] => $sectionid];
+                        } else {
+                            $sectiondata = (object) $sectiondata;
+                            $sectiondata->id = $skillsetmoodleid[$keyss];
+                            $sectionid = $DB->update_record('course_sections', $sectiondata);
+                        }
+
+
+                        if (!empty($skills[$keyss])) {
+                            foreach ($skills[$keyss] as $keyskills => $valueskills) {
+                                if (!empty($valueskills)) {
+
+                                    $sectiondata = array();
+
+                                    $sectiondata['course'] = $courseid;
+                                    $sectiondata['name'] = $valueskills;
+                                    $sectiondata['summaryformat'] = 1;
+                                    $sectiondata['visible'] = 1;
+                                    $sectiondata['availability'] = null;
+                                    $sectiondata['timemodified'] = time();
+
+                                    $sectionorder++;
+                                    $sectionorderskill = $sectionorder;
+                                    if (empty($skillmoodleid[$keyss][$keyskills])) {
+                                        $sectiondata['sequence'] = '';
+                                        $sectiondata['section'] = $sectionorder;
+                                        $sectiondata = (object) $sectiondata;
+                                        $lastid = $DB->insert_record('course_sections', $sectiondata);
+                                        $returnidsarray[] = [$skillsleelooid[$keyss][$keyskills] => $lastid];
+
+                                        $tempobject = new stdClass();
+                                        $tempobject->courseid = $courseid;
+                                        $tempobject->format = 'flexsections';
+                                        $tempobject->sectionid = $lastid;
+                                        $tempobject->name = 'collapsed';
+                                        $tempobject->value = 0;
+                                        $DB->insert_record('course_format_options', $tempobject);
+
+                                        $tempobject = new stdClass();
+                                        $tempobject->courseid = $courseid;
+                                        $tempobject->format = 'flexsections';
+                                        $tempobject->sectionid = $lastid;
+                                        $tempobject->name = 'parent';
+                                        $tempobject->value = $sectionorderskillset;
+                                        $DB->insert_record('course_format_options', $tempobject);
+
+                                        $tempobject = new stdClass();
+                                        $tempobject->courseid = $courseid;
+                                        $tempobject->format = 'flexsections';
+                                        $tempobject->sectionid = $lastid;
+                                        $tempobject->name = 'visibleold';
+                                        $tempobject->value = 1;
+                                        $DB->insert_record('course_format_options', $tempobject);
+                                    } else {
+
+                                        // Update AR names also if Skills name has changed
+                                        $tempdata = $DB->get_record('course_sections', ['id' => $skillmoodleid[$keyss][$keyskills]]);
+                                        $sectionorderskill = $tempdata->section;
+                                        if ($tempdata->name != $valueskills) {
+                                            $quizdataarr = $DB->get_records('quiz', ['course' => $courseid, 'name' => $tempdata->name]);
+                                            if (!empty($quizdataarr)) {
+                                                foreach ($quizdataarr as $keytemppp => $quizdataa) {
+                                                    $tempdataobj = array();
+                                                    $tempdataobj['name'] = $valueskills;
+                                                    $tempdataobj['id'] = $quizdataa->id;
+                                                    $tempdataobj = (object) $tempdataobj;
+                                                    $DB->update_record('quiz', $tempdataobj);
+                                                    $gradedataa = $DB->get_record('grade_items', ['courseid' => $courseid, 'itemname' => $tempdata->name, 'iteminstance' => $quizdataa->id]);
+                                                    if (!empty($gradedataa)) {
+                                                        $tempdataobj = array();
+                                                        $tempdataobj['itemname'] = $valueskills;
+                                                        $tempdataobj['id'] = $gradedataa->id;
+                                                        $tempdataobj = (object) $tempdataobj;
+                                                        $DB->update_record('grade_items', $tempdataobj);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        $sectiondata = (object) $sectiondata;
+                                        $lastid = $sectiondata->id = $skillmoodleid[$keyss][$keyskills];
+                                        $DB->update_record('course_sections', $sectiondata);
+                                    }
+
+                                    // Add/Edit AR duels for skills
+                                    if (!empty($structuredata->duels_per_skill) && !empty($structuredata->skillstaskid[$keyss][$keyskills]['duels'])) {
+                                        $returnarr = self::save_ar_data($lastid, $valueskills, $structuredata->skillstaskid[$keyss][$keyskills]['duels'], $structuredata->duels_per_skill, $courseid, 'duels');
+                                        $returnarids[] = $returnarr;
+                                    }
+
+                                    // Add/Edit AR duels for situation
+                                    if (!empty($structuredata->situations_per_skill) && !empty($structuredata->skillstaskid[$keyss][$keyskills]['situation'])) {
+                                        $returnarr = self::save_ar_data($lastid, $valueskills, $structuredata->skillstaskid[$keyss][$keyskills]['situation'], $structuredata->situations_per_skill, $courseid, 'situation');
+                                        $returnarids[] = $returnarr;
+                                    }
+
+                                    // Add/Edit AR duels for case
+                                    if (!empty($structuredata->cases_per_skill) && !empty($structuredata->skillstaskid[$keyss][$keyskills]['case'])) {
+                                        $returnarr = self::save_ar_data($lastid, $valueskills, $structuredata->skillstaskid[$keyss][$keyskills]['case'], $structuredata->cases_per_skill, $courseid, 'case');
+                                        $returnarids[] = $returnarr;
+                                    }
+
+                                    // Add/Edit AR duels for quest
+                                    if (!empty($structuredata->quests_per_skill) && !empty($structuredata->skillstaskid[$keyss][$keyskills]['quest'])) {
+                                        $returnarr = self::save_ar_data($lastid, $valueskills, $structuredata->skillstaskid[$keyss][$keyskills]['quest'], $structuredata->quests_per_skill, $courseid, 'quest');
+                                        $returnarids[] = $returnarr;
+                                    }
+
+                                    $sectionid = $lastid;
+                                    if (!empty($units[$keyss][$keyskills])) {
+                                        foreach ($units[$keyss][$keyskills] as $keyunits => $valueunits) {
+
+                                            if (!empty($valueunits)) {
+
+                                                $sectiondata = array();
+
+                                                $sectiondata['course'] = $courseid;
+                                                $sectiondata['name'] = $valueunits;
+                                                $sectiondata['summaryformat'] = 1;
+                                                $sectiondata['visible'] = 1;
+                                                $sectiondata['availability'] = null;
+                                                $sectiondata['timemodified'] = time();
+
+                                                $sectionorder++;
+                                                if (empty($unitmoodleid[$keyss][$keyskills][$keyunits])) {
+                                                    $sectiondata['sequence'] = '';
+                                                    $sectiondata['section'] = $sectionorder;
+                                                    $sectiondata = (object) $sectiondata;
+                                                    $lastid = $DB->insert_record('course_sections', $sectiondata);
+                                                    $returnidsarray[] = [$unitsleelooid[$keyss][$keyskills][$keyunits] => $lastid];
+
+                                                    $tempobject = new stdClass();
+                                                    $tempobject->courseid = $courseid;
+                                                    $tempobject->format = 'flexsections';
+                                                    $tempobject->sectionid = $lastid;
+                                                    $tempobject->name = 'collapsed';
+                                                    $tempobject->value = 0;
+                                                    $DB->insert_record('course_format_options', $tempobject);
+
+                                                    $tempobject = new stdClass();
+                                                    $tempobject->courseid = $courseid;
+                                                    $tempobject->format = 'flexsections';
+                                                    $tempobject->sectionid = $lastid;
+                                                    $tempobject->name = 'parent';
+                                                    $tempobject->value = $sectionorderskill;
+                                                    $DB->insert_record('course_format_options', $tempobject);
+
+                                                    $tempobject = new stdClass();
+                                                    $tempobject->courseid = $courseid;
+                                                    $tempobject->format = 'flexsections';
+                                                    $tempobject->sectionid = $lastid;
+                                                    $tempobject->name = 'visibleold';
+                                                    $tempobject->value = 1;
+                                                    $DB->insert_record('course_format_options', $tempobject);
+                                                } else {
+
+                                                    // Update AR names also if Skills name has changed
+                                                    $tempdata = $DB->get_record('course_sections', ['id' => $unitmoodleid[$keyss][$keyskills][$keyunits]]);
+                                                    if ($tempdata->name != $valueunits) {
+                                                        $quizdataarr = $DB->get_records('quiz', ['course' => $courseid, 'name' => $tempdata->name]);
+                                                        if (!empty($quizdataarr)) {
+                                                            foreach ($quizdataarr as $keytemppp => $quizdataa) {
+                                                                $tempdataobj = array();
+                                                                $tempdataobj['name'] = $valueunits;
+                                                                $tempdataobj['id'] = $quizdataa->id;
+                                                                $tempdataobj = (object) $tempdataobj;
+                                                                $DB->update_record('quiz', $tempdataobj);
+                                                                $gradedataa = $DB->get_record('grade_items', ['courseid' => $courseid, 'itemname' => $tempdata->name, 'iteminstance' => $quizdataa->id]);
+                                                                if (!empty($gradedataa)) {
+                                                                    $tempdataobj = array();
+                                                                    $tempdataobj['itemname'] = $valueunits;
+                                                                    $tempdataobj['id'] = $gradedataa->id;
+                                                                    $tempdataobj = (object) $tempdataobj;
+                                                                    $DB->update_record('grade_items', $tempdataobj);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    $sectiondata = (object) $sectiondata;
+                                                    $lastid = $sectiondata->id = $unitmoodleid[$keyss][$keyskills][$keyunits];
+                                                    $DB->update_record('course_sections', $sectiondata);
+                                                }
+
+                                                // Add/Edit AR for Unit
+                                                if (!empty($structuredata->discover_per_unit) && !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['discover'])) {
+                                                    $returnarr = self::save_ar_data($lastid, $valueunits, $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['discover'], $structuredata->discover_per_unit, $courseid, 'discover');
+                                                    $returnarids[] = $returnarr;
+                                                }
+
+                                                // Add/Edit AR for Unit
+                                                if (!empty($structuredata->remember_per_unit) && !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['remember'])) {
+                                                    $returnarr = self::save_ar_data($lastid, $valueunits, $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['remember'], $structuredata->remember_per_unit, $courseid, 'remember');
+                                                    $returnarids[] = $returnarr;
+                                                }
+
+                                                // Add/Edit AR for Unit
+                                                if (!empty($structuredata->understand_per_unit) && !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['understand'])) {
+                                                    $returnarr = self::save_ar_data($lastid, $valueunits, $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['understand'], $structuredata->understand_per_unit, $courseid, 'understand');
+                                                    $returnarids[] = $returnarr;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $returndataarr = [
+                'projectids' => $returnidsarray,
+                'taskids' => $returnarids,
+            ];
+            return json_encode($returndataarr);
+        } else if ($action == 'delete') {
+
+            $sectionidstring = $structuredata->sectionidstring;
+            $quiztypestring = $structuredata->quiztypestring;
+            $courseid = $structuredata->courseid;
+            $sectionidsarr = explode(',', $sectionidstring);
+            $quiztypesarr = explode(',', $quiztypestring);
+
+            if (!empty($sectionidsarr)) {
+
+                foreach ($sectionidsarr as $key => $sectionid) {
+
+                    $sectiondataaa = $DB->get_record('course_sections', ['id' => $sectionid]);
+                    $DB->delete_records('course_sections', ['id' => $sectionid, 'course' => $courseid]);
+                    $DB->delete_records('course_format_options', ['sectionid' => $sectionid, 'courseid' => $courseid]);
+
+                    if (!empty($quiztypesarr)) {
+
+                        foreach ($quiztypesarr as $keyqt => $valueqt) {
+                            $quizdataa = $DB->get_record('quiz', ['course' => $courseid, 'name' => $sectiondataaa->name, 'quiztype' => $valueqt]);
+
+                            if (!empty($quizdataa)) {
+                                $instance = $quizdataa->id;
+                                $modulesdata = $DB->get_record('modules', ['name' => 'quiz']);
+                                $coursemodulesdata = $DB->get_records('course_modules', ['section' => $sectionid, 'course' => $courseid, 'instance' => $instance, 'module' => $modulesdata->id], 'id');
+
+                                if (!empty($coursemodulesdata)) {
+                                    foreach ($coursemodulesdata as $keymodule => $valuemodule) {
+                                        $data = array();
+                                        $data['id'] = $valuemodule->id;
+                                        $data['deletioninprogress'] = 1;
+
+                                        $data = (object) $data;
+
+                                        $DB->update_record('course_modules', $data);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            $questionid = $structuredata->questionid;
+
+            $questionidarr = explode(',', $questionid);
+
+            if (!empty($questionidarr)) {
+
+                foreach ($questionidarr as $key => $questionid) {
+                    if (!empty($questionid)) {
+                        $DB->delete_records('quiz_slots', ['questionid' => $questionid]);
+                        $DB->delete_records('question', ['id' => $questionid]);
+                        $DB->delete_records('question', ['parent' => $questionid]);
+                        $DB->delete_records('qtype_shortanswer_options', ['questionid' => $questionid]);
+                        $DB->delete_records('question_answers', ['question' => $questionid]);
+                        $DB->delete_records('question_truefalse', ['question' => $questionid]);
+                        $DB->delete_records('local_leeloolxptrivias_qd', ['questionid' => $questionid]);
+                    }
+                }
+            }
+            return 1;
+        }
     }
 
     /**
