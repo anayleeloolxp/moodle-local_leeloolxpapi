@@ -572,6 +572,7 @@ class local_leeloolxpapi_external extends external_api {
                 if ($modulesdata->id) {
 
                     if ($artype == 'page') {
+                        $dp = 'a:3:{s:12:"printheading";s:1:"1";s:10:"printintro";s:1:"0";s:17:"printlastmodified";s:1:"1";}';
                         $sectiondata = array();
                         $sectiondata['course'] = $courseid;
                         $sectiondata['name'] = $arname;
@@ -582,7 +583,7 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['legacyfiles'] = 0;
                         $sectiondata['legacyfileslast'] = null;
                         $sectiondata['display'] = 5;
-                        $sectiondata['displayoptions'] = 'a:3:{s:12:"printheading";s:1:"1";s:10:"printintro";s:1:"0";s:17:"printlastmodified";s:1:"1";}';
+                        $sectiondata['displayoptions'] = $dp;
                         $sectiondata['revision'] = 1;
                         $sectiondata['timemodified'] = time();
 
@@ -590,6 +591,7 @@ class local_leeloolxpapi_external extends external_api {
 
                         $instance = $DB->insert_record('page', $sectiondata);
                     } else if ($artype == 'leeloolxpvimeo') {
+                        $dp = 'a:3:{s:12:"printheading";s:1:"1";s:10:"printintro";s:1:"0";s:17:"printlastmodified";s:1:"1";}';
                         $sectiondata = array();
                         $sectiondata['course'] = $courseid;
                         $sectiondata['name'] = $arname;
@@ -606,7 +608,7 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['legacyfiles'] = 0;
                         $sectiondata['legacyfileslast'] = null;
                         $sectiondata['display'] = 5;
-                        $sectiondata['displayoptions'] = 'a:3:{s:12:"printheading";s:1:"1";s:10:"printintro";s:1:"0";s:17:"printlastmodified";s:1:"1";}';
+                        $sectiondata['displayoptions'] = $dp;
                         $sectiondata['revision'] = 1;
                         $sectiondata['timemodified'] = time();
 
@@ -2444,7 +2446,6 @@ class local_leeloolxpapi_external extends external_api {
                 if (!empty($catreturnedid)) {
                     $gradesdata->categoryid = $gradesdata->iteminstance = $catreturnedid;
 
-
                     $itemreturnedid = $DB->insert_record('grade_items', $gradesdata);
                 } else if (!empty($gradesdata->categoryid)) {
 
@@ -3756,7 +3757,6 @@ class local_leeloolxpapi_external extends external_api {
                     $count = 1;
                     foreach ($allsectiondata as $key => $section) {
 
-
                         $coursesectionold = $DB->get_record('course_sections', ['id' => $section->id]);
                         $coursesectionoldsection = $coursesectionold->section;
 
@@ -3840,8 +3840,6 @@ class local_leeloolxpapi_external extends external_api {
 
         $questiondata = (object) json_decode($reqquestiondata, true);
 
-        file_put_contents(dirname(__FILE__) . '/test.txt', print_r($questiondata, true));
-
         $userid = '2';
         if (isset($reqemail)) {
             $email = (object) json_decode($reqemail, true);
@@ -3870,41 +3868,55 @@ class local_leeloolxpapi_external extends external_api {
 
                         if (!empty($modulesdata)) {
 
-                            $tempdata = $DB->get_record_sql("SELECT shortname,category FROM {course} where id = ? ", [$questiondata->course_id]);
+                            $tempdata = $DB->get_record_sql(
+                                "SELECT shortname,category FROM {course} where id = ? ",
+                                [$questiondata->course_id]
+                            );
                             $contextdata = $DB->get_record('context', ['instanceid' => $questiondata->course_id, 'depth' => '3']);
 
                             if (empty($contextdata)) {
 
                                 $coursecatid = $tempdata->category;
-                                $contextdata2 = $DB->get_record('context', ['instanceid' => $coursecatid, 'depth' => '2', 'contextlevel' => '40'], 'id');
-                                $path_context = '/1/' . $contextdata2->id;
+                                $contextdata2 = $DB->get_record(
+                                    'context',
+                                    ['instanceid' => $coursecatid, 'depth' => '2', 'contextlevel' => '40'],
+                                    'id'
+                                );
+                                $pathcontext = '/1/' . $contextdata2->id;
                                 $catnewdata = array();
                                 $catnewdata['contextlevel'] = '50';
                                 $catnewdata['instanceid'] = $questiondata->course_id;
-                                $catnewdata['path'] = $path_context;
+                                $catnewdata['path'] = $pathcontext;
                                 $catnewdata['locked'] = 0;
                                 $catnewdata['depth'] = '3';
                                 $catnewdata = (object) $catnewdata;
                                 $lastiddtemp = $DB->insert_record('context', $catnewdata);
 
                                 $catnewdata = array();
-                                $catnewdata['path'] = $path_context . '/' . $lastiddtemp;
+                                $catnewdata['path'] = $pathcontext . '/' . $lastiddtemp;
                                 $catnewdata = (object) $catnewdata;
                                 $catnewdata->id = $lastiddtemp;
                                 $DB->update_record('context', $catnewdata);
-                                $contextdata = $DB->get_record('context', ['instanceid' => $questiondata->course_id, 'depth' => '3']);
+                                $contextdata = $DB->get_record(
+                                    'context',
+                                    ['instanceid' => $questiondata->course_id, 'depth' => '3']
+                                );
                             }
 
                             if (!empty($contextdata)) {
 
-                                $qcdata = $DB->get_record_sql("SELECT id FROM {question_categories} where contextid = ? ORDER BY `id` DESC", [$contextdata->id]);
+                                $qcdata = $DB->get_record_sql(
+                                    "SELECT id FROM {question_categories} where contextid = ? ORDER BY id DESC",
+                                    [$contextdata->id]
+                                );
 
                                 if (empty($qcdata)) {
+                                    $infotext = "The default category for questions shared in context '$tempdata->shortname'. ";
 
                                     $catnewdata = array();
                                     $catnewdata['name'] = 'top';
                                     $catnewdata['contextid'] = $contextdata->id;
-                                    $catnewdata['info'] = "The default category for questions shared in context '$tempdata->shortname'. ";
+                                    $catnewdata['info'] = $infotext;
                                     $catnewdata['infoformat'] = 0;
                                     $catnewdata['stamp'] = $_SERVER['HTTP_HOST'];
                                     $catnewdata['parent'] = 0;
@@ -3916,7 +3928,7 @@ class local_leeloolxpapi_external extends external_api {
                                     $catnewdata2 = array();
                                     $catnewdata2['name'] = 'Default for ' . $tempdata->shortname;
                                     $catnewdata2['contextid'] = $contextdata->id;
-                                    $catnewdata2['info'] = "The default category for questions shared in context '$tempdata->shortname'. ";
+                                    $catnewdata2['info'] = $infotext;
                                     $catnewdata2['infoformat'] = 0;
                                     $catnewdata2['stamp'] = $_SERVER['HTTP_HOST'] . '+' . $lastidd;
                                     $catnewdata2['parent'] = $lastidd;
@@ -3926,12 +3938,21 @@ class local_leeloolxpapi_external extends external_api {
 
                                     $DB->insert_record('question_categories', $catnewdata2);
 
-                                    $qcdata = $DB->get_record_sql("SELECT id FROM {question_categories} where contextid = ? ORDER BY `id` DESC", [$contextdata->id]);
+                                    $qcdata = $DB->get_record_sql(
+                                        "SELECT id FROM {question_categories} where contextid = ? ORDER BY id DESC",
+                                        [$contextdata->id]
+                                    );
                                 }
 
                                 if (!empty($qcdata)) {
 
-                                    $quizdataa = $DB->get_record('quiz', ['course' => $questiondata->course_id, 'name' => $valueactivity['task_name'], 'quiztype' => $valueactivity['quiztype']]);
+                                    $quizdataa = $DB->get_record(
+                                        'quiz',
+                                        [
+                                            'course' => $questiondata->course_id,
+                                            'name' => $valueactivity['task_name'], 'quiztype' => $valueactivity['quiztype']
+                                        ]
+                                    );
 
                                     if (!empty($quizdataa)) {
 
@@ -3965,7 +3986,6 @@ class local_leeloolxpapi_external extends external_api {
                                             $sectiondata['modifiedby'] = $userid;
                                             $sectiondata['idnumber'] = null;
 
-
                                             $sectiondata = (object) $sectiondata;
 
                                             if (empty($valuess['mid'])) {
@@ -3976,7 +3996,7 @@ class local_leeloolxpapi_external extends external_api {
                                                     $tempdata['usecase'] = 0;
                                                     $tempdata['questionid'] = $mqid;
                                                     $DB->insert_record('qtype_shortanswer_options', $tempdata);
-                                                } elseif ($valuess['qtype'] == 'multichoice') {
+                                                } else if ($valuess['qtype'] == 'multichoice') {
                                                     $tempdata = [];
 
                                                     $tempdata['questionid'] = $mqid;
@@ -3999,7 +4019,10 @@ class local_leeloolxpapi_external extends external_api {
 
                                                 $questionidsarr[] = [$leelooids[0] => $mqid];
 
-                                                $quizslotsdata = $DB->get_record_sql("SELECT * FROM {quiz_slots} where quizid = ? ORDER BY `id` DESC", [$quizid]);
+                                                $quizslotsdata = $DB->get_record_sql(
+                                                    "SELECT * FROM {quiz_slots} where quizid = ? ORDER BY id DESC",
+                                                    [$quizid]
+                                                );
                                                 $slott = 1;
                                                 if (!empty($quizslotsdata)) {
                                                     $slott = $quizslotsdata->page + 1;
@@ -4057,7 +4080,10 @@ class local_leeloolxpapi_external extends external_api {
                                                     $sectiondata->id = $tempid;
                                                     $lasttidd = $DB->update_record('question', $sectiondata);
 
-                                                    $tempdata = $DB->get_record_sql("SELECT id FROM {local_leeloolxptrivias_qd} where questionid = ? ", [$tempid]);
+                                                    $tempdata = $DB->get_record_sql(
+                                                        "SELECT id FROM {local_leeloolxptrivias_qd} where questionid = ? ",
+                                                        [$tempid]
+                                                    );
                                                     $extradatainsert = array();
                                                     $extradatainsert['vimeoid'] = $valuess['video_id'];
                                                     $extradatainsert = (object) $extradatainsert;
@@ -4065,8 +4091,6 @@ class local_leeloolxpapi_external extends external_api {
                                                     $DB->update_record('local_leeloolxptrivias_qd', $extradatainsert);
                                                 }
                                             }
-
-
 
                                             if (!empty($valuess['answers'])) {
 
@@ -4084,7 +4108,10 @@ class local_leeloolxpapi_external extends external_api {
                                                     $answersdata['feedbackformat'] = '1';
                                                     $answersdata = (object) $answersdata;
                                                     if (empty($valueanswers['mid'])) {
-                                                        $lastidanswer = $maid = $DB->insert_record('question_answers', $answersdata);
+                                                        $lastidanswer = $maid = $DB->insert_record(
+                                                            'question_answers',
+                                                            $answersdata
+                                                        );
                                                         $answeridsarr[] = [$valueanswers['id'] => $maid];
                                                     } else {
                                                         $lastidanswer = $answersdata->id = $valueanswers['mid'];
@@ -4166,6 +4193,17 @@ class local_leeloolxpapi_external extends external_api {
         );
     }
 
+    /**
+     * Structure Create.
+     *
+     * @param string $sectionid sectionid
+     * @param string $valueskills valueskills
+     * @param string $leelooidstring leelooidstring
+     * @param string $arcount arcount
+     * @param string $courseid courseid
+     * @param string $quiztype quiztype
+     * @return array $returnarr returnarr
+     */
     public static function save_ar_data($sectionid, $valueskills, $leelooidstring, $arcount, $courseid, $quiztype) {
 
         global $DB;
@@ -4384,9 +4422,6 @@ class local_leeloolxpapi_external extends external_api {
 
         $structuredata = (object) json_decode($reqstructuredata, true);
 
-
-        file_put_contents(dirname(__FILE__) . '/structurecreator.txt', print_r($structuredata, true));
-
         if (isset($reqemail)) {
             $email = (object) json_decode($reqemail, true);
         }
@@ -4482,7 +4517,6 @@ class local_leeloolxpapi_external extends external_api {
             $returnidsarray = [];
             $returnarids = [];
 
-
             if (!empty($skillsets)) {
 
                 foreach ($skillsets as $keyss => $valuess) {
@@ -4509,7 +4543,6 @@ class local_leeloolxpapi_external extends external_api {
                             $sectiondata->id = $skillsetmoodleid[$keyss];
                             $sectionid = $DB->update_record('course_sections', $sectiondata);
                         }
-
 
                         if (!empty($skills[$keyss])) {
                             foreach ($skills[$keyss] as $keyskills => $valueskills) {
@@ -4558,11 +4591,17 @@ class local_leeloolxpapi_external extends external_api {
                                         $DB->insert_record('course_format_options', $tempobject);
                                     } else {
 
-                                        // Update AR names also if Skills name has changed
-                                        $tempdata = $DB->get_record('course_sections', ['id' => $skillmoodleid[$keyss][$keyskills]]);
+                                        // Update AR names also if Skills name has changed.
+                                        $tempdata = $DB->get_record(
+                                            'course_sections',
+                                            ['id' => $skillmoodleid[$keyss][$keyskills]]
+                                        );
                                         $sectionorderskill = $tempdata->section;
                                         if ($tempdata->name != $valueskills) {
-                                            $quizdataarr = $DB->get_records('quiz', ['course' => $courseid, 'name' => $tempdata->name]);
+                                            $quizdataarr = $DB->get_records(
+                                                'quiz',
+                                                ['course' => $courseid, 'name' => $tempdata->name]
+                                            );
                                             if (!empty($quizdataarr)) {
                                                 foreach ($quizdataarr as $keytemppp => $quizdataa) {
                                                     $tempdataobj = array();
@@ -4570,7 +4609,16 @@ class local_leeloolxpapi_external extends external_api {
                                                     $tempdataobj['id'] = $quizdataa->id;
                                                     $tempdataobj = (object) $tempdataobj;
                                                     $DB->update_record('quiz', $tempdataobj);
-                                                    $gradedataa = $DB->get_record('grade_items', ['courseid' => $courseid, 'itemname' => $tempdata->name, 'iteminstance' => $quizdataa->id]);
+
+                                                    $gradedataa = $DB->get_record(
+                                                        'grade_items',
+                                                        [
+                                                            'courseid' => $courseid,
+                                                            'itemname' => $tempdata->name,
+                                                            'iteminstance' => $quizdataa->id
+                                                        ]
+                                                    );
+
                                                     if (!empty($gradedataa)) {
                                                         $tempdataobj = array();
                                                         $tempdataobj['itemname'] = $valueskills;
@@ -4587,27 +4635,71 @@ class local_leeloolxpapi_external extends external_api {
                                         $DB->update_record('course_sections', $sectiondata);
                                     }
 
-                                    // Add/Edit AR duels for skills
-                                    if (!empty($structuredata->duels_per_skill) && !empty($structuredata->skillstaskid[$keyss][$keyskills]['duels'])) {
-                                        $returnarr = self::save_ar_data($lastid, $valueskills, $structuredata->skillstaskid[$keyss][$keyskills]['duels'], $structuredata->duels_per_skill, $courseid, 'duels');
+                                    // Add/Edit AR duels for skills.
+                                    if (
+                                        !empty($structuredata->duels_per_skill)
+                                        &&
+                                        !empty($structuredata->skillstaskid[$keyss][$keyskills]['duels'])
+                                    ) {
+                                        $returnarr = self::save_ar_data(
+                                            $lastid,
+                                            $valueskills,
+                                            $structuredata->skillstaskid[$keyss][$keyskills]['duels'],
+                                            $structuredata->duels_per_skill,
+                                            $courseid,
+                                            'duels'
+                                        );
                                         $returnarids[] = $returnarr;
                                     }
 
-                                    // Add/Edit AR duels for situation
-                                    if (!empty($structuredata->situations_per_skill) && !empty($structuredata->skillstaskid[$keyss][$keyskills]['situation'])) {
-                                        $returnarr = self::save_ar_data($lastid, $valueskills, $structuredata->skillstaskid[$keyss][$keyskills]['situation'], $structuredata->situations_per_skill, $courseid, 'situation');
+                                    // Add/Edit AR duels for situation.
+                                    if (
+                                        !empty($structuredata->situations_per_skill)
+                                        &&
+                                        !empty($structuredata->skillstaskid[$keyss][$keyskills]['situation'])
+                                    ) {
+                                        $returnarr = self::save_ar_data(
+                                            $lastid,
+                                            $valueskills,
+                                            $structuredata->skillstaskid[$keyss][$keyskills]['situation'],
+                                            $structuredata->situations_per_skill,
+                                            $courseid,
+                                            'situation'
+                                        );
                                         $returnarids[] = $returnarr;
                                     }
 
-                                    // Add/Edit AR duels for case
-                                    if (!empty($structuredata->cases_per_skill) && !empty($structuredata->skillstaskid[$keyss][$keyskills]['case'])) {
-                                        $returnarr = self::save_ar_data($lastid, $valueskills, $structuredata->skillstaskid[$keyss][$keyskills]['case'], $structuredata->cases_per_skill, $courseid, 'case');
+                                    // Add/Edit AR duels for case.
+                                    if (
+                                        !empty($structuredata->cases_per_skill)
+                                        &&
+                                        !empty($structuredata->skillstaskid[$keyss][$keyskills]['case'])
+                                    ) {
+                                        $returnarr = self::save_ar_data(
+                                            $lastid,
+                                            $valueskills,
+                                            $structuredata->skillstaskid[$keyss][$keyskills]['case'],
+                                            $structuredata->cases_per_skill,
+                                            $courseid,
+                                            'case'
+                                        );
                                         $returnarids[] = $returnarr;
                                     }
 
-                                    // Add/Edit AR duels for quest
-                                    if (!empty($structuredata->quests_per_skill) && !empty($structuredata->skillstaskid[$keyss][$keyskills]['quest'])) {
-                                        $returnarr = self::save_ar_data($lastid, $valueskills, $structuredata->skillstaskid[$keyss][$keyskills]['quest'], $structuredata->quests_per_skill, $courseid, 'quest');
+                                    // Add/Edit AR duels for quest.
+                                    if (
+                                        !empty($structuredata->quests_per_skill)
+                                        &&
+                                        !empty($structuredata->skillstaskid[$keyss][$keyskills]['quest'])
+                                    ) {
+                                        $returnarr = self::save_ar_data(
+                                            $lastid,
+                                            $valueskills,
+                                            $structuredata->skillstaskid[$keyss][$keyskills]['quest'],
+                                            $structuredata->quests_per_skill,
+                                            $courseid,
+                                            'quest'
+                                        );
                                         $returnarids[] = $returnarr;
                                     }
 
@@ -4659,10 +4751,16 @@ class local_leeloolxpapi_external extends external_api {
                                                     $DB->insert_record('course_format_options', $tempobject);
                                                 } else {
 
-                                                    // Update AR names also if Skills name has changed
-                                                    $tempdata = $DB->get_record('course_sections', ['id' => $unitmoodleid[$keyss][$keyskills][$keyunits]]);
+                                                    // Update AR names also if Skills name has changed.
+                                                    $tempdata = $DB->get_record(
+                                                        'course_sections',
+                                                        ['id' => $unitmoodleid[$keyss][$keyskills][$keyunits]]
+                                                    );
                                                     if ($tempdata->name != $valueunits) {
-                                                        $quizdataarr = $DB->get_records('quiz', ['course' => $courseid, 'name' => $tempdata->name]);
+                                                        $quizdataarr = $DB->get_records(
+                                                            'quiz',
+                                                            ['course' => $courseid, 'name' => $tempdata->name]
+                                                        );
                                                         if (!empty($quizdataarr)) {
                                                             foreach ($quizdataarr as $keytemppp => $quizdataa) {
                                                                 $tempdataobj = array();
@@ -4670,7 +4768,16 @@ class local_leeloolxpapi_external extends external_api {
                                                                 $tempdataobj['id'] = $quizdataa->id;
                                                                 $tempdataobj = (object) $tempdataobj;
                                                                 $DB->update_record('quiz', $tempdataobj);
-                                                                $gradedataa = $DB->get_record('grade_items', ['courseid' => $courseid, 'itemname' => $tempdata->name, 'iteminstance' => $quizdataa->id]);
+
+                                                                $gradedataa = $DB->get_record(
+                                                                    'grade_items',
+                                                                    [
+                                                                        'courseid' => $courseid,
+                                                                        'itemname' => $tempdata->name,
+                                                                        'iteminstance' => $quizdataa->id
+                                                                    ]
+                                                                );
+
                                                                 if (!empty($gradedataa)) {
                                                                     $tempdataobj = array();
                                                                     $tempdataobj['itemname'] = $valueunits;
@@ -4687,21 +4794,54 @@ class local_leeloolxpapi_external extends external_api {
                                                     $DB->update_record('course_sections', $sectiondata);
                                                 }
 
-                                                // Add/Edit AR for Unit
-                                                if (!empty($structuredata->discover_per_unit) && !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['discover'])) {
-                                                    $returnarr = self::save_ar_data($lastid, $valueunits, $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['discover'], $structuredata->discover_per_unit, $courseid, 'discover');
+                                                // Add/Edit AR for Unit.
+                                                if (
+                                                    !empty($structuredata->discover_per_unit)
+                                                    &&
+                                                    !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['discover'])
+                                                ) {
+                                                    $returnarr = self::save_ar_data(
+                                                        $lastid,
+                                                        $valueunits,
+                                                        $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['discover'],
+                                                        $structuredata->discover_per_unit,
+                                                        $courseid,
+                                                        'discover'
+                                                    );
                                                     $returnarids[] = $returnarr;
                                                 }
 
-                                                // Add/Edit AR for Unit
-                                                if (!empty($structuredata->remember_per_unit) && !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['remember'])) {
-                                                    $returnarr = self::save_ar_data($lastid, $valueunits, $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['remember'], $structuredata->remember_per_unit, $courseid, 'remember');
+                                                // Add/Edit AR for Unit.
+                                                if (
+                                                    !empty($structuredata->remember_per_unit)
+                                                    &&
+                                                    !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['remember'])
+                                                ) {
+                                                    $returnarr = self::save_ar_data(
+                                                        $lastid,
+                                                        $valueunits,
+                                                        $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['remember'],
+                                                        $structuredata->remember_per_unit,
+                                                        $courseid,
+                                                        'remember'
+                                                    );
                                                     $returnarids[] = $returnarr;
                                                 }
 
-                                                // Add/Edit AR for Unit
-                                                if (!empty($structuredata->understand_per_unit) && !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['understand'])) {
-                                                    $returnarr = self::save_ar_data($lastid, $valueunits, $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['understand'], $structuredata->understand_per_unit, $courseid, 'understand');
+                                                // Add/Edit AR for Unit.
+                                                if (
+                                                    !empty($structuredata->understand_per_unit)
+                                                    &&
+                                                    !empty($structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['understand'])
+                                                ) {
+                                                    $returnarr = self::save_ar_data(
+                                                        $lastid,
+                                                        $valueunits,
+                                                        $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['understand'],
+                                                        $structuredata->understand_per_unit,
+                                                        $courseid,
+                                                        'understand'
+                                                    );
                                                     $returnarids[] = $returnarr;
                                                 }
                                             }
@@ -4737,12 +4877,24 @@ class local_leeloolxpapi_external extends external_api {
                     if (!empty($quiztypesarr)) {
 
                         foreach ($quiztypesarr as $keyqt => $valueqt) {
-                            $quizdataa = $DB->get_record('quiz', ['course' => $courseid, 'name' => $sectiondataaa->name, 'quiztype' => $valueqt]);
+                            $quizdataa = $DB->get_record(
+                                'quiz',
+                                ['course' => $courseid, 'name' => $sectiondataaa->name, 'quiztype' => $valueqt]
+                            );
 
                             if (!empty($quizdataa)) {
                                 $instance = $quizdataa->id;
                                 $modulesdata = $DB->get_record('modules', ['name' => 'quiz']);
-                                $coursemodulesdata = $DB->get_records('course_modules', ['section' => $sectionid, 'course' => $courseid, 'instance' => $instance, 'module' => $modulesdata->id], 'id');
+                                $coursemodulesdata = $DB->get_records(
+                                    'course_modules',
+                                    [
+                                        'section' => $sectionid,
+                                        'course' => $courseid,
+                                        'instance' => $instance,
+                                        'module' => $modulesdata->id
+                                    ],
+                                    'id'
+                                );
 
                                 if (!empty($coursemodulesdata)) {
                                     foreach ($coursemodulesdata as $keymodule => $valuemodule) {
