@@ -319,6 +319,11 @@ class local_leeloolxpapi_external extends external_api {
             $moddata['ispremium'] = $ispremium;
         }
 
+        if (isset($ardata->instructor)) {
+            $instructor = $ardata->instructor;
+            $moddata['instructor'] = $instructor;
+        }
+
         if (isset($ardata->isfree)) {
             $isfree = $ardata->isfree;
             $moddata['isfree'] = $isfree;
@@ -610,6 +615,7 @@ class local_leeloolxpapi_external extends external_api {
                         $sectiondata['vimeo_video_id'] = $ardata->vimeo_video_id;
                         $sectiondata['ispremium'] = $ardata->ispremium;
                         $sectiondata['isfree'] = $ardata->isfree;
+                        $sectiondata['instructor'] = $ardata->instructor;
                         $sectiondata['vimeo_token'] = '';
                         $sectiondata['width'] = 640;
                         $sectiondata['height'] = 320;
@@ -4238,6 +4244,7 @@ class local_leeloolxpapi_external extends external_api {
                 $moddata['vimeo_video_id'] = '';
                 $moddata['ispremium'] = 2;
                 $moddata['isfree'] = 2;
+                $moddata['instructor'] = 0;
                 $moddata['quiztype'] = $quiztype;
                 $moddata['timeopen'] = '';
                 $moddata['timeclose'] = '';
