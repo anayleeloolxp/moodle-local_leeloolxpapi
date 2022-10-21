@@ -797,3 +797,29 @@ function get_all_data($params) {
 
     return $return;
 }
+
+
+/**
+ * Get custom fields
+ *
+ * @param array $params params
+ * @return array $data data
+ */
+function get_custom_fields($params) {
+
+    global $DB;
+    if ($params['functiondata'] == 'userfield') {
+        $query = "SELECT * from {user_info_field} ";
+        $singledata1 = $DB->get_records_sql($query);
+    } else {
+        $query = "SELECT * from {customfield_field} ";
+        $singledata1 = $DB->get_records_sql($query);
+    }
+
+
+    $return = array();
+
+    $return['data'] = $singledata1;
+
+    return $return;
+}
