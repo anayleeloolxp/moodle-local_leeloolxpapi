@@ -1688,7 +1688,8 @@ class local_leeloolxpapi_external extends external_api {
             )
         );
 
-        $email = $reqemail;
+        $reqemail = json_decode($reqemail, true);
+        $email = base64_decode($reqemail[1], true);
         $res = $DB->get_record_sql("SELECT * FROM {user} where email = ?", [$email]);
         if (!empty($res)) {
             return $res->id;
