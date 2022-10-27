@@ -4213,7 +4213,29 @@ class local_leeloolxpapi_external extends external_api {
     }
 
     /**
-     * Structure Create.
+     * Check and pdate course sections.
+     *
+     * @param string $courseid courseid
+     * @param string $section section
+     */
+    public static function check_update_course_section($courseid, $section) {
+        global $DB;
+        // Check if course-section exist
+        $csexist = $DB->get_record('course_sections', ['course' => $courseid, 'section' => $section]);
+        if (!empty($csexist)) {
+            // Update all entries by 1 after and including the record we found
+            $updatedata = $DB->get_records_sql("select id from {course_sections} WHERE section >= ? and course = ?  ORDER BY section DESC ", [$section, $courseid]);
+            foreach ($updatedata as $key => $value) {
+                $DB->execute(
+                    "update {course_sections} set section = section + 1 WHERE id = ? ",
+                    [$value->id]
+                );
+            }
+        }
+    }
+
+    /**
+     * Save ar data.
      *
      * @param string $sectionid sectionid
      * @param string $valueskills valueskills
@@ -4558,6 +4580,7 @@ class local_leeloolxpapi_external extends external_api {
                             $sectiondata['section'] = $sectionorder;
                             $sectiondata['sequence'] = '';
                             $sectiondata = (object) $sectiondata;
+                            self::check_update_course_section($courseid, $sectionorder);
                             $sectionid = $DB->insert_record('course_sections', $sectiondata);
                             $returnidsarray[] = [$skillsetsleelooid[$keyss] => $sectionid];
                         } else {
@@ -4585,6 +4608,7 @@ class local_leeloolxpapi_external extends external_api {
                                         $sectiondata['sequence'] = '';
                                         $sectiondata['section'] = $sectionorder;
                                         $sectiondata = (object) $sectiondata;
+                                        self::check_update_course_section($courseid, $sectionorder);
                                         $lastid = $DB->insert_record('course_sections', $sectiondata);
                                         $returnidsarray[] = [$skillsleelooid[$keyss][$keyskills] => $lastid];
 
@@ -4745,6 +4769,7 @@ class local_leeloolxpapi_external extends external_api {
                                                     $sectiondata['sequence'] = '';
                                                     $sectiondata['section'] = $sectionorder;
                                                     $sectiondata = (object) $sectiondata;
+                                                    self::check_update_course_section($courseid, $sectionorder);
                                                     $lastid = $DB->insert_record('course_sections', $sectiondata);
                                                     $returnidsarray[] = [$unitsleelooid[$keyss][$keyskills][$keyunits] => $lastid];
 
