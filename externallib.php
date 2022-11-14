@@ -1452,7 +1452,14 @@ class local_leeloolxpapi_external extends external_api {
             $isparentfound = $value->is_parent;
             unset($value->is_parent);
         }
-        $value->sortorder = 10000;
+        $sql = "SELECT sortorder FROM {course_categories} ORDER BY sortorder DESC ";
+        $catorderdata = $DB->get_record_sql($sql);
+        if (!empty($catorderdata)) {
+            $catorderdata->sortorder = (int)$catorderdata->sortorder;
+            $value->sortorder = $catorderdata->sortorder + 10000;
+        } else {
+            $value->sortorder = 10000;
+        }
         unset($value->moodle_cat_id);
         unset($value->moodle_parent_cat_id);
         unset($value->is_update);
