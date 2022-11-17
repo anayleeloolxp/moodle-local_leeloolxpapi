@@ -4996,4 +4996,111 @@ class local_leeloolxpapi_external extends external_api {
     public static function structurecreator_returns() {
         return new external_value(PARAM_TEXT, 'Returns true');
     }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function checkintegration_parameters() {
+        return new external_function_parameters(
+            array(
+                'checkmodule' => new external_value(PARAM_RAW, 'Check Module', VALUE_DEFAULT, null),
+                'leeloo_token' => new external_value(PARAM_RAW, 'leeloo_token', VALUE_DEFAULT, null),
+                'moodle_content_token' => new external_value(PARAM_RAW, 'moodle_content_token', VALUE_DEFAULT, null),
+                'payments_licensekey' => new external_value(PARAM_RAW, 'payments_licensekey', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Check Module.
+     *
+     * @param string $reqcheckmodule checkmodule
+     * @param string $reqleelootoken leeloo_token
+     * @param string $reqmoodlecontenttoken moodle_content_token
+     * @param string $reqpaymentslicensekey payments_licensekey
+     * @return string welcome message
+     */
+    public static function checkintegration(
+        $reqcheckmodule = '',
+        $reqleelootoken = '',
+        $reqmoodlecontenttoken = '',
+        $reqpaymentslicensekey = ''
+    ) {
+
+        global $DB;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::checkintegration_parameters(),
+            array(
+                'checkmodule' => $reqcheckmodule,
+                'leeloo_token' => $reqleelootoken,
+                'moodle_content_token' => $reqmoodlecontenttoken,
+                'payments_licensekey' => $reqpaymentslicensekey,
+            )
+        );
+
+        $modulesdata = $DB->get_record(
+            'config_plugins',
+            [
+                'plugin' => $reqcheckmodule,
+                'name' => 'version'
+            ]
+        );
+
+        if ($modulesdata) {
+            $status = 'installed';
+
+            $vendorkeycheck = $DB->get_record_sql(
+                "SELECT value FROM {config_plugins} where plugin = ? and name = ?",
+                [$reqcheckmodule, 'vendorkey']
+            );
+
+            if ($vendorkeycheck) {
+                if ($vendorkeycheck->value == $reqpaymentslicensekey) {
+                    $vendortrue = 1;
+                } else {
+                    $vendortrue = 0;
+                }
+            } else {
+                $vendortrue = 2; //not needed
+            }
+
+            $licekeycheck = $DB->get_record_sql(
+                "SELECT value FROM {config_plugins} where plugin = ? and name LIKE '%license%'",
+                [$reqcheckmodule]
+            );
+
+            if ($licekeycheck) {
+                if ($licekeycheck->value == $reqpaymentslicensekey) {
+                    $licetrue = 1;
+                } else {
+                    $licetrue = 0;
+                }
+            } else {
+                $licetrue = 2; //not needed
+            }
+        } else {
+            $status = 'notinstalled';
+            $vendortrue = 2; //not needed
+            $licetrue = 2; //not needed
+        }
+
+        $responsearr = array();
+
+        $responsearr['status'] = $status;
+        $responsearr['vendorkeycheck'] = $vendortrue;
+        $responsearr['licekeycheck'] = $licetrue;
+
+        return json_encode($responsearr);
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function checkintegration_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
 }

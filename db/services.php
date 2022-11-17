@@ -340,6 +340,14 @@ $functions = array(
         'description' => 'Structure Creator',
         'type' => 'write',
     ),
+
+    'local_leeloolxpapi_checkintegration' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'checkintegration',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Check integration with LeelooLXP',
+        'type' => 'read',
+    ),
 );
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
@@ -385,7 +393,8 @@ $services = array(
             'local_leeloolxpapi_course_enroll',
             'local_leeloolxpapi_ar_enroll',
             'local_leeloolxpapi_questionsync',
-            'local_leeloolxpapi_structurecreator'
+            'local_leeloolxpapi_structurecreator',
+            'local_leeloolxpapi_checkintegration'
         ),
         'restrictedusers' => 0,
         'enabled' => 1,
