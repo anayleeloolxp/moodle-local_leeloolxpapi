@@ -4700,7 +4700,7 @@ class local_leeloolxpapi_external extends external_api {
                                             $structuredata->skillstaskid[$keyss][$keyskills]['duels'],
                                             $structuredata->duels_per_skill,
                                             $courseid,
-                                            'duels'
+                                            'regularduel'
                                         );
                                         $returnarids[] = $returnarr;
                                     }
