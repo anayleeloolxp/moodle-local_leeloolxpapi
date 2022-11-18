@@ -5028,7 +5028,7 @@ class local_leeloolxpapi_external extends external_api {
         $reqpaymentslicensekey = ''
     ) {
 
-        global $DB;
+        global $DB, $CFG;
         // Parameter validation.
         // REQUIRED.
         $params = self::validate_parameters(
@@ -5052,6 +5052,92 @@ class local_leeloolxpapi_external extends external_api {
         if ($modulesdata) {
             $status = 'installed';
 
+            $enabled = 2;
+
+            get_enabled_auth_plugins(true);
+            if (empty($CFG->auth)) {
+                $authsenabled = array();
+            } else {
+                $authsenabled = explode(',', $CFG->auth);
+            }
+
+            if (
+                $reqcheckmodule == 'auth_leeloolxp_tracking_sso' ||
+                $reqcheckmodule == 'auth_leeloo_pay_sso'
+            ) {
+                if (in_array(str_replace('auth_', '', $reqcheckmodule), $authsenabled)) {
+                    $enabled = 1;
+                } else {
+                    $enabled = 0;
+                }
+            }
+
+            if (
+                $reqcheckmodule == 'filter_leeloolxp'
+            ) {
+                $filteractive = $DB->get_record('filter_active', ['filter' => 'leeloolxp', 'active' => '1']);
+                if ($filteractive) {
+                    $enabled = 1;
+                } else {
+                    $enabled = 0;
+                }
+            }
+
+            if (
+                $reqcheckmodule == 'local_leeloolxpsocial'
+            ) {
+                $filteractive = $DB->get_record('config_plugins', ['plugin' => $reqcheckmodule, 'name' => 'addsocialpage']);
+                if ($filteractive->value == 1) {
+                    $enabled = 1;
+                } else {
+                    $enabled = 0;
+                }
+            }
+
+            if (
+                $reqcheckmodule == 'local_leeloolxpsrm'
+            ) {
+                $filteractive = $DB->get_record('config_plugins', ['plugin' => $reqcheckmodule, 'name' => 'addsrmpage']);
+                if ($filteractive->value == 1) {
+                    $enabled = 1;
+                } else {
+                    $enabled = 0;
+                }
+            }
+
+            if (
+                $reqcheckmodule == 'local_leeloolxp_web_tat'
+            ) {
+                $filteractive = $DB->get_record('config_plugins', ['plugin' => $reqcheckmodule, 'name' => 'leeloolxp_web_tatenabled']);
+                if ($filteractive->value == 1) {
+                    $enabled = 1;
+                } else {
+                    $enabled = 0;
+                }
+            }
+
+            if (
+                $reqcheckmodule == 'local_leeloolxp_lct'
+            ) {
+                $filteractive = $DB->get_record('config_plugins', ['plugin' => $reqcheckmodule, 'name' => 'certitrackerenable']);
+                if ($filteractive->value == 1) {
+                    $enabled = 1;
+                } else {
+                    $enabled = 0;
+                }
+            }
+
+            if (
+                $reqcheckmodule == 'local_leeloolxp_web_login_tracking'
+            ) {
+                $filteractive = $DB->get_record('config_plugins', ['plugin' => $reqcheckmodule, 'name' => 'web_loginlogout']);
+                if ($filteractive->value == 1) {
+                    $enabled = 1;
+                } else {
+                    $enabled = 0;
+                }
+            }
+
             $vendorkeycheck = $DB->get_record_sql(
                 "SELECT value FROM {config_plugins} where plugin = ? and name = ?",
                 [$reqcheckmodule, 'vendorkey']
@@ -5064,7 +5150,7 @@ class local_leeloolxpapi_external extends external_api {
                     $vendortrue = 0;
                 }
             } else {
-                $vendortrue = 2; //not needed
+                $vendortrue = 2; // Not needed.
             }
 
             $licekeycheck = $DB->get_record_sql(
@@ -5079,12 +5165,13 @@ class local_leeloolxpapi_external extends external_api {
                     $licetrue = 0;
                 }
             } else {
-                $licetrue = 2; //not needed
+                $licetrue = 2; // Not needed.
             }
         } else {
             $status = 'notinstalled';
-            $vendortrue = 2; //not needed
-            $licetrue = 2; //not needed
+            $vendortrue = 2; // Not needed.
+            $licetrue = 2; // Not needed.
+            $enabled = 2; // Not needed.
         }
 
         $responsearr = array();
@@ -5092,6 +5179,7 @@ class local_leeloolxpapi_external extends external_api {
         $responsearr['status'] = $status;
         $responsearr['vendorkeycheck'] = $vendortrue;
         $responsearr['licekeycheck'] = $licetrue;
+        $responsearr['enabled'] = $enabled;
 
         return json_encode($responsearr);
     }
