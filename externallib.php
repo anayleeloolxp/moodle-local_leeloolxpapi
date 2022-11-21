@@ -5054,6 +5054,18 @@ class local_leeloolxpapi_external extends external_api {
 
             $enabled = 2;
             $tokenmatched = 2;
+            $leelooapitokenmatched = 2;
+
+            if (
+                $reqcheckmodule == 'local_leeloolxpapi'
+            ) {
+                $leelooapitoken = $DB->get_record('config_plugins', ['plugin' => $reqcheckmodule, 'name' => 'leelooapitoken']);
+                if ($leelooapitoken->value == $reqleelootoken) {
+                    $leelooapitokenmatched = 1;
+                } else {
+                    $leelooapitokenmatched = 0;
+                }
+            }
 
             if (
                 $reqcheckmodule == 'local_leeloolxpcontentapi'
@@ -5191,6 +5203,7 @@ class local_leeloolxpapi_external extends external_api {
             $licetrue = 2; // Not needed.
             $enabled = 2; // Not needed.
             $tokenmatched = 2; // Not needed.
+            $leelooapitokenmatched = 2; // Not needed.
         }
 
         $responsearr = array();
@@ -5200,6 +5213,7 @@ class local_leeloolxpapi_external extends external_api {
         $responsearr['licekeycheck'] = $licetrue;
         $responsearr['enabled'] = $enabled;
         $responsearr['tokenmatched'] = $tokenmatched;
+        $responsearr['leelooapitokenmatched'] = $leelooapitokenmatched;
 
         return json_encode($responsearr);
     }
