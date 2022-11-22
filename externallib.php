@@ -4248,11 +4248,13 @@ class local_leeloolxpapi_external extends external_api {
      * @param string $valueskills valueskills
      * @param string $leelooidstring leelooidstring
      * @param string $arcount arcount
+     * @param string $startdate startdate
+     * @param string $enddate enddate
      * @param string $courseid courseid
      * @param string $quiztype quiztype
      * @return array $returnarr returnarr
      */
-    public static function save_ar_data($sectionid, $valueskills, $leelooidstring, $arcount, $courseid, $quiztype) {
+    public static function save_ar_data($sectionid, $valueskills, $leelooidstring, $arcount, $startdate, $enddate, $courseid, $quiztype, $userid) {
 
         global $DB;
 
@@ -4298,8 +4300,8 @@ class local_leeloolxpapi_external extends external_api {
                     $sectiondata['name'] = $arname;
                     $sectiondata['intro'] = '';
                     $sectiondata['introformat'] = 1;
-                    $sectiondata['timeopen'] = 0;
-                    $sectiondata['timeclose'] = 0;
+                    $sectiondata['timeopen'] = strtotime($startdate);
+                    $sectiondata['timeclose'] = strtotime($enddate);
                     $sectiondata['timelimit'] = 0;
                     $sectiondata['overduehandling'] = 'autosubmit';
                     $sectiondata['graceperiod'] = 0;
@@ -4390,7 +4392,28 @@ class local_leeloolxpapi_external extends external_api {
                     $sectiondata['timemodified'] = time();
 
                     $sectiondata = (object) $sectiondata;
-                    $DB->insert_record('grade_items', $sectiondata);
+                    $itemidlast = $DB->insert_record('grade_items', $sectiondata);
+
+                    $gradegradedata = array();
+                    $gradegradedata['itemid'] = $itemidlast;
+                    $gradegradedata['userid'] = $userid;
+                    $gradegradedata['rawgrademax'] = '10.00000';
+                    $gradegradedata['rawgrademin'] = '0.00000';
+                    $gradegradedata['hidden'] = 0;
+                    $gradegradedata['locked'] = 0;
+                    $gradegradedata['locktime'] = 0;
+                    $gradegradedata['exported'] = 0;
+                    $gradegradedata['overridden'] = 0;
+                    $gradegradedata['excluded'] = 0;
+                    $gradegradedata['feedback'] = '';
+                    $gradegradedata['feedbackformat'] = 0;
+                    $gradegradedata['information'] = '';
+                    $gradegradedata['informationformat'] = 0;
+                    $gradegradedata['aggregationstatus'] = 'novalue';
+                    $gradegradedata['aggregationweight'] = '0.00000';
+
+                    $gradegradedata = (object) $gradegradedata;
+                    $DB->insert_record('grade_grades', $gradegradedata);
 
                     if ($instance) {
                         $sectiondata = array();
@@ -4473,8 +4496,18 @@ class local_leeloolxpapi_external extends external_api {
 
         $structuredata = (object) json_decode($reqstructuredata, true);
 
-        if (isset($reqemail)) {
-            $email = (object) json_decode($reqemail, true);
+        $sql = "SELECT id FROM {user} WHERE id != ? ORDER BY id ASC";
+        $userdata = $DB->get_record_sql(
+            $sql,
+            ['1']
+        );
+        $userid = $userdata->id;
+        if (isset($structuredata->email)) {
+            $email = (object) json_decode($structuredata->email, true);
+            $userdata = $DB->get_record('user', ['email' => $email->scalar], 'id');
+            if (!empty($userdata)) {
+                $userid = $userdata->id;
+            }
         }
 
         $courseid = $structuredata->courseid;
@@ -4552,7 +4585,12 @@ class local_leeloolxpapi_external extends external_api {
                 $DB->insert_record('course_sections', $tempdata);
                 $sectionorder = 0;
             } else {
-                $sectionorder = -1;
+                $coursexist = $DB->get_record('course_sections', ['course' => $courseid, 'section' => '0']);
+                if (!empty($coursexist)) {
+                    $sectionorder = 0;
+                } else {
+                    $sectionorder = -1;
+                }
             }
 
             $skillsets = $structuredata->skillsets;
@@ -4688,6 +4726,26 @@ class local_leeloolxpapi_external extends external_api {
                                         $DB->update_record('course_sections', $sectiondata);
                                     }
 
+                                    // Add multiple quizzes.
+                                    if (
+                                        !empty($structuredata->skill_quiz_numbers)
+                                    ) {
+                                        foreach ($structuredata->skill_quiz_numbers as $keyquiznumbers => $valuequiznumbers) {
+                                            $returnarr = self::save_ar_data(
+                                                $lastid,
+                                                $valueskills,
+                                                $structuredata->skillstaskid[$keyss][$keyskills][$structuredata->skill_quiz_types[$keyquiznumbers]],
+                                                $valuequiznumbers,
+                                                $structuredata->skill_quiz_start_date[$keyquiznumbers],
+                                                $structuredata->skill_quiz_end_date[$keyquiznumbers],
+                                                $courseid,
+                                                $structuredata->skill_quiz_types[$keyquiznumbers],
+                                                $userid
+                                            );
+                                            $returnarids[] = $returnarr;
+                                        }
+                                    }
+
                                     // Add/Edit AR duels for skills.
                                     if (
                                         !empty($structuredata->duels_per_skill)
@@ -4699,8 +4757,11 @@ class local_leeloolxpapi_external extends external_api {
                                             $valueskills,
                                             $structuredata->skillstaskid[$keyss][$keyskills]['duels'],
                                             $structuredata->duels_per_skill,
+                                            $structuredata->duels_per_skill_startdate,
+                                            $structuredata->duels_per_skill_enddate,
                                             $courseid,
-                                            'regularduel'
+                                            'regularduel',
+                                            $userid
                                         );
                                         $returnarids[] = $returnarr;
                                     }
@@ -4716,8 +4777,11 @@ class local_leeloolxpapi_external extends external_api {
                                             $valueskills,
                                             $structuredata->skillstaskid[$keyss][$keyskills]['situation'],
                                             $structuredata->situations_per_skill,
+                                            $structuredata->situations_per_skill_startdate,
+                                            $structuredata->situations_per_skill_enddate,
                                             $courseid,
-                                            'situation'
+                                            'situation',
+                                            $userid
                                         );
                                         $returnarids[] = $returnarr;
                                     }
@@ -4733,8 +4797,11 @@ class local_leeloolxpapi_external extends external_api {
                                             $valueskills,
                                             $structuredata->skillstaskid[$keyss][$keyskills]['case'],
                                             $structuredata->cases_per_skill,
+                                            $structuredata->cases_per_skill_startdate,
+                                            $structuredata->cases_per_skill_enddate,
                                             $courseid,
-                                            'case'
+                                            'case',
+                                            $userid
                                         );
                                         $returnarids[] = $returnarr;
                                     }
@@ -4750,8 +4817,11 @@ class local_leeloolxpapi_external extends external_api {
                                             $valueskills,
                                             $structuredata->skillstaskid[$keyss][$keyskills]['quest'],
                                             $structuredata->quests_per_skill,
+                                            $structuredata->quests_per_skill_startdate,
+                                            $structuredata->quests_per_skill_enddate,
                                             $courseid,
-                                            'quest'
+                                            'quest',
+                                            $userid
                                         );
                                         $returnarids[] = $returnarr;
                                     }
@@ -4859,8 +4929,11 @@ class local_leeloolxpapi_external extends external_api {
                                                         $valueunits,
                                                         $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['discover'],
                                                         $structuredata->discover_per_unit,
+                                                        $structuredata->discover_per_unit_startdate,
+                                                        $structuredata->discover_per_unit_enddate,
                                                         $courseid,
-                                                        'discover'
+                                                        'discover',
+                                                        $userid
                                                     );
                                                     $returnarids[] = $returnarr;
                                                 }
@@ -4876,8 +4949,11 @@ class local_leeloolxpapi_external extends external_api {
                                                         $valueunits,
                                                         $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['remember'],
                                                         $structuredata->remember_per_unit,
+                                                        $structuredata->remember_per_unit_startdate,
+                                                        $structuredata->remember_per_unit_enddate,
                                                         $courseid,
-                                                        'remember'
+                                                        'remember',
+                                                        $userid
                                                     );
                                                     $returnarids[] = $returnarr;
                                                 }
@@ -4893,10 +4969,33 @@ class local_leeloolxpapi_external extends external_api {
                                                         $valueunits,
                                                         $structuredata->unitstaskid[$keyss][$keyskills][$keyunits]['understand'],
                                                         $structuredata->understand_per_unit,
+                                                        $structuredata->understand_per_unit_startdate,
+                                                        $structuredata->understand_per_unit_enddate,
                                                         $courseid,
-                                                        'understand'
+                                                        'understand',
+                                                        $userid
                                                     );
                                                     $returnarids[] = $returnarr;
+                                                }
+
+                                                // Add multiple quizzes.
+                                                if (
+                                                    !empty($structuredata->unit_quiz_numbers)
+                                                ) {
+                                                    foreach ($structuredata->unit_quiz_numbers as $keyquiznumbers => $valuequiznumbers) {
+                                                        $returnarr = self::save_ar_data(
+                                                            $lastid,
+                                                            $valueunits,
+                                                            $structuredata->unitstaskid[$keyss][$keyskills][$keyunits][$structuredata->unit_quiz_types[$keyquiznumbers]],
+                                                            $valuequiznumbers,
+                                                            $structuredata->unit_quiz_start_date[$keyquiznumbers],
+                                                            $structuredata->unit_quiz_end_date[$keyquiznumbers],
+                                                            $courseid,
+                                                            $structuredata->unit_quiz_types[$keyquiznumbers],
+                                                            $userid
+                                                        );
+                                                        $returnarids[] = $returnarr;
+                                                    }
                                                 }
                                             }
                                         }
