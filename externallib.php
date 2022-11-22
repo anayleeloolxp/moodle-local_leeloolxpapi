@@ -5152,6 +5152,36 @@ class local_leeloolxpapi_external extends external_api {
             $status = 'installed';
 
             $enabled = 2;
+            $tokenmatched = 2;
+            $leelooapitokenmatched = 2;
+
+            if (
+                $reqcheckmodule == 'local_leeloolxpapi'
+            ) {
+                $leelooapitoken = $DB->get_record('config_plugins', ['plugin' => $reqcheckmodule, 'name' => 'leelooapitoken']);
+                if ($leelooapitoken->value == $reqleelootoken) {
+                    $leelooapitokenmatched = 1;
+                } else {
+                    $leelooapitokenmatched = 0;
+                }
+            }
+
+            if (
+                $reqcheckmodule == 'local_leeloolxpcontentapi'
+            ) {
+                $conetnttokenactive = $DB->get_record_sql(
+                    'SELECT
+                        t.token
+                    FROM {external_tokens} t
+                        left join {external_services} s on t.externalserviceid = s.id
+                    WHERE s.component = "local_leeloolxpcontentapi"'
+                );
+                if ($conetnttokenactive->token == $reqmoodlecontenttoken) {
+                    $tokenmatched = 1;
+                } else {
+                    $tokenmatched = 0;
+                }
+            }
 
             get_enabled_auth_plugins(true);
             if (empty($CFG->auth)) {
@@ -5271,6 +5301,8 @@ class local_leeloolxpapi_external extends external_api {
             $vendortrue = 2; // Not needed.
             $licetrue = 2; // Not needed.
             $enabled = 2; // Not needed.
+            $tokenmatched = 2; // Not needed.
+            $leelooapitokenmatched = 2; // Not needed.
         }
 
         $responsearr = array();
@@ -5279,6 +5311,8 @@ class local_leeloolxpapi_external extends external_api {
         $responsearr['vendorkeycheck'] = $vendortrue;
         $responsearr['licekeycheck'] = $licetrue;
         $responsearr['enabled'] = $enabled;
+        $responsearr['tokenmatched'] = $tokenmatched;
+        $responsearr['leelooapitokenmatched'] = $leelooapitokenmatched;
 
         return json_encode($responsearr);
     }
