@@ -3898,7 +3898,7 @@ class local_leeloolxpapi_external extends external_api {
                                 "SELECT shortname,category FROM {course} where id = ? ",
                                 [$questiondata->course_id]
                             );
-                            $contextdata = $DB->get_record('context', ['instanceid' => $questiondata->course_id, 'depth' => '3']);
+                            $contextdata = $DB->get_record('context', ['instanceid' => $questiondata->course_id, 'contextlevel' => '50']);
 
                             if (empty($contextdata)) {
 
