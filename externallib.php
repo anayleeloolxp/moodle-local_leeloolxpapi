@@ -3819,6 +3819,25 @@ class local_leeloolxpapi_external extends external_api {
                 }
 
                 return 1;
+            } else if ($action == 'editcourse') {
+                $id = $ardata->course_id;
+                if (!empty($ardata->idnumber)) {
+                    $idnumber = $ardata->idnumber;
+                    $updatenewdata = ['idnumber' => $idnumber, 'id' => $id];
+                } elseif (!empty($ardata->startdate)) {
+                    $startdate = $ardata->startdate;
+                    $updatenewdata = ['startdate' => $startdate, 'id' => $id];
+                } elseif (!empty($ardata->enddate)) {
+                    $enddate = $ardata->enddate;
+                    $updatenewdata = ['enddate' => $enddate, 'id' => $id];
+                } elseif (isset($ardata->visible)) {
+                    $visible = $ardata->visible;
+                    $updatenewdata = ['visible' => $visible, 'id' => $id];
+                }
+
+                $updatenewdata = (object) $updatenewdata;
+                $DB->update_record('course', $updatenewdata);
+                return 1;
             }
         }
     }
