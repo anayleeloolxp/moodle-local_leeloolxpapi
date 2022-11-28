@@ -4640,11 +4640,14 @@ class local_leeloolxpapi_external extends external_api {
 
                         $sectionorder++;
                         $sectionorderskillset = $sectionorder;
+                        $sectiondata['section'] = $sectionorder;
+                        self::check_update_course_section($courseid, $sectionorder);
+
                         if (empty($skillsetmoodleid[$keyss])) {
-                            $sectiondata['section'] = $sectionorder;
+
                             $sectiondata['sequence'] = '';
                             $sectiondata = (object) $sectiondata;
-                            self::check_update_course_section($courseid, $sectionorder);
+
                             $sectionid = $DB->insert_record('course_sections', $sectiondata);
                             $returnidsarray[] = [$skillsetsleelooid[$keyss] => $sectionid];
                         } else {
@@ -4668,11 +4671,14 @@ class local_leeloolxpapi_external extends external_api {
 
                                     $sectionorder++;
                                     $sectionorderskill = $sectionorder;
+                                    $sectiondata['section'] = $sectionorder;
+                                    self::check_update_course_section($courseid, $sectionorder);
+
                                     if (empty($skillmoodleid[$keyss][$keyskills])) {
                                         $sectiondata['sequence'] = '';
-                                        $sectiondata['section'] = $sectionorder;
+
                                         $sectiondata = (object) $sectiondata;
-                                        self::check_update_course_section($courseid, $sectionorder);
+
                                         $lastid = $DB->insert_record('course_sections', $sectiondata);
                                         $returnidsarray[] = [$skillsleelooid[$keyss][$keyskills] => $lastid];
 
@@ -4706,7 +4712,7 @@ class local_leeloolxpapi_external extends external_api {
                                             'course_sections',
                                             ['id' => $skillmoodleid[$keyss][$keyskills]]
                                         );
-                                        $sectionorderskill = $tempdata->section;
+
                                         if ($tempdata->name != $valueskills) {
                                             $quizdataarr = $DB->get_records(
                                                 'quiz',
@@ -4743,6 +4749,12 @@ class local_leeloolxpapi_external extends external_api {
                                         $sectiondata = (object) $sectiondata;
                                         $lastid = $sectiondata->id = $skillmoodleid[$keyss][$keyskills];
                                         $DB->update_record('course_sections', $sectiondata);
+
+                                        // Update format table also
+                                        $DB->execute(
+                                            "update {course_format_options} set value = ? WHERE courseid = ? AND name = ? AND sectionid = ?  AND format = ? ",
+                                            [$sectionorderskillset, $courseid, 'parent', $lastid, 'flexsections']
+                                        );
                                     }
 
                                     // Add multiple quizzes.
@@ -4848,7 +4860,6 @@ class local_leeloolxpapi_external extends external_api {
                                     $sectionid = $lastid;
                                     if (!empty($units[$keyss][$keyskills])) {
                                         foreach ($units[$keyss][$keyskills] as $keyunits => $valueunits) {
-
                                             if (!empty($valueunits)) {
 
                                                 $sectiondata = array();
@@ -4859,13 +4870,15 @@ class local_leeloolxpapi_external extends external_api {
                                                 $sectiondata['visible'] = 1;
                                                 $sectiondata['availability'] = null;
                                                 $sectiondata['timemodified'] = time();
-
                                                 $sectionorder++;
+                                                $sectiondata['section'] = $sectionorder;
+                                                self::check_update_course_section($courseid, $sectionorder);
+
                                                 if (empty($unitmoodleid[$keyss][$keyskills][$keyunits])) {
                                                     $sectiondata['sequence'] = '';
-                                                    $sectiondata['section'] = $sectionorder;
+
                                                     $sectiondata = (object) $sectiondata;
-                                                    self::check_update_course_section($courseid, $sectionorder);
+
                                                     $lastid = $DB->insert_record('course_sections', $sectiondata);
                                                     $returnidsarray[] = [$unitsleelooid[$keyss][$keyskills][$keyunits] => $lastid];
 
@@ -4935,6 +4948,13 @@ class local_leeloolxpapi_external extends external_api {
                                                     $sectiondata = (object) $sectiondata;
                                                     $lastid = $sectiondata->id = $unitmoodleid[$keyss][$keyskills][$keyunits];
                                                     $DB->update_record('course_sections', $sectiondata);
+
+                                                    // Update format table also
+
+                                                    $DB->execute(
+                                                        "update {course_format_options} set value = ? WHERE courseid = ? AND name = ? AND sectionid = ? AND format = ? ",
+                                                        [$sectionorderskill, $courseid, 'parent', $lastid, 'flexsections']
+                                                    );
                                                 }
 
                                                 // Add/Edit AR for Unit.
