@@ -3824,19 +3824,46 @@ class local_leeloolxpapi_external extends external_api {
                 if (!empty($ardata->idnumber)) {
                     $idnumber = $ardata->idnumber;
                     $updatenewdata = ['idnumber' => $idnumber, 'id' => $id];
-                } elseif (!empty($ardata->startdate)) {
+                    $updatenewdata = (object) $updatenewdata;
+                    $DB->update_record('course', $updatenewdata);
+                }
+                if (!empty($ardata->startdate)) {
+                    $updatenewdata = [];
                     $startdate = $ardata->startdate;
                     $updatenewdata = ['startdate' => $startdate, 'id' => $id];
-                } elseif (!empty($ardata->enddate)) {
+                    $updatenewdata = (object) $updatenewdata;
+                    $DB->update_record('course', $updatenewdata);
+                }
+                if (!empty($ardata->enddate)) {
+                    $updatenewdata = [];
                     $enddate = $ardata->enddate;
                     $updatenewdata = ['enddate' => $enddate, 'id' => $id];
-                } elseif (isset($ardata->visible)) {
+                    $updatenewdata = (object) $updatenewdata;
+                    $DB->update_record('course', $updatenewdata);
+                }
+                if (isset($ardata->visible)) {
+                    $updatenewdata = [];
                     $visible = $ardata->visible;
                     $updatenewdata = ['visible' => $visible, 'id' => $id];
+                    $updatenewdata = (object) $updatenewdata;
+                    $DB->update_record('course', $updatenewdata);
+                }
+                if (!empty($ardata->fullname)) {
+                    $updatenewdata = [];
+                    $fullname = $ardata->fullname;
+                    $updatenewdata = ['fullname' => $fullname, 'id' => $id];
+                    $updatenewdata = (object) $updatenewdata;
+                    $DB->update_record('course', $updatenewdata);
+                }
+                if (!empty($ardata->summary)) {
+                    $updatenewdata = [];
+                    $summary = $ardata->summary;
+                    $updatenewdata = ['summary' => $summary, 'id' => $id];
+                    $updatenewdata = (object) $updatenewdata;
+                    $DB->update_record('course', $updatenewdata);
                 }
 
-                $updatenewdata = (object) $updatenewdata;
-                $DB->update_record('course', $updatenewdata);
+
                 return 1;
             }
         }
