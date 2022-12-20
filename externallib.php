@@ -3865,6 +3865,107 @@ class local_leeloolxpapi_external extends external_api {
 
 
                 return 1;
+            } else if ($action == 'updateAccessCompletion') {
+                $videodataupdate = array();
+                $quizdataupdate = array();
+
+                if (isset($ardata->v_completion)) {
+                    $completion = $ardata->v_completion;
+                    $videodataupdate['completion'] = $completion;
+                }
+                if (isset($ardata->v_completionview)) {
+                    $mcompletionview = $ardata->v_completionview;
+                    $videodataupdate['completionview'] = $mcompletionview;
+                }
+                if (isset($ardata->v_completiongradeitemnumber)) {
+                    $completiongradeitemnumber = $ardata->v_completiongradeitemnumber;
+                    $videodataupdate['completiongradeitemnumber'] = $completiongradeitemnumber;
+                }
+
+
+                if (isset($ardata->q_completion)) {
+                    $completion = $ardata->q_completion;
+                    $quizdataupdate['completion'] = $completion;
+                }
+                if (isset($ardata->q_completiongradeitemnumber)) {
+                    $completiongradeitemnumber = $ardata->q_completiongradeitemnumber;
+                    $quizdataupdate['completiongradeitemnumber'] = $completiongradeitemnumber;
+                }
+
+                $modulesdataquiz = $DB->get_record('modules', ['name' => 'quiz']);
+                $quizmoduleid = $modulesdataquiz->id;
+                $modulesdatavimeovideo = $DB->get_record('modules', ['name' => 'leeloolxpvimeo']);
+                $vimeovideomoduleid = $modulesdatavimeovideo->id;
+
+                $quizzesdata = $DB->get_records('course_modules', ['course' => $courseid, 'module' => $quizmoduleid]);
+                $videosdata = $DB->get_records('course_modules', ['course' => $courseid, 'module' => $vimeovideomoduleid]);
+
+
+                if (isset($ardata->v_availability)) {
+                    $mavailability = $ardata->v_availability;
+                    $mavailability = str_ireplace('&lt;', '<', $mavailability);
+                    $mavailability = str_ireplace('&gt;', '>', $mavailability);
+                    $videodataupdate['availability'] = $mavailability;
+                }
+
+                if (isset($ardata->q_availability)) {
+                    $mavailability = $ardata->q_availability;
+                    $mavailability = str_ireplace('&lt;', '<', $mavailability);
+                    $mavailability = str_ireplace('&gt;', '>', $mavailability);
+                    $quizdataupdate['availability'] = $mavailability;
+                }
+
+                if (isset($ardata->is_delete)) {
+                    $videodataupdate['availability'] = '';
+                    $videodataupdate['completion'] = 1;
+                    $videodataupdate['completionview'] = 0;
+                    $videodataupdate['completiongradeitemnumber'] = '';
+                    $quizdataupdate['availability'] = '';
+                    $quizdataupdate['completion'] = 1;
+                    $quizdataupdate['completionview'] = 0;
+                    $quizdataupdate['completiongradeitemnumber'] = '';
+                }
+
+                if (!empty($videosdata)) {
+                    $videodataupdate = (object) $videodataupdate;
+                    foreach ($videosdata as $keytemppp => $vdata) {
+                        $videodataupdate->id = $vdata->id;
+                        $DB->update_record('course_modules', $videodataupdate);
+                    }
+                }
+
+                if (!empty($quizzesdata)) {
+                    $quizdataupdate = (object) $quizdataupdate;
+                    foreach ($quizzesdata as $keytemppp => $qdataa) {
+                        $quizdataupdate->id = $qdataa->id;
+                        $DB->update_record('course_modules', $quizdataupdate);
+
+                        $moddata = [];
+                        if (isset($ardata->q_completionattemptsexhausted)) {
+                            $mcompletionattemptsexhausted = $ardata->q_completionattemptsexhausted;
+                            $moddata['completionattemptsexhausted'] = $mcompletionattemptsexhausted;
+                        }
+                        if (isset($ardata->q_completionpass)) {
+                            $completionpass = $ardata->q_completionpass;
+                            $moddata['completionpass'] = $completionpass;
+                        }
+
+                        if (isset($ardata->is_delete)) {
+                            $moddata['completionattemptsexhausted'] = 0;
+                            $moddata['completionpass'] = 0;
+                        }
+
+                        $countupdatesmd = count($moddata);
+
+                        $moddata['id'] = $qdataa->instance;
+
+                        $moddata = (object) $moddata;
+
+                        if ($countupdatesmd > 0) {
+                            $DB->update_record('quiz', $moddata);
+                        }
+                    }
+                }
             }
         }
     }
