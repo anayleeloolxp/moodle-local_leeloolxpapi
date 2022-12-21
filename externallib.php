@@ -3917,11 +3917,11 @@ class local_leeloolxpapi_external extends external_api {
 
                 if (isset($ardata->is_delete)) {
                     $videodataupdate['availability'] = '';
-                    $videodataupdate['completion'] = 1;
+                    $videodataupdate['completion'] = 0;
                     $videodataupdate['completionview'] = 0;
                     $videodataupdate['completiongradeitemnumber'] = '';
                     $quizdataupdate['availability'] = '';
-                    $quizdataupdate['completion'] = 1;
+                    $quizdataupdate['completion'] = 0;
                     $quizdataupdate['completionview'] = 0;
                     $quizdataupdate['completiongradeitemnumber'] = '';
                 }
