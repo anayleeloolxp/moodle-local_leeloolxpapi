@@ -348,6 +348,14 @@ $functions = array(
         'description' => 'Check integration with LeelooLXP',
         'type' => 'read',
     ),
+
+    'local_leeloolxpapi_quizzes_settings' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'quizzes_settings',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Quizzes Settings',
+        'type' => 'write',
+    ),
 );
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
@@ -394,7 +402,8 @@ $services = array(
             'local_leeloolxpapi_ar_enroll',
             'local_leeloolxpapi_questionsync',
             'local_leeloolxpapi_structurecreator',
-            'local_leeloolxpapi_checkintegration'
+            'local_leeloolxpapi_checkintegration',
+            'local_leeloolxpapi_quizzes_settings',
         ),
         'restrictedusers' => 0,
         'enabled' => 1,

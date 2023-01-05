@@ -4079,8 +4079,7 @@ class local_leeloolxpapi_external extends external_api {
                             if (!empty($contextdata)) {
 
                                 $qcdata = $DB->get_record_sql(
-                                    "SELECT id FROM {question_categories} where contextid = ? ORDER BY id DESC",
-                                    [$contextdata->id]
+                                    "SELECT id FROM {question_categories} where contextid = '$contextdata->id' ORDER BY id DESC"
                                 );
 
                                 if (empty($qcdata)) {
@@ -4091,7 +4090,7 @@ class local_leeloolxpapi_external extends external_api {
                                     $catnewdata['contextid'] = $contextdata->id;
                                     $catnewdata['info'] = $infotext;
                                     $catnewdata['infoformat'] = 0;
-                                    $catnewdata['stamp'] = $_SERVER['HTTP_HOST'];
+                                    $catnewdata['stamp'] = $_SERVER['HTTP_HOST'] . '+' . rand() . '+' . substr(md5(microtime()), rand(0, 26), 6);
                                     $catnewdata['parent'] = 0;
                                     $catnewdata['sortorder'] = 0;
                                     $catnewdata['idnumber'] = null;
@@ -4103,7 +4102,7 @@ class local_leeloolxpapi_external extends external_api {
                                     $catnewdata2['contextid'] = $contextdata->id;
                                     $catnewdata2['info'] = $infotext;
                                     $catnewdata2['infoformat'] = 0;
-                                    $catnewdata2['stamp'] = $_SERVER['HTTP_HOST'] . '+' . $lastidd;
+                                    $catnewdata2['stamp'] = $_SERVER['HTTP_HOST'] . '+' . rand() . '+' . substr(md5(microtime()), rand(0, 26), 6);
                                     $catnewdata2['parent'] = $lastidd;
                                     $catnewdata2['sortorder'] = 0;
                                     $catnewdata2['idnumber'] = null;
@@ -4141,7 +4140,11 @@ class local_leeloolxpapi_external extends external_api {
                                                 $sectiondata['penalty'] = '1.0000000';
                                             }
 
-                                            $sectiondata['category'] = $qcdata->id;
+                                            if (!empty($valuess['question_category_id'])) {
+                                                $sectiondata['category'] = $valuess['question_category_id'];
+                                            } else {
+                                                $sectiondata['category'] = $qcdata->id;
+                                            }
                                             $sectiondata['parent'] = 0;
                                             $sectiondata['name'] = $valuess['name'];
                                             $sectiondata['questiontext'] = $valuess['questiontext'];
@@ -5489,6 +5492,499 @@ class local_leeloolxpapi_external extends external_api {
      * @return external_description
      */
     public static function checkintegration_returns() {
+        return new external_value(PARAM_TEXT, 'Returns true');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function quizzes_settings_parameters() {
+        return new external_function_parameters(
+            array(
+                'req_data' => new external_value(PARAM_RAW, 'Structure Data', VALUE_DEFAULT, null),
+                'email' => new external_value(PARAM_RAW, 'Email', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Structure Create.
+     *
+     * @param string $reqstructuredata reqstructuredata
+     * @param string $reqemail reqemail
+     * @return string welcome message
+     */
+    public static function quizzes_settings($reqstructuredata = '', $reqemail = '') {
+
+        global $DB;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::quizzes_settings_parameters(),
+            array(
+                'req_data' => $reqstructuredata,
+                'email' => $reqemail,
+            )
+        );
+
+        $req_data = (object) json_decode($reqstructuredata, true);
+
+
+
+        if (isset($reqemail)) {
+            $email = (object) json_decode($reqemail, true);
+        }
+        $course_id = $req_data->course_id;
+        $quiztypesstr = $req_data->quiz_types_str;
+        $timeopen = $req_data->timeopen;
+        $timeclose = $req_data->timeclose;
+        $timelimit = $req_data->timelimit;
+        $overduehandling = $req_data->overduehandling;
+        $attempts = $req_data->attempts;
+        $grademethod = $req_data->grademethod;
+        $showblocks = $req_data->showblocks;
+        $preferredbehaviour = $req_data->preferredbehaviour;
+        $shuffleanswers = $req_data->shuffleanswers;
+        $canredoquestions = $req_data->canredoquestions;
+        $attemptonlast = $req_data->attemptonlast;
+        $grade = $req_data->grade;
+        $shufflequestions = $req_data->shufflequestions;
+        $reviewattempt = $req_data->reviewattempt;
+        $reviewcorrectness = $req_data->reviewcorrectness;
+        $reviewmarks = $req_data->reviewmarks;
+        $reviewspecificfeedback = $req_data->reviewspecificfeedback;
+        $reviewgeneralfeedback = $req_data->reviewgeneralfeedback;
+        $reviewrightanswer = $req_data->reviewrightanswer;
+        $reviewoverallfeedback = $req_data->reviewoverallfeedback;
+        /*$quizzesdata = $DB->get_records_sql("SELECT id FROM {quiz} where course = ? AND quiztype IN ($quiztypesstr) ", [$course_id]);
+        file_put_contents(dirname(__FILE__) . "/structurecreator.txt", print_r($quizzesdata, true));*/
+        $DB->execute("update {quiz} set timeopen = ?, timeclose = ?, timelimit = ? , overduehandling = ?, attempts = ?, grademethod = ? , showblocks = ?, preferredbehaviour = ?, shuffleanswers = ?, canredoquestions = ?, grade = ?, attemptonlast = ? ,reviewattempt = ?,reviewcorrectness = ?,reviewmarks = ?,reviewspecificfeedback = ?,reviewgeneralfeedback = ?,reviewrightanswer = ?,reviewoverallfeedback = ? where course = ? AND quiztype IN ($quiztypesstr) ", [$timeopen, $timeclose, $timelimit, $overduehandling, $attempts, $grademethod, $showblocks, $preferredbehaviour, $shuffleanswers, $canredoquestions, $grade, $attemptonlast, $reviewattempt, $reviewcorrectness, $reviewmarks, $reviewspecificfeedback, $reviewgeneralfeedback, $reviewrightanswer, $reviewoverallfeedback, $course_id]);
+        $quizzesdata = $DB->get_records_sql("SELECT id,quiztype FROM {quiz} where course = ? AND quiztype IN ($quiztypesstr) ORDER BY `quiztype` ASC ", [$course_id]);
+
+        $quizseqforid = 1;
+        $lastquiztype = '';
+        $lastquiztypeseq = 1;
+        foreach ($quizzesdata as $key => $value) {
+
+            $groupmode = $req_data->groupmode;
+            $groupingid = $req_data->groupingid;
+            $idnumberstr = $idnumber = $req_data->idnumber;
+            $instance = $value->id;
+            $quiztype = $value->quiztype;
+            $module = '17';
+            if ($lastquiztype != $quiztype) {
+                $lastquiztypeseq = 1;
+                $lastquiztype = $quiztype;
+            }
+
+            if (strpos($idnumber, '$') !== false) {
+                $idnumberarr = explode('_', $idnumber);
+                $idnumberstr = '01';
+
+                if (strpos($idnumber, '$ID') !== false) {
+                    $courseidnumber = $req_data->course_id_number;
+                    $courseidnumber = trim($courseidnumber);
+                    $idnumberstr = $courseidnumber . '_01';
+                }
+                if (strpos($idnumber, '$SECTION') !== false) {
+                    $tempdata1 = $DB->get_record_sql("SELECT section  FROM {course_modules} where course = ? AND instance = ? AND module = '17' ", [$course_id, $instance]);
+                    $section = $tempdata1->section;
+                    $tempdata2 = $DB->get_record_sql("SELECT value FROM {course_format_options} where sectionid = ? AND name = 'parent' AND courseid = '$course_id' ", [$section]);
+                    $parentt = $tempdata2->value;
+                    $tempdatanew = $DB->get_records_sql("SELECT sectionid FROM {course_format_options} where name = 'parent' AND courseid = '$course_id' AND value = '$parentt' ORDER BY id ASC ");
+                    if (!empty($tempdatanew)) {
+                        $orderunit = 1;
+                        foreach ($tempdatanew as $keytemp => $valuetemp) {
+                            if ($valuetemp->sectionid == $section) {
+                                break;
+                            }
+                            $orderunit++;
+                        }
+
+
+                        $datausedonlyonce = $DB->get_record_sql("SELECT id FROM {course_sections} where course = ? AND section = ? ", [$course_id, $parentt]);
+                        $section = $datausedonlyonce->id;
+                        $tempdata2 = $DB->get_record_sql("SELECT value FROM {course_format_options} where sectionid = ? AND name = 'parent' AND courseid = '$course_id' ", [$section]);
+                        $parentt = $tempdata2->value;
+                        $tempdatanew = $DB->get_records_sql("SELECT sectionid FROM {course_format_options} where name = 'parent' AND courseid = '$course_id' AND value = '$parentt' ORDER BY id ASC ");
+                        if (!empty($tempdatanew)) {
+                            $orderskill = 1;
+                            foreach ($tempdatanew as $keytemp => $valuetemp) {
+                                if ($valuetemp->sectionid == $section) {
+                                    break;
+                                }
+                                $orderskill++;
+                            }
+                            $orderskill = sprintf("%02d", $orderskill);
+                            $idnumberstr .= $orderskill;
+                        }
+                        $orderunit = sprintf("%02d", $orderunit);
+                        $idnumberstr .= $orderunit;
+                    }
+                }
+                if (strpos($idnumber, '$TYPE') !== false) {
+                    $quiztypechar = strtoupper($quiztype[0]);
+                    $idnumberstr .= '_' . $quiztypechar;
+                }
+
+                if (strpos($idnumber, '**') !== false) {
+                    $idnumberstr .= $lastquiztypeseq;
+                    $lastquiztypeseq++;
+                } elseif (strpos($idnumber, '*') !== false) {
+                    $idnumberstr .= $quizseqforid;
+                    $quizseqforid++;
+                }
+            }
+
+            $DB->execute("update {course_modules} set groupmode = ?, groupingid = ?, idnumber = ? where course = ? AND instance = ? AND module = '17' ", [$groupmode, $groupingid, $idnumberstr, $course_id, $instance]);
+            $DB->execute("update {quiz_sections} set shufflequestions = ? where quizid = ? ", [$shufflequestions, $value->id]);
+
+            // Update Question data
+            $difficulty = $req_data->difficulty;
+            $shuffleanswers = $req_data->shuffleanswers;
+            $answernumbering = $req_data->answernumbering;
+            $choice1correct = $req_data->choice_1_correct;
+            $defaultmark = $req_data->default_mark;
+            $quesslotsdata = $DB->get_records_sql("SELECT questionid FROM {quiz_slots} where quizid = ? ", [$value->id]);
+            if (!empty($quesslotsdata)) {
+                foreach ($quesslotsdata as $keyqsd => $valueqsd) {
+                    $DB->execute("update {question} set defaultmark = ? where id = ? ", [$defaultmark, $valueqsd->questionid]);
+
+                    $difficultyexist = $DB->get_record_sql(
+                        "SELECT id FROM {local_leeloolxptrivias_qd} where questionid = ?",
+                        [$valueqsd->questionid]
+                    );
+                    if (!empty($difficultyexist)) {
+                        $DB->execute("update {local_leeloolxptrivias_qd} set difficulty = ? where questionid = ? ", [$difficulty, $valueqsd->questionid]);
+                    } else {
+                        $extradatainsert = array();
+                        $extradatainsert['vimeoid'] = '0';
+                        $extradatainsert['questionid'] = $valueqsd->questionid;
+                        $extradatainsert['difficulty'] = $difficulty;
+                        $DB->insert_record('local_leeloolxptrivias_qd', $extradatainsert);
+                    }
+                    $DB->execute("update {qtype_multichoice_options} set shuffleanswers = ? ,answernumbering = ? where questionid = ? ", [$shuffleanswers, $answernumbering, $valueqsd->questionid]);
+
+                    if (!empty($choice1correct)) {
+                        $answerexist = $DB->get_record_sql(
+                            "SELECT id FROM {question_answers} where question = ? ORDER BY id ASC ",
+                            [$valueqsd->questionid]
+                        );
+                        if (!empty($answerexist)) {
+                            $DB->execute("update {question_answers} set fraction = '1.0000000' where id = ? ", [$answerexist->id]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Create/Update quiz cat hierarchy
+        $coursequestioncategories = [];
+        if (!empty($req_data->create_update_cat)) {
+            $catsleeloodata = json_decode($req_data->catsleeloodata);
+            $structuredata = $DB->get_records_sql("SELECT * FROM {course_sections} where course = ? AND section != '0' ORDER BY section ASC ", [$course_id]);
+            $contextdata = $DB->get_record(
+                'context',
+                ['instanceid' => $course_id, 'depth' => '3']
+            );
+            $paretcategory = $DB->get_record_sql(
+                "SELECT * FROM {question_categories} where contextid = ? and parent = '0' ORDER BY id DESC",
+                [$contextdata->id]
+            );
+
+            $lastidd = $lastskillid = $lastskillsetid = $paretcategory->id;
+
+
+
+            foreach ($structuredata as $keystr => $valuestr) {
+                /*$skillsetexist = $DB->get_record_sql("SELECT id FROM {course_format_options} where sectionid = '$valuestr->id' ");*/
+                $skillsetexist = $DB->get_record('course_format_options', ['courseid' => $course_id, 'sectionid' => $valuestr->id]);
+                $catnewdata = array();
+
+                if (!empty($skillsetexist)) { // Skill/Unit
+
+                    $tempdata = $DB->get_record_sql("SELECT value FROM {course_format_options} where sectionid = ? AND name = 'parent' ", [$valuestr->id]);
+                    $tempdata2 = $DB->get_record_sql("SELECT id FROM {course_sections} where course = ? AND section = ? ", [$course_id, $tempdata->value]);
+                    $skillsetexistcheck = $DB->get_record_sql("SELECT id FROM {course_format_options} where sectionid = ? ", [$tempdata2->id]);
+                    if (!empty($skillsetexistcheck)) { // Unit cat
+                        $catnewdata['name'] = $valuestr->name;
+                        $catnewdata['contextid'] = $paretcategory->contextid;
+                        $catnewdata['info'] = '';
+                        $catnewdata['infoformat'] = 1;
+                        $catnewdata['stamp'] = $_SERVER['HTTP_HOST'] . '+' . rand() . '+' . substr(md5(microtime()), rand(0, 26), 6);
+                        $catnewdata['parent'] = $lastskillid;
+                        $catnewdata['sortorder'] = 999;
+                        $catnewdata['idnumber'] = null;
+                        $catnewdata = (object) $catnewdata;
+
+
+                        $keycheck = array_search($valuestr->id, array_column($catsleeloodata, 'sectionid'));
+
+                        if (is_int($keycheck)) { // Update
+                            $lastidd = $catnewdata->id = $catsleeloodata[$keycheck]->moodle_id;
+                            $DB->update_record('question_categories', $catnewdata);
+                        } else { // Insert
+                            $lastidd = $DB->insert_record('question_categories', $catnewdata);
+                            $lastcategory = $DB->get_record_sql("SELECT * FROM {question_categories} where id = '$lastidd' ");
+                            $lastcategory->sectionid = $valuestr->id;
+                            $coursequestioncategories[] = $lastcategory;
+                        }
+
+                        $quiztypeexist = $DB->get_record_sql(
+                            "SELECT
+                                cm.id,quiz.id as qid
+                            FROM {course_modules} cm
+                                left join {quiz} quiz on cm.instance = quiz.id
+                            WHERE cm.course = '$course_id'
+                            AND cm.module = '17' AND cm.section = '$valuestr->id'
+                            AND quiz.quiztype IN ($quiztypesstr) "
+                        );
+                        if (!empty($quiztypeexist)) {
+                            $quiztypesarr = explode(',', $quiztypesstr);
+                            foreach ($quiztypesarr as $keyquiztype => $valuequiztype) {
+                                $valuequiztype = str_replace("'", "", $valuequiztype);
+                                $quiztypeexistsingle = $DB->get_record_sql(
+                                    "SELECT
+                                        cm.id,quiz.id as qid
+                                    FROM {course_modules} cm
+                                        left join {quiz} quiz on cm.instance = quiz.id
+                                    WHERE cm.course = '$course_id'
+                                    AND cm.module = '17' AND cm.section = '$valuestr->id'
+                                    AND quiz.quiztype = '$valuequiztype' "
+                                );
+                                if (!empty($quiztypeexistsingle)) {
+                                    $catnewdata = array();
+                                    $catnewdata['name'] = $valuequiztype;
+                                    $catnewdata['contextid'] = $paretcategory->contextid;
+                                    $catnewdata['info'] = '';
+                                    $catnewdata['infoformat'] = 1;
+                                    $catnewdata['stamp'] = $_SERVER['HTTP_HOST'] . '+' . rand() . '+' . substr(md5(microtime()), rand(0, 26), 6);
+                                    $catnewdata['parent'] = $lastidd;
+                                    $catnewdata['sortorder'] = 999;
+                                    $catnewdata['idnumber'] = null;
+                                    $catnewdata = (object) $catnewdata;
+
+                                    $recordexist = $DB->get_record_sql("SELECT id,name FROM {question_categories} where contextid = '$paretcategory->contextid' and parent = '$lastidd' and name = '$valuequiztype' ");
+
+                                    if (empty($recordexist)) {
+                                        $lastquizcatid = $DB->insert_record('question_categories', $catnewdata);
+                                        $lastcategory = $DB->get_record_sql("SELECT * FROM {question_categories} where id = '$lastquizcatid' ");
+                                        $lastcategory->sectionid = '';
+                                        $coursequestioncategories[] = $lastcategory;
+                                    } else {
+                                        $lastquizcatid = $recordexist->id;
+                                    }
+
+                                    $allquiztypequestions = $DB->get_records_sql(
+                                        "SELECT
+                                        ques.id as quesid
+                                    FROM {course_modules} cm
+                                        join {quiz} quiz on cm.instance = quiz.id
+                                        join {quiz_slots} qs on quiz.id = qs.quizid
+                                        join {question} ques on qs.questionid = ques.id
+                                    WHERE cm.course = '$course_id'
+                                    AND cm.module = '17' AND cm.section = '$valuestr->id'
+                                    AND quiz.quiztype = '$valuequiztype' "
+                                    );
+
+                                    if (!empty($allquiztypequestions)) {
+                                        foreach ($allquiztypequestions as $keyaqt => $valueaqt) {
+                                            $tempdataupdate = new stdClass();
+                                            $tempdataupdate->category = $lastquizcatid;
+                                            $tempdataupdate->id = $valueaqt->quesid;
+                                            $DB->update_record('question', $tempdataupdate);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else { // Skills cat
+                        $catnewdata['name'] = $valuestr->name;
+                        $catnewdata['contextid'] = $paretcategory->contextid;
+                        $catnewdata['info'] = '';
+                        $catnewdata['infoformat'] = 1;
+                        $catnewdata['stamp'] = $_SERVER['HTTP_HOST'] . '+' . rand() . '+' . substr(md5(microtime()), rand(0, 26), 6);
+                        $catnewdata['parent'] = $lastskillsetid;
+                        $catnewdata['sortorder'] = 999;
+                        $catnewdata['idnumber'] = null;
+                        $catnewdata = (object) $catnewdata;
+
+                        $keycheck = array_search($valuestr->id, array_column($catsleeloodata, 'sectionid'));
+
+                        if (is_int($keycheck)) { // Update
+                            $lastidd = $lastskillid = $catnewdata->id = $catsleeloodata[$keycheck]->moodle_id;
+                            $DB->update_record('question_categories', $catnewdata);
+                        } else { // Insert
+                            $lastidd = $lastskillid = $DB->insert_record('question_categories', $catnewdata);
+                            $lastcategory = $DB->get_record_sql("SELECT * FROM {question_categories} where id = '$lastidd' ");
+                            $lastcategory->sectionid = $valuestr->id;
+                            $coursequestioncategories[] = $lastcategory;
+                        }
+
+                        $quiztypeexist = $DB->get_record_sql(
+                            "SELECT
+                                cm.id
+                            FROM {course_modules} cm
+                                left join {quiz} quiz on cm.instance = quiz.id
+                            WHERE cm.course = '$course_id'
+                            AND cm.module = '17' AND cm.section = '$valuestr->id'
+                            AND quiz.quiztype IN ($quiztypesstr) "
+                        );
+                        if (!empty($quiztypeexist)) {
+                            $quiz_types_arr = explode(',', $quiztypesstr);
+                            foreach ($quiz_types_arr as $keyquiztype => $valuequiztype) {
+                                $valuequiztype = str_replace("'", "", $valuequiztype);
+                                $quiztypeexistsingle = $DB->get_record_sql(
+                                    "SELECT
+                                        cm.id,quiz.id as qid
+                                    FROM {course_modules} cm
+                                        left join {quiz} quiz on cm.instance = quiz.id
+                                    WHERE cm.course = '$course_id'
+                                    AND cm.module = '17' AND cm.section = '$valuestr->id'
+                                    AND quiz.quiztype = '$valuequiztype' "
+                                );
+                                if (!empty($quiztypeexistsingle)) {
+                                    $catnewdata = array();
+                                    $catnewdata['name'] = $valuequiztype;
+                                    $catnewdata['contextid'] = $paretcategory->contextid;
+                                    $catnewdata['info'] = '';
+                                    $catnewdata['infoformat'] = 1;
+                                    $catnewdata['stamp'] = $_SERVER['HTTP_HOST'] . '+' . rand() . '+' . substr(md5(microtime()), rand(0, 26), 6);
+                                    $catnewdata['parent'] = $lastidd;
+                                    $catnewdata['sortorder'] = 999;
+                                    $catnewdata['idnumber'] = null;
+                                    $catnewdata = (object) $catnewdata;
+
+                                    $recordexist = $DB->get_record_sql("SELECT id,name FROM {question_categories} where contextid = '$paretcategory->contextid' and parent = '$lastidd' and name = '$valuequiztype' ");
+
+                                    if (empty($recordexist)) {
+                                        $lastquizcatid = $DB->insert_record('question_categories', $catnewdata);
+                                        $lastcategory = $DB->get_record_sql("SELECT * FROM {question_categories} where id = '$lastquizcatid' ");
+                                        $lastcategory->sectionid = '';
+                                        $coursequestioncategories[] = $lastcategory;
+                                    } else {
+                                        $lastquizcatid = $recordexist->id;
+                                    }
+
+                                    $allquiztypequestions = $DB->get_records_sql(
+                                        "SELECT
+                                        ques.id as quesid
+                                    FROM {course_modules} cm
+                                        join {quiz} quiz on cm.instance = quiz.id
+                                        join {quiz_slots} qs on quiz.id = qs.quizid
+                                        join {question} ques on qs.questionid = ques.id
+                                    WHERE cm.course = '$course_id'
+                                    AND cm.module = '17' AND cm.section = '$valuestr->id'
+                                    AND quiz.quiztype IN ($quiztypesstr) "
+                                    );
+
+                                    if (!empty($allquiztypequestions)) {
+                                        foreach ($allquiztypequestions as $keyaqt => $valueaqt) {
+                                            $tempdataupdate = new stdClass();
+                                            $tempdataupdate->category = $lastquizcatid;
+                                            $tempdataupdate->id = $valueaqt->quesid;
+                                            $DB->update_record('question', $tempdataupdate);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else { // Skillset
+
+                    $catnewdata['name'] = $valuestr->name;
+                    $catnewdata['contextid'] = $paretcategory->contextid;
+                    $catnewdata['info'] = '';
+                    $catnewdata['infoformat'] = 1;
+                    $catnewdata['stamp'] = $_SERVER['HTTP_HOST'] . '+' . rand() . '+' . substr(md5(microtime()), rand(0, 26), 6);
+                    $catnewdata['parent'] = $paretcategory->id;
+                    $catnewdata['sortorder'] = 999;
+                    $catnewdata['idnumber'] = null;
+                    $catnewdata = (object) $catnewdata;
+
+
+                    $keycheck = array_search($valuestr->id, array_column($catsleeloodata, 'sectionid'));
+
+                    if (is_int($keycheck)) { // Update
+                        $lastidd = $lastskillsetid = $catnewdata->id = $catsleeloodata[$keycheck]->moodle_id;
+                        $DB->update_record('question_categories', $catnewdata);
+                    } else { // Insert
+                        $lastidd = $lastskillsetid = $DB->insert_record('question_categories', $catnewdata);
+                        $lastcategory = $DB->get_record_sql("SELECT * FROM {question_categories} where id = '$lastidd' ");
+                        $lastcategory->sectionid = $valuestr->id;
+                        $coursequestioncategories[] = $lastcategory;
+                    }
+                }
+            }
+        }
+
+        $categoriesarr = [];
+        // Add quiz to its own category
+        if (!empty($req_data->cats_arr)) {
+            $categoriesarr = json_decode($req_data->cats_arr);
+            if (!empty($categoriesarr)) {
+                $sql = "SELECT id,path FROM {grade_categories} WHERE courseid = '$course_id' ORDER BY id ASC ";
+                $parentcatdata = $DB->get_record_sql($sql);
+                foreach ($categoriesarr as $keycat => $valuecat) {
+                    $gradecatdata = new stdClass();
+                    $gradecatdata->courseid = $course_id;
+                    $gradecatdata->parent = $parentcatdata->id;
+                    $gradecatdata->depth = '2';
+                    $gradecatdata->path = '';
+                    $gradecatdata->fullname = $valuecat->fullname;
+                    $gradecatdata->aggregation = '13';
+                    $gradecatdata->keephigh = '0';
+                    $gradecatdata->droplow = '0';
+                    $gradecatdata->aggregateonlygraded = '1';
+                    $gradecatdata->aggregateoutcomes = '0';
+                    $gradecatdata->timecreated = strtotime(date('Y/m/d h:i', time()));
+                    $gradecatdata->timemodified = strtotime(date('Y/m/d h:i', time()));
+                    $gradecatdata->hidden = '0';
+
+                    $catreturnedid = $DB->insert_record('grade_categories', $gradecatdata);
+                    $valuecat->moodle_cat_id = $catreturnedid;
+
+                    $updatenewdata = ['path' => $parentcatdata->path . $catreturnedid . '/', 'id' => $catreturnedid];
+                    $updatenewdata = (object) $updatenewdata;
+                    $DB->update_record('grade_categories', $updatenewdata);
+
+                    $gradeitems = $DB->get_records_sql(
+                        "SELECT
+                            gi.id
+                        FROM {grade_items} gi
+                            left join {quiz} quiz on gi.iteminstance = quiz.id
+                        WHERE quiz.course = '$course_id'
+                        AND quiz.quiztype = '$valuecat->fullname' "
+                    );
+                    if (!empty($gradeitems)) {
+                        foreach ($gradeitems as $keygi => $valuegi) {
+                            $gradeitemdata = new stdClass();
+                            $gradeitemdata->categoryid = $catreturnedid;
+                            $gradeitemdata->id = $valuegi->id;
+                            $DB->update_record('grade_items', $gradeitemdata);
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+        $returndata = [
+            'cat_ids_arr' => json_encode($categoriesarr),
+            'question_cats' => json_encode($coursequestioncategories)
+        ];
+
+        return json_encode($returndata);
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function quizzes_settings_returns() {
         return new external_value(PARAM_TEXT, 'Returns true');
     }
 }
