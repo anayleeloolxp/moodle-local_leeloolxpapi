@@ -4268,6 +4268,16 @@ class local_leeloolxpapi_external extends external_api {
                                                 }
                                             }
 
+                                            $quizslotsdatatotal = $DB->get_record_sql(
+                                                "SELECT sum(maxmark) as total FROM {quiz_slots} where quizid = ? ",
+                                                [$quizid]
+                                            );
+
+                                            if (!empty($quizslotsdatatotal)) {
+                                                $sumgrades = $quizslotsdatatotal->total;
+                                                $DB->execute("update {quiz} set sumgrades = ? where id = ? ", [$sumgrades, $quizid]);
+                                            }
+
                                             if (!empty($valuess['answers'])) {
 
                                                 $trueid = 0;
