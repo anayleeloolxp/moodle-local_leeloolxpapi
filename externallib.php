@@ -5557,8 +5557,7 @@ class local_leeloolxpapi_external extends external_api {
         $reviewgeneralfeedback = $req_data->reviewgeneralfeedback;
         $reviewrightanswer = $req_data->reviewrightanswer;
         $reviewoverallfeedback = $req_data->reviewoverallfeedback;
-        /*$quizzesdata = $DB->get_records_sql("SELECT id FROM {quiz} where course = ? AND quiztype IN ($quiztypesstr) ", [$course_id]);
-        file_put_contents(dirname(__FILE__) . "/structurecreator.txt", print_r($quizzesdata, true));*/
+
         $DB->execute("update {quiz} set timeopen = ?, timeclose = ?, timelimit = ? , overduehandling = ?, attempts = ?, grademethod = ? , showblocks = ?, preferredbehaviour = ?, shuffleanswers = ?, canredoquestions = ?, grade = ?, attemptonlast = ? ,reviewattempt = ?,reviewcorrectness = ?,reviewmarks = ?,reviewspecificfeedback = ?,reviewgeneralfeedback = ?,reviewrightanswer = ?,reviewoverallfeedback = ? where course = ? AND quiztype IN ($quiztypesstr) ", [$timeopen, $timeclose, $timelimit, $overduehandling, $attempts, $grademethod, $showblocks, $preferredbehaviour, $shuffleanswers, $canredoquestions, $grade, $attemptonlast, $reviewattempt, $reviewcorrectness, $reviewmarks, $reviewspecificfeedback, $reviewgeneralfeedback, $reviewrightanswer, $reviewoverallfeedback, $course_id]);
         $quizzesdata = $DB->get_records_sql("SELECT id,quiztype FROM {quiz} where course = ? AND quiztype IN ($quiztypesstr) ORDER BY `quiztype` ASC ", [$course_id]);
 
@@ -5698,7 +5697,7 @@ class local_leeloolxpapi_external extends external_api {
 
 
             foreach ($structuredata as $keystr => $valuestr) {
-                /*$skillsetexist = $DB->get_record_sql("SELECT id FROM {course_format_options} where sectionid = '$valuestr->id' ");*/
+
                 $skillsetexist = $DB->get_record('course_format_options', ['courseid' => $course_id, 'sectionid' => $valuestr->id]);
                 $catnewdata = array();
 
