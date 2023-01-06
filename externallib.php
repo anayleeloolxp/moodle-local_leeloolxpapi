@@ -4670,8 +4670,11 @@ class local_leeloolxpapi_external extends external_api {
 
             $gradecategory = $DB->get_record('grade_categories', ['courseid' => $courseid], 'id');
 
+
+            $gradecategoryinsertdata = [];
+            $gradeiteminsertdata = [];
             if (empty($gradecategory)) {
-                $$categoriesdata = [];
+                $categoriesdata = [];
                 $categoriesdata = (object) $categoriesdata;
                 $categoriesdata->path = '/';
                 $categoriesdata->courseid = $courseid;
@@ -4683,6 +4686,9 @@ class local_leeloolxpapi_external extends external_api {
                 $updatenewdata = ['path' => '/' . $catreturnid . '/', 'id' => $catreturnid];
                 $updatenewdata = (object) $updatenewdata;
                 $DB->update_record('grade_categories', $updatenewdata);
+                $categoriesdata->path = '/' . $catreturnid . '/';
+                $categoriesdata->id = $catreturnid;
+                $gradecategoryinsertdata = $categoriesdata;
 
                 $sectiondata = array();
                 $sectiondata['courseid'] = $courseid;
@@ -4715,7 +4721,9 @@ class local_leeloolxpapi_external extends external_api {
                 $sectiondata['timemodified'] = time();
 
                 $sectiondata = (object) $sectiondata;
-                $DB->insert_record('grade_items', $sectiondata);
+                $tempinsertedid = $DB->insert_record('grade_items', $sectiondata);
+                $sectiondata->id = $tempinsertedid;
+                $gradeiteminsertdata = $sectiondata;
             }
 
             if (empty($coursexist)) {
@@ -5179,6 +5187,8 @@ class local_leeloolxpapi_external extends external_api {
             $returndataarr = [
                 'projectids' => $returnidsarray,
                 'taskids' => $returnarids,
+                'gradecategoryinsertdata' => $gradecategoryinsertdata,
+                'gradeiteminsertdata' => $gradeiteminsertdata,
             ];
             return json_encode($returndataarr);
         } else if ($action == 'delete') {
