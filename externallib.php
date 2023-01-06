@@ -5569,6 +5569,7 @@ class local_leeloolxpapi_external extends external_api {
             $groupmode = $req_data->groupmode;
             $groupingid = $req_data->groupingid;
             $idnumberstr = $idnumber = $req_data->idnumber;
+            $gradepass = $req_data->gradepass;
             $instance = $value->id;
             $quiztype = $value->quiztype;
             $module = '17';
@@ -5638,6 +5639,7 @@ class local_leeloolxpapi_external extends external_api {
 
             $DB->execute("update {course_modules} set groupmode = ?, groupingid = ?, idnumber = ? where course = ? AND instance = ? AND module = '17' ", [$groupmode, $groupingid, $idnumberstr, $course_id, $instance]);
             $DB->execute("update {quiz_sections} set shufflequestions = ? where quizid = ? ", [$shufflequestions, $value->id]);
+            $DB->execute("update {grade_items} set gradepass = ? where iteminstance = ? AND courseid = ? AND itemmodule = 'quiz' ", [$gradepass, $value->id, $course_id]);
 
             // Update Question data
             $difficulty = $req_data->difficulty;
