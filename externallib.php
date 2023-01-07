@@ -5570,6 +5570,7 @@ class local_leeloolxpapi_external extends external_api {
         $attemptonlast = $req_data->attemptonlast;
         $grade = $req_data->grade;
         $shufflequestions = $req_data->shufflequestions;
+        $forcerepair = $req_data->forcerepair;
         $reviewattempt = $req_data->reviewattempt;
         $reviewcorrectness = $req_data->reviewcorrectness;
         $reviewmarks = $req_data->reviewmarks;
@@ -5660,6 +5661,17 @@ class local_leeloolxpapi_external extends external_api {
             $DB->execute("update {course_modules} set groupmode = ?, groupingid = ?, idnumber = ? where course = ? AND instance = ? AND module = '17' ", [$groupmode, $groupingid, $idnumberstr, $course_id, $instance]);
             $DB->execute("update {quiz_sections} set shufflequestions = ? where quizid = ? ", [$shufflequestions, $value->id]);
             $DB->execute("update {grade_items} set gradepass = ? where iteminstance = ? AND courseid = ? AND itemmodule = 'quiz' ", [$gradepass, $value->id, $course_id]);
+
+            if (!empty($forcerepair)) {
+                $quizslotsdatatotal = $DB->get_record_sql(
+                    "SELECT sum(maxmark) as total FROM {quiz_slots} where quizid = ? ",
+                    [$value->id]
+                );
+                if (!empty($quizslotsdatatotal) && !empty($quizslotsdatatotal->total)) {
+                    $sumgrades = $quizslotsdatatotal->total;
+                    $DB->execute("update {quiz} set sumgrades = ? where id = ? ", [$sumgrades, $value->id]);
+                }
+            }
 
             // Update Question data
             $difficulty = $req_data->difficulty;
