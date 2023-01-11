@@ -3862,6 +3862,29 @@ class local_leeloolxpapi_external extends external_api {
                     $updatenewdata = (object) $updatenewdata;
                     $DB->update_record('course', $updatenewdata);
                 }
+                if (isset($ardata->sectionvisible)) {
+                    $sectionvisible = $ardata->sectionvisible;
+                    $sectionid = $ardata->sectionid;
+                    $coursesections = $DB->get_record('course_sections', ['id' => $sectionid], 'section');
+                    if (!empty($coursesections)) {
+                        $sectionval = $coursesections->section;
+                        $DB->execute("update {course_sections} set visible = ? where id = ? ", [$sectionvisible, $sectionid]);
+                        $coursesectionskills = $DB->get_records_sql("SELECT sectionid FROM {course_format_options} where courseid = '$id' AND name = 'parent' AND value = '$sectionval' ");
+                        if (!empty($coursesectionskills)) {
+                            foreach ($coursesectionskills as $keycoursesectionskills => $valuecoursesectionskills) {
+                                $coursesectionsnew = $DB->get_record('course_sections', ['id' => $valuecoursesectionskills->sectionid], 'section');
+                                $sectionvalnew = $coursesectionsnew->section;
+                                $DB->execute("update {course_sections} set visible = ? where id = ? ", [$sectionvisible, $valuecoursesectionskills->sectionid]);
+                                $coursesectionsunits = $DB->get_records('course_format_options', ['courseid' => $id, 'name' => 'parent', 'value' => $sectionvalnew]);
+                                if (!empty($coursesectionsunits)) {
+                                    foreach ($coursesectionsunits as $keycoursesectionunits => $valuecoursesectionunits) {
+                                        $DB->execute("update {course_sections} set visible = ? where id = ? ", [$sectionvisible, $valuecoursesectionunits->sectionid]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
 
                 return 1;
