@@ -5578,31 +5578,123 @@ class local_leeloolxpapi_external extends external_api {
         if (isset($reqemail)) {
             $email = (object) json_decode($reqemail, true);
         }
+        $updatequerymain = 'update {quiz} set timeopen = ?, timeclose = ?, timelimit = ?';
+
         $course_id = $req_data->course_id;
         $quiztypesstr = $req_data->quiz_types_str;
         $timeopen = $req_data->timeopen;
         $timeclose = $req_data->timeclose;
         $timelimit = $req_data->timelimit;
-        $overduehandling = $req_data->overduehandling;
-        $attempts = $req_data->attempts;
-        $grademethod = $req_data->grademethod;
-        $showblocks = $req_data->showblocks;
-        $preferredbehaviour = $req_data->preferredbehaviour;
-        $shuffleanswers = $req_data->shuffleanswers;
-        $canredoquestions = $req_data->canredoquestions;
-        $attemptonlast = $req_data->attemptonlast;
-        $grade = $req_data->grade;
-        $shufflequestions = $req_data->shufflequestions;
-        $forcerepair = $req_data->forcerepair;
-        $reviewattempt = $req_data->reviewattempt;
-        $reviewcorrectness = $req_data->reviewcorrectness;
-        $reviewmarks = $req_data->reviewmarks;
-        $reviewspecificfeedback = $req_data->reviewspecificfeedback;
-        $reviewgeneralfeedback = $req_data->reviewgeneralfeedback;
-        $reviewrightanswer = $req_data->reviewrightanswer;
-        $reviewoverallfeedback = $req_data->reviewoverallfeedback;
 
-        $DB->execute("update {quiz} set timeopen = ?, timeclose = ?, timelimit = ? , overduehandling = ?, attempts = ?, grademethod = ? , showblocks = ?, preferredbehaviour = ?, shuffleanswers = ?, canredoquestions = ?, grade = ?, attemptonlast = ? ,reviewattempt = ?,reviewcorrectness = ?,reviewmarks = ?,reviewspecificfeedback = ?,reviewgeneralfeedback = ?,reviewrightanswer = ?,reviewoverallfeedback = ? where course = ? AND quiztype IN ($quiztypesstr) ", [$timeopen, $timeclose, $timelimit, $overduehandling, $attempts, $grademethod, $showblocks, $preferredbehaviour, $shuffleanswers, $canredoquestions, $grade, $attemptonlast, $reviewattempt, $reviewcorrectness, $reviewmarks, $reviewspecificfeedback, $reviewgeneralfeedback, $reviewrightanswer, $reviewoverallfeedback, $course_id]);
+        $updatequeryparams = [$timeopen, $timeclose, $timelimit];
+        if (isset($req_data->overduehandling)) {
+            $updatequerymain .= ', overduehandling=? ';
+            $overduehandling = $req_data->overduehandling;
+            array_push($updatequeryparams, $overduehandling);
+        }
+        if (isset($req_data->attempts)) {
+            $updatequerymain .= ', attempts=? ';
+            $attempts = $req_data->attempts;
+            array_push($updatequeryparams, $attempts);
+        }
+        if (isset($req_data->grademethod)) {
+            $updatequerymain .= ', grademethod=? ';
+            $grademethod = $req_data->grademethod;
+            array_push($updatequeryparams, $grademethod);
+        }
+
+        if (isset($req_data->showblocks)) {
+            $updatequerymain .= ', showblocks=? ';
+            $showblocks = $req_data->showblocks;
+            array_push($updatequeryparams, $showblocks);
+        }
+
+        if (isset($req_data->preferredbehaviour)) {
+            $updatequerymain .= ', preferredbehaviour=? ';
+            $preferredbehaviour = $req_data->preferredbehaviour;
+            array_push($updatequeryparams, $preferredbehaviour);
+        }
+
+        if (isset($req_data->shuffleanswers)) {
+            $updatequerymain .= ', shuffleanswers=? ';
+            $shuffleanswers = $req_data->shuffleanswers;
+            array_push($updatequeryparams, $shuffleanswers);
+        }
+
+        if (isset($req_data->canredoquestions)) {
+            $updatequerymain .= ', canredoquestions=? ';
+            $canredoquestions = $req_data->canredoquestions;
+            array_push($updatequeryparams, $canredoquestions);
+        }
+
+        if (isset($req_data->grade)) {
+            $updatequerymain .= ', grade=? ';
+            $grade = $req_data->grade;
+            array_push($updatequeryparams, $grade);
+        }
+
+        if (isset($req_data->attemptonlast)) {
+            $updatequerymain .= ', attemptonlast=? ';
+            $attemptonlast = $req_data->attemptonlast;
+            array_push($updatequeryparams, $attemptonlast);
+        }
+
+        if (isset($req_data->reviewattempt)) {
+            $updatequerymain .= ', reviewattempt=? ';
+            $reviewattempt = $req_data->reviewattempt;
+            array_push($updatequeryparams, $reviewattempt);
+        }
+
+        if (isset($req_data->reviewcorrectness)) {
+            $updatequerymain .= ', reviewcorrectness=? ';
+            $reviewcorrectness = $req_data->reviewcorrectness;
+            array_push($updatequeryparams, $reviewcorrectness);
+        }
+
+        if (isset($req_data->reviewmarks)) {
+            $updatequerymain .= ', reviewmarks=? ';
+            $reviewmarks = $req_data->reviewmarks;
+            array_push($updatequeryparams, $reviewmarks);
+        }
+
+        if (isset($req_data->reviewspecificfeedback)) {
+            $updatequerymain .= ', reviewspecificfeedback=? ';
+            $reviewspecificfeedback = $req_data->reviewspecificfeedback;
+            array_push($updatequeryparams, $reviewspecificfeedback);
+        }
+
+        if (isset($req_data->reviewgeneralfeedback)) {
+            $updatequerymain .= ', reviewgeneralfeedback=? ';
+            $reviewgeneralfeedback = $req_data->reviewgeneralfeedback;
+            array_push($updatequeryparams, $reviewgeneralfeedback);
+        }
+
+        if (isset($req_data->reviewrightanswer)) {
+            $updatequerymain .= ', reviewrightanswer=? ';
+            $reviewrightanswer = $req_data->reviewrightanswer;
+            array_push($updatequeryparams, $reviewrightanswer);
+        }
+
+        if (isset($req_data->reviewoverallfeedback)) {
+            $updatequerymain .= ', reviewoverallfeedback=? ';
+            $reviewoverallfeedback = $req_data->reviewoverallfeedback;
+            array_push($updatequeryparams, $reviewoverallfeedback);
+        }
+
+        if (isset($req_data->shufflequestions)) {
+            $shufflequestions = $req_data->shufflequestions;
+        }
+        if (isset($req_data->attemptonlast)) {
+            $attemptonlast = $req_data->attemptonlast;
+        }
+        if (isset($req_data->forcerepair)) {
+            $forcerepair = $req_data->forcerepair;
+        }
+
+        $updatequerymain .= " where course = ? AND quiztype IN ($quiztypesstr)";
+        array_push($updatequeryparams, $course_id);
+
+        $DB->execute("$updatequerymain ", $updatequeryparams);
         $quizzesdata = $DB->get_records_sql("SELECT id,quiztype FROM {quiz} where course = ? AND quiztype IN ($quiztypesstr) ORDER BY `quiztype` ASC ", [$course_id]);
 
         $quizseqforid = 1;
@@ -5610,11 +5702,25 @@ class local_leeloolxpapi_external extends external_api {
         $lastquiztypeseq = 1;
         foreach ($quizzesdata as $key => $value) {
 
-            $groupmode = $req_data->groupmode;
-            $groupingid = $req_data->groupingid;
             $idnumberstr = $idnumber = $req_data->idnumber;
-            $gradepass = $req_data->gradepass;
+            $cmupdatequery = 'update {course_modules} set idnumber = ? ';
+            $cmupdatequeryparams = [$idnumberstr];
+            if (isset($req_data->groupmode)) {
+                $cmupdatequery .= ', groupmode=? ';
+                $groupmode = $req_data->groupmode;
+                array_push($cmupdatequeryparams, $groupmode);
+            }
+
+            if (isset($req_data->groupingid)) {
+                $cmupdatequery .= ', groupingid=? ';
+                $groupingid = $req_data->groupingid;
+                array_push($cmupdatequeryparams, $groupingid);
+            }
+
             $instance = $value->id;
+            $cmupdatequery .= " where course = ? AND instance = ? AND module = '17'";
+            array_push($cmupdatequeryparams, $course_id, $instance);
+
             $quiztype = $value->quiztype;
             $module = '17';
             if ($lastquiztype != $quiztype) {
@@ -5681,9 +5787,16 @@ class local_leeloolxpapi_external extends external_api {
                 }
             }
 
-            $DB->execute("update {course_modules} set groupmode = ?, groupingid = ?, idnumber = ? where course = ? AND instance = ? AND module = '17' ", [$groupmode, $groupingid, $idnumberstr, $course_id, $instance]);
-            $DB->execute("update {quiz_sections} set shufflequestions = ? where quizid = ? ", [$shufflequestions, $value->id]);
-            $DB->execute("update {grade_items} set gradepass = ? where iteminstance = ? AND courseid = ? AND itemmodule = 'quiz' ", [$gradepass, $value->id, $course_id]);
+            $DB->execute("$cmupdatequery ", $cmupdatequeryparams);
+            if (isset($shufflequestions)) {
+                $DB->execute("update {quiz_sections} set shufflequestions = ? where quizid = ? ", [$shufflequestions, $value->id]);
+            }
+
+            if (isset($req_data->gradepass)) {
+                $gradepass = $req_data->gradepass;
+                $DB->execute("update {grade_items} set gradepass = ? where iteminstance = ? AND courseid = ? AND itemmodule = 'quiz' ", [$gradepass, $value->id, $course_id]);
+            }
+
 
             if (!empty($forcerepair)) {
                 $quizslotsdatatotal = $DB->get_record_sql(
@@ -5697,30 +5810,41 @@ class local_leeloolxpapi_external extends external_api {
             }
 
             // Update Question data
-            $difficulty = $req_data->difficulty;
-            $shuffleanswers = $req_data->shuffleanswers;
-            $answernumbering = $req_data->answernumbering;
             $choice1correct = $req_data->choice_1_correct;
-            $defaultmark = $req_data->default_mark;
             $quesslotsdata = $DB->get_records_sql("SELECT questionid FROM {quiz_slots} where quizid = ? ", [$value->id]);
             if (!empty($quesslotsdata)) {
                 foreach ($quesslotsdata as $keyqsd => $valueqsd) {
-                    $DB->execute("update {question} set defaultmark = ? where id = ? ", [$defaultmark, $valueqsd->questionid]);
+                    if (isset($req_data->default_mark)) {
+                        $defaultmark = $req_data->default_mark;
+                        $DB->execute("update {question} set defaultmark = ? where id = ? ", [$defaultmark, $valueqsd->questionid]);
+                    }
+
 
                     $difficultyexist = $DB->get_record_sql(
                         "SELECT id FROM {local_leeloolxptrivias_qd} where questionid = ?",
                         [$valueqsd->questionid]
                     );
-                    if (!empty($difficultyexist)) {
+                    if (!empty($difficultyexist) && isset($req_data->difficulty)) {
+                        $difficulty = $req_data->difficulty;
                         $DB->execute("update {local_leeloolxptrivias_qd} set difficulty = ? where questionid = ? ", [$difficulty, $valueqsd->questionid]);
                     } else {
+                        $difficulty = '1';
                         $extradatainsert = array();
                         $extradatainsert['vimeoid'] = '0';
                         $extradatainsert['questionid'] = $valueqsd->questionid;
                         $extradatainsert['difficulty'] = $difficulty;
                         $DB->insert_record('local_leeloolxptrivias_qd', $extradatainsert);
                     }
-                    $DB->execute("update {qtype_multichoice_options} set shuffleanswers = ? ,answernumbering = ? where questionid = ? ", [$shuffleanswers, $answernumbering, $valueqsd->questionid]);
+
+                    if (isset($req_data->shuffleanswers)) {
+                        $shuffleanswers = $req_data->shuffleanswers;
+                        $DB->execute("update {qtype_multichoice_options} set shuffleanswers = ? where questionid = ? ", [$shuffleanswers, $valueqsd->questionid]);
+                    }
+                    if (isset($req_data->answernumbering)) {
+                        $answernumbering = $req_data->answernumbering;
+                        $DB->execute("update {qtype_multichoice_options} set answernumbering = ? where questionid = ? ", [$answernumbering, $valueqsd->questionid]);
+                    }
+
 
                     if (!empty($choice1correct)) {
                         $answerexist = $DB->get_record_sql(
