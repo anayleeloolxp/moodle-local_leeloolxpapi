@@ -6167,4 +6167,2132 @@ class local_leeloolxpapi_external extends external_api {
     public static function quizzes_settings_returns() {
         return new external_value(PARAM_TEXT, 'Returns true');
     }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function fetch_category_courses_parameters() {
+        return new external_function_parameters(
+            array(
+                'category_id' => new external_value(PARAM_RAW, 'category_id', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     *
+     * @param string $category_id category_id
+     *
+     * @return string welcome message
+     */
+    public static function fetch_category_courses($categoryid = '') {
+
+        global $DB, $CFG;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::fetch_category_courses_parameters(),
+            array(
+                'category_id' => $categoryid,
+            )
+        );
+
+        $categoryidarr = json_decode($categoryid, true);
+        $tempArr = $categoryidarr[0];
+        $tempArr = explode('&', $tempArr);
+        $categoryid = $tempArr[0] . '"';
+        $tempVal = $tempArr[1];
+        if (strpos($tempVal, '1') !== false) {
+
+            $sql = "SELECT id,fullname,idnumber FROM {course} where category = $categoryid ";
+            $coursedetail = $DB->get_records_sql($sql);
+            //file_put_contents(dirname(__FILE__) . "/structurecreator.txt", print_r($categoryidarr, true));
+            return json_encode($coursedetail);
+        } else {
+            $courseid = $categoryid;
+            $courseid = str_replace('"', '', $courseid);
+
+            $coursedetails = $DB->get_record('course', array('id' => $courseid));
+
+            $table = 'course_sections';
+
+            $sections = $DB->get_records($table, array('course' => $courseid), 'section ASC');
+
+            $courseaction = get_course($courseid);
+
+            $modinfo = get_fast_modinfo($courseaction);
+
+            $actvitiesArr = [];
+
+            if (!empty($sections)) {
+                foreach ($sections as $sectionkey => $sectionsdetails) {
+                    $sequence = $sectionsdetails->sequence;
+
+                    $modulescourse = $DB->get_records_sql("select * from
+
+                            {course_modules} where section = ? ORDER BY ID", [$sectionsdetails->id]);
+
+                    if (!empty($modulescourse)) {
+                        $sequencearr = explode(',', $sequence);
+
+                        $newcoursemoduledda = [];
+
+                        foreach ($sequencearr as $tempidval) {
+
+                            if (!empty($modulescourse[$tempidval])) {
+
+                                $newcoursemoduledda[$tempidval] = $modulescourse[$tempidval];
+                            }
+                        }
+
+                        foreach ($newcoursemoduledda as $coursemoduledetails) {
+                            $moduleid = $coursemoduledetails->module;
+
+                            $instance = $coursemoduledetails->instance;
+
+                            $completionexpected = $coursemoduledetails->completionexpected;
+
+                            $completionview = $coursemoduledetails->completionview;
+
+                            $completiongradeitemnumber = $coursemoduledetails->completiongradeitemnumber;
+
+                            $modules = $DB->get_records("modules", array('id' => $moduleid));
+                            if (!empty($modules)) {
+                                foreach ($modules as $key => $value) {
+                                    $tbl = $value->name;
+
+                                    $moduledetail = $DB->get_records($tbl, array('id' => $instance));
+
+                                    if (!empty($moduledetail)) {
+
+                                        foreach ($moduledetail as $key => $valuefinal) {
+
+                                            if ($tbl == 'lesson') {
+                                                if ($valuefinal->available != 0) {
+                                                    $activitystartdates = $valuefinal->available;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->deadline != 0) {
+                                                    $activityenddatess = $valuefinal->deadline;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'quiz') {
+                                                if ($valuefinal->timeopen != 0) {
+                                                    $activitystartdates = $valuefinal->timeopen;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->timeclose != 0) {
+                                                    $activityenddatess = $valuefinal->timeclose;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'assign') {
+                                                if ($valuefinal->allowsubmissionsfromdate != 0) {
+                                                    $activitystartdates = $valuefinal->allowsubmissionsfromdate;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->duedate != 0) {
+                                                    $activityenddatess = $valuefinal->duedate;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'chat') {
+                                                if ($valuefinal->chattime != 0) {
+                                                    $activitystartdates = $valuefinal->chattime;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->chattime != 0) {
+                                                    $activityenddatess = $valuefinal->chattime;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'choice') {
+                                                if ($valuefinal->timeopen != 0) {
+                                                    $activitystartdates = $valuefinal->timeopen;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->timeclose != 0) {
+                                                    $activityenddatess = $valuefinal->timeclose;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'data') {
+                                                if ($valuefinal->timeavailablefrom != 0) {
+                                                    $activitystartdates = $valuefinal->timeavailablefrom;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->timeavailableto != 0) {
+                                                    $activityenddatess = $valuefinal->timeavailableto;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'feedback') {
+                                                if ($valuefinal->timeopen != 0) {
+                                                    $activitystartdates = $valuefinal->timeopen;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->timeclose != 0) {
+                                                    $activityenddatess = $valuefinal->timeclose;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'forum') {
+                                                if ($valuefinal->duedate != 0) {
+                                                    $activitystartdates = $valuefinal->duedate;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->cutoffdate != 0) {
+                                                    $activityenddatess = $valuefinal->cutoffdate;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'leeloolxpvc') {
+                                                if ($valuefinal->timeopen != 0) {
+                                                    $activitystartdates = $valuefinal->timeopen;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->timeopen != 0) {
+                                                    $activityenddatess = $valuefinal->timeopen;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'workshop') {
+                                                if ($valuefinal->submissionstart != 0) {
+                                                    $activitystartdates = $valuefinal->submissionstart;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->submissionend != 0) {
+                                                    $activityenddatess = $valuefinal->submissionend;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else if ($tbl == 'scorm') {
+                                                if ($valuefinal->timeopen != 0) {
+                                                    $activitystartdates = $valuefinal->timeopen;
+                                                } else {
+                                                    $activitystartdates = $coursedetails->startdate;
+                                                }
+
+                                                if ($valuefinal->timeclose != 0) {
+                                                    $activityenddatess = $valuefinal->timeclose;
+                                                } else {
+                                                    if ($completionexpected != 0) {
+                                                        $activityenddatess = $completionexpected;
+                                                    } else {
+                                                        $activityenddatess = $coursedetails->enddate;
+                                                    }
+                                                }
+                                            } else {
+
+                                                $activitystartdates = $coursedetails->startdate;
+
+                                                if ($completionexpected != 0) {
+                                                    $activityenddatess = $completionexpected;
+                                                } else {
+                                                    $activityenddatess = $coursedetails->enddate;
+                                                }
+                                            }
+
+                                            $activityids = $DB->get_record(
+                                                'course_modules',
+
+                                                array('instance' => $instance, 'module' => $moduleid)
+                                            );
+
+                                            $alreadyenabled = $DB->get_record_sql("SELECT id FROM
+
+                                                        {tool_leeloolxp_sync}
+                                                        where activityid = ? and enabled = '1'
+                                                        order by id desc limit 1", [$activityids->id]);
+                                            $sectiondataa = $DB->get_record_sql("SELECT section FROM {course_modules}
+                                                WHERE id = ? ", [$activityids->id]);
+
+                                            $enabled = false;
+
+                                            if (!empty($alreadyenabled)) {
+                                                $enabled = true;
+                                            }
+
+                                            $cm = $modinfo->cms[$activityids->id];
+
+                                            if ($cm) {
+                                                if ($cm->modname == 'quiz') {
+                                                    $quizid = $cm->get_course_module_record()->instance;
+                                                    $quizdata = $DB->get_record('quiz', array('id' => $quizid), '*', MUST_EXIST);
+
+                                                    if (isset($quizdata->quiztype)) {
+                                                        $iconurl = $CFG->wwwroot . '/local/leeloolxptrivias/pix/' . $quizdata->quiztype . '.png';
+                                                    } else {
+                                                        $iconurl = $cm->get_icon_url() . '?default';
+                                                    }
+                                                } else {
+                                                    $iconurl = $cm->get_icon_url();
+                                                    $iconurl = $iconurl->get_scheme() . '://' . $iconurl->get_host() . '' . $iconurl->get_path();
+                                                }
+
+                                                $icon = '<img src="' . $iconurl . '"
+
+                                                            class="icon" alt="" />&nbsp;';
+                                            } else {
+
+                                                $icon = '<i class="fa fa-recycle"></i>';
+
+                                                $iconurl = '';
+                                            }
+
+                                            if (isset($valuefinal->quiztype)) {
+                                                $quiztype = $valuefinal->quiztype;
+                                            } else {
+                                                $quiztype = '';
+                                            }
+
+                                            $difficulty = '1';
+
+
+                                            $querystring = $coursedetails->fullname . "$$" .
+
+                                                $sectionsdetails->name . "$$" . $valuefinal->name . "$$" .
+
+                                                $activityids->id . "$$" . $courseid . "$$" .
+
+                                                $sectionsdetails->summary . "$$" .
+
+                                                strip_tags($valuefinal->intro . "$$" .
+                                                    $activitystartdates . "$$" .
+                                                    $activityenddatess . "$$" . $tbl . "$$" . $iconurl
+                                                    . "$$" . $quiztype . "$$" . $difficulty)
+                                                . "$$" .
+
+                                                $sectiondataa->section . "$$" .
+                                                base64_encode(
+                                                    json_encode(
+                                                        array_values($moduledetail)[0]
+                                                    )
+                                                );
+
+                                            $valuefinal->iconurl = $iconurl;
+                                            $valuefinal->activityid = $activityids->id;
+                                            $valuefinal->querystring = $querystring;
+
+
+                                            if (isset($valuefinal->questionsperpage)) {
+                                                $isquiz = $DB->get_record_sql(
+                                                    "SELECT id FROM {tool_leeloolxp_sync}
+                                                        where activityid =  ? and is_quiz = '1'
+                                                        order by id desc limit 1",
+                                                    [$activityids->id]
+                                                );
+
+                                                if (!empty($isquiz)) {
+                                                    $valuefinal->check_quiz_sync = $querystring;
+                                                }
+                                            }
+                                            $actvitiesArr[$sectionsdetails->id][] = $valuefinal;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            $returndataarr = [
+                'sections' => $sections,
+                'actvities' => $actvitiesArr,
+            ];
+            return json_encode($returndataarr);
+        }
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function fetch_category_courses_returns() {
+        return new external_value(PARAM_TEXT, 'Returns data');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function sync_course_activities_parameters() {
+        return new external_function_parameters(
+            array(
+                'data_array' => new external_value(PARAM_RAW, 'data_array', VALUE_DEFAULT, null),
+                'type' => new external_value(PARAM_RAW, 'type', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     *
+     * @param string $data_array data_array
+     * @return string welcome message
+     */
+    public static function sync_course_activities($data_array = '') {
+
+        global $DB, $CFG;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::sync_course_activities_parameters(),
+            array(
+                'data_array' => $data_array,
+                'type' => $type,
+            )
+        );
+
+        $dataArray = json_decode($data_array, true);
+        //file_put_contents(dirname(__FILE__) . "/structurecreator.txt", print_r($dataArray, true));
+
+        if (!empty($dataArray[0])) {
+            $alldata = $dataArray[0];
+
+
+            $i = 0;
+
+            $moodleuserarray = array();
+
+            $moodleuserstudentarray = array();
+
+            $moodleuserteacherarray = array();
+
+            $moodleuserteacherarrayy = array();
+
+            $moodleuserstudentarrayy = array();
+
+            $useridscohort = '';
+
+            $cohortname = '';
+
+            foreach ($alldata as $key => $value) {
+                $activityidmoodlearr = array();
+
+                $activityset = str_replace("'", '', $value);
+
+                $activityidarr = explode('$$', $activityset);
+
+                $courseidagain = $activityidarr[4];
+
+                $activitystartdate = $activityidarr[7];
+
+                $activityenddate = $activityidarr[8];
+
+                $activitytype = $activityidarr[9];
+
+                $activityurl = $activityidarr[10];
+
+                $quiztypesync = $activityidarr[11];
+
+                $quizdiffsync = $activityidarr[12];
+
+                $arfulldata = $activityidarr[14];
+
+                if ($CFG->dbtype == 'mysqli') {
+
+                    $sql = "SELECT cs.id cid , cs.name cname , cs.section csection , cs.sequence csequence, cfo.*,
+                    (Select id from {course_sections} where course = ? and section = cfo.value) as parentsectionid
+                    FROM {course_sections} cs left join {course_format_options} cfo
+                    on cfo.sectionid = cs.id and cfo.name = 'parent' WHERE cs.course = ? and cs.section != '0'
+                    GROUP BY cs.id ORDER BY csection ASC";
+
+                    // AND ( cfo.name LIKE 'parent' OR cfo.name LIKE 'hiddensections' OR cfo.name LIKE 'coursedisplay').
+                    $coursehierarchy = $DB->get_records_sql($sql, [$courseidagain, $courseidagain]);
+                } else {
+                    $sql = "SELECT DISTINCT ON (cs.id) cs.id cid , cs.name cname , cs.section csection ,
+                    cs.sequence csequence, cfo.value,  cfo.courseid ,cfo.format,cfo.sectionid,cfo.name ,
+                    cfo.value ,cfo.id id ,
+                    (Select id from {course_sections} where course = ? and section = CAST(cfo.value as INT)) as parentsectionid
+                    from   {course_sections}  cs
+                    left join {course_format_options} cfo ON cfo.sectionid = cs.id and cfo.name = 'parent'
+                    WHERE course = ? and cs.section != '0' ORDER BY cs.id ASC";
+                    $coursehierarchy = $DB->get_records_sql($sql, [$courseidagain, $courseidagain]);
+                    if (!empty($coursehierarchy)) {
+                        usort($coursehierarchy, function ($a, $b) {
+                            return $a->csection - $b->csection;
+                        });
+                    }
+                }
+
+                if (empty($coursehierarchy)) {
+
+                    $sql = "SELECT id cid,name cname,section csection ,sequence csequence,id sectionid
+                    FROM {course_sections} cs
+                    WHERE course = ? and cs.section != '0' ";
+
+                    $coursehierarchy = $DB->get_records_sql($sql, [$courseidagain]);
+                }
+
+                if ($i == '0') {
+                    $enrolleduser = $DB->get_records_sql("SELECT u.*, ue.id, e.courseid, ue.userid, ue.timeend,
+                    ue.timestart, e.status enrol_status ,
+                    e.sortorder  enrol_sortorder , e.enrol
+                    enrolmethod, (ue.timecreated)
+                    FROM {user_enrolments} ue JOIN {enrol} e ON e.id = ue.enrolid
+                    AND e.status = 0 JOIN {user} u ON u.id = ue.userid
+                    AND u.deleted = 0
+                    Where e.courseid = ?", [$courseidagain]);
+
+                    foreach ($enrolleduser as $key => $moodeluservalue) {
+
+                        $useridscohort .= $moodeluservalue->userid . ',';
+
+                        $sql = "SELECT {role}.shortname shortname, {role}.id roleid
+
+                        FROM {role_assignments} LEFT JOIN {user_enrolments} ON {role_assignments}.userid = {user_enrolments}.userid
+
+                        LEFT JOIN {role} ON {role_assignments}.roleid = {role}.id LEFT JOIN {context}
+
+                        ON {context}.id = {role_assignments}.contextid LEFT JOIN {enrol} ON {enrol}.courseid = {context}.instanceid
+
+                        AND {user_enrolments}.enrolid = {enrol}.id
+
+                        WHERE  {user_enrolments}.userid = ? AND {enrol}.courseid = ?";
+
+                        $roleresult = $DB->get_records_sql($sql, [$moodeluservalue->userid, $courseidagain]);
+
+                        $userrole = '';
+
+                        foreach ($roleresult as $rolekey => $rolevalues) {
+                            $userrole = $rolevalues->shortname;
+
+                            $roleid = $rolevalues->roleid;
+                        }
+
+                        $usertype = '';
+
+                        $teamniorole = '';
+
+                        $teamniousertype = '';
+
+                        $userdegree = $DB->get_record_sql("SELECT DISTINCT data FROM {user_info_data}
+
+                        left join {user_info_field} on {user_info_data}.fieldid = {user_info_field}.id
+
+                        where {user_info_field}.shortname = 'degree' and {user_info_data}.userid = ?", [$moodeluservalue->userid]);
+
+                        if (isset($userdegree->data) && isset($userdegree->data) != '') {
+                            $userdegreename = $userdegree->data;
+                        } else {
+                            $userdegreename = '';
+                        }
+
+                        $userdepartment = $moodeluservalue->department;
+
+                        $userinstitution = $moodeluservalue->institution;
+
+                        $ssopluginconfig = get_config('auth_leeloolxp_tracking_sso');
+
+                        $studentnumcombinationsval = $ssopluginconfig->student_num_combination;
+
+                        $studentdbsetarr = array();
+
+                        for ($si = 1; $studentnumcombinationsval >= $si; $si++) {
+                            $studentpositionmoodle = 'student_position_moodle_' . $si;
+
+                            $mstudentrole = $ssopluginconfig->$studentpositionmoodle;
+
+                            $studentinstitution = 'student_institution_' . $si;
+
+                            $mstudentinstitution = $ssopluginconfig->$studentinstitution;
+
+                            $studentdepartment = 'student_department_' . $si;
+
+                            $mstudentdepartment = $ssopluginconfig->$studentdepartment;
+
+                            $studentdegree = 'student_degree_' . $si;
+
+                            $mstudentdegree = $ssopluginconfig->$studentdegree;
+
+                            $studentdbsetarr[$si] = $mstudentrole . "_" .
+
+                                $mstudentinstitution . "_" . $mstudentdepartment . "_" . $mstudentdegree;
+                        }
+
+                        $userstudentinfo = $roleid . "_" . $userinstitution . "_" .
+
+                            $userdepartment . "_" . $userdegreename;
+
+                        $matchedvalue = array_search($userstudentinfo, $studentdbsetarr);
+
+                        if ($matchedvalue) {
+                            $tcolnamestudent = 'student_position_t_' . $matchedvalue;
+
+                            $teamniorole = $ssopluginconfig->$tcolnamestudent;
+
+                            $usertype = 'student';
+                        } else {
+
+                            $teachernumcombinations = $ssopluginconfig->teacher_num_combination;
+
+                            $teachernumcombinationsval = $teachernumcombinations;
+
+                            $teacherdbsetarr = array();
+
+                            for ($si = 1; $teachernumcombinationsval >= $si; $si++) {
+                                $teacherpositionmoodle = 'teacher_position_moodle_' . $si;
+
+                                $mteacherrole = $ssopluginconfig->$teacherpositionmoodle;
+
+                                $teacherinstitution = 'teacher_institution_' . $si;
+
+                                $mteacherinstitution = $ssopluginconfig->$teacherinstitution;
+
+                                $teacherdepartment = 'teacher_department_' . $si;
+
+                                $mteacherdepartment = $ssopluginconfig->$teacherdepartment;
+
+                                $teacherdegree = 'teacher_degree_' . $si;
+
+                                $mteacherdegree = $ssopluginconfig->$teacherdegree;
+                                if (empty($mteacherinstitution)) {
+                                    $mteacherinstitution = '';
+                                }
+                                if (empty($mteacherdepartment)) {
+                                    $mteacherdepartment = '';
+                                }
+                                if (empty($mteacherdegree)) {
+                                    $mteacherdegree = '';
+                                }
+                                $teacherdbsetarr[$si] = $mteacherrole . "_" .
+
+                                    $mteacherinstitution . "_" . $mteacherdepartment . "_" . $mteacherdegree;
+                            }
+
+                            $userteacherinfo = $roleid . "_" . $userinstitution . "_" .
+
+                                $userdepartment . "_" . $userdegreename;
+
+                            $matchedvalueteacher = array_search($userteacherinfo, $teacherdbsetarr);
+
+                            if ($matchedvalueteacher) {
+                                $tcolnameteacher = 'teacher_position_t_' . $matchedvalueteacher;
+
+                                $teamniorole = $ssopluginconfig->$tcolnameteacher;
+
+                                $usertype = 'teacher';
+                            } else {
+
+                                $usertype = 'student';
+
+                                $teamniorole = $ssopluginconfig->default_student_position;
+                            }
+                        }
+
+                        if ($usertype == 'student') {
+                            $cancreateuser = $ssopluginconfig->web_new_user_student;
+
+                            $userdesignation = $teamniorole;
+
+                            $userapproval = $ssopluginconfig->required_aproval_student;
+                        } else {
+
+                            if ($usertype == 'teacher') {
+                                $cancreateuser = $ssopluginconfig->web_new_user_teacher;
+
+                                $userdesignation = $teamniorole;
+
+                                $userapproval = $ssopluginconfig->required_aproval_teacher;
+                            }
+                        }
+
+                        $enrolleduserid = $moodeluservalue->userid;
+
+                        $groupsname = $DB->get_records_sql("SELECT * FROM {groups} groups left join
+
+                        {groups_members} on {groups_members}.groupid = groups.id
+
+                        where groups.courseid = ? and {groups_members}.userid= ?", [$courseidagain, $enrolleduserid]);
+
+                        $usergroupsname = array();
+
+                        if (!empty($groupsname)) {
+                            foreach ($groupsname as $key => $gvalue) {
+                                $usergroupsname[] = $gvalue->name;
+                            }
+                        }
+
+                        $academicprogramfield = $DB->get_record_sql("SELECT DISTINCT data
+                        FROM {user_info_field} field
+                        left join {user_info_data} on {user_info_data}.fieldid = field.id
+                        where field.name LIKE '%Academic program%'
+                        and {user_info_data}.userid= ?", [$enrolleduserid]);
+
+                        if (isset($academicprogramfield->data) && $academicprogramfield->data != '') {
+                            $academicprogram = $academicprogramfield->data;
+                        } else {
+                            $academicprogram = '';
+                        }
+
+                        $usergroupsname = implode(',', $usergroupsname);
+
+                        $moodleurlpic = new moodle_url('/user/pix.php/' . $moodeluservalue->id . '/f.jpg');
+
+                        if ($usertype == 'student') {
+
+                            $tempdatacon = $DB->get_record_sql(" SELECT id FROM {context}
+                            WHERE instanceid = ? AND depth = '3'
+                            ORDER BY id DESC", [$courseidagain]);
+
+                            if (!empty($tempdatacon)) {
+                                $temptdatastr = $tempdatacon->id;
+                            } else {
+                                $temptdatastr = 0;
+                            }
+
+                            $userrolename = 'student';
+
+                            if (!empty($temptdatastr)) {
+
+                                $userrolename = $DB->get_record_sql(" SELECT r.shortname
+                                FROM {role_assignments} ra
+                                left join {role} r on r.id = ra.roleid
+                                WHERE contextid IN (?)
+                                and userid = ? ", [$temptdatastr, $moodeluservalue->userid]);
+
+
+                                $userrolename = $userrolename->shortname;
+                            }
+
+
+                            $lastlogin = date('Y-m-d h:i:s', $moodeluservalue->lastlogin);
+
+                            $moodleuserstudentarrayy[] = array(
+
+                                'username' => base64_encode($moodeluservalue->username),
+
+                                'fullname' => ucfirst($moodeluservalue->firstname) . " " .
+
+                                    ucfirst($moodeluservalue->middlename) . " " . ucfirst($moodeluservalue->lastname),
+
+                                'user_pic_moodle_url' => $moodleurlpic,
+
+                                'email' => base64_encode($moodeluservalue->email),
+
+                                'course_role' => $userrolename,
+
+                                'city' => $moodeluservalue->city,
+
+                                'country' => $moodeluservalue->country,
+
+                                'timezone' => $moodeluservalue->timezone,
+
+                                'firstnamephonetic' => $moodeluservalue->firstnamephonetic,
+
+                                'lastnamephonetic' => $moodeluservalue->lastnamephonetic,
+
+                                'middlename' => $moodeluservalue->middlename,
+
+                                'alternatename' => $moodeluservalue->alternatename,
+
+                                'icq' => $moodeluservalue->icq,
+
+                                'skype' => $moodeluservalue->skype,
+
+                                'aim' => $moodeluservalue->aim,
+
+                                'yahoo' => $moodeluservalue->yahoo,
+
+                                'msn' => $moodeluservalue->msn,
+
+                                'idnumber' => $moodeluservalue->idnumber,
+
+                                'institution' => $moodeluservalue->institution,
+
+                                'department' => $moodeluservalue->department,
+
+                                'phone' => $moodeluservalue->phone1,
+
+                                'moodle_phone' => $moodeluservalue->phone2,
+
+                                'adress' => $moodeluservalue->address,
+
+                                'firstaccess' => $moodeluservalue->firstaccess,
+
+                                'lastaccess' => $moodeluservalue->lastaccess,
+
+                                'lastlogin' => $lastlogin,
+
+                                'lastip' => $moodeluservalue->lastip,
+
+                                'passwors' => $moodeluservalue->password,
+
+                                'user_groups_name' => $usergroupsname,
+
+                                'groups_data' => $groupsname,
+
+                                'can_create_user' => $cancreateuser,
+
+                                'designation' => $userdesignation,
+
+                                'user_approval' => $userapproval,
+
+                                'user_type' => $usertype,
+
+                                'userrole' => $userrole,
+
+                                'designation_id' => $userdesignation,
+
+                                'enrol' => $moodeluservalue->enrolmethod,
+
+                                'timeend' => $moodeluservalue->timeend,
+
+                                'timestart' => $moodeluservalue->timestart,
+
+                                'userid' => $moodeluservalue->userid,
+
+                                'enrol_status' => $moodeluservalue->enrol_status,
+
+                                'academicprogram' => $academicprogram,
+
+                                'auth' => $moodeluservalue->auth,
+
+                                'confirmed' => $moodeluservalue->confirmed,
+
+                                'deleted' => $moodeluservalue->deleted,
+
+                                'suspended' => $moodeluservalue->suspended,
+
+                                'timecreated' => $moodeluservalue->timecreated,
+
+                                'timemodified' => $moodeluservalue->timemodified,
+
+                                'enrol_sortorder' => $moodeluservalue->enrol_sortorder
+                            );
+                        } else {
+
+                            $tempdatacon = $DB->get_record_sql(" SELECT id FROM {context}
+                            WHERE instanceid = ? AND depth = '3'
+                            ORDER BY id DESC", [$courseidagain]);
+
+                            if (!empty($tempdatacon)) {
+                                $temptdatastr = $tempdatacon->id;
+                            } else {
+                                $temptdatastr = 0;
+                            }
+
+                            $userrolename = 'student';
+
+                            if (!empty($temptdatastr)) {
+                                $userrolename = $DB->get_record_sql(" SELECT r.shortname
+                                FROM {role_assignments} ra
+                                left join {role} r on r.id = ra.roleid
+                                WHERE contextid IN (?)
+                                and userid = ? ", [$temptdatastr, $moodeluservalue->userid]);
+                                $userrolename = $userrolename->shortname;
+                            }
+
+                            if ($usertype == 'teacher') {
+                                $moodeluservalueteacher = $moodeluservalue;
+
+                                $moodleuserteacherarrayy[] = array(
+                                    'username' => base64_encode($moodeluservalueteacher->username),
+
+                                    'fullname' => ucfirst($moodeluservalueteacher->firstname) . " " .
+
+                                        ucfirst($moodeluservalueteacher->middlename) . " " . ucfirst($moodeluservalueteacher->lastname),
+
+                                    'user_pic_moodle_url' => $moodleurlpic,
+
+                                    'email' => base64_encode($moodeluservalueteacher->email),
+
+                                    'course_role' => $userrolename,
+
+                                    'city' => $moodeluservalueteacher->city,
+
+                                    'country' => $moodeluservalueteacher->country,
+
+                                    'timezone' => $moodeluservalueteacher->timezone,
+
+                                    'firstnamephonetic' => $moodeluservalueteacher->firstnamephonetic,
+
+                                    'lastnamephonetic' => $moodeluservalueteacher->lastnamephonetic,
+
+                                    'middlename' => $moodeluservalueteacher->middlename,
+
+                                    'alternatename' => $moodeluservalueteacher->alternatename,
+
+                                    'icq' => $moodeluservalueteacher->icq,
+
+                                    'skype' => $moodeluservalueteacher->skype,
+
+                                    'aim' => $moodeluservalueteacher->aim,
+
+                                    'yahoo' => $moodeluservalueteacher->yahoo,
+
+                                    'msn' => $moodeluservalueteacher->msn,
+
+                                    'idnumber' => $moodeluservalue->idnumber,
+
+                                    'institution' => $moodeluservalueteacher->institution,
+
+                                    'department' => $moodeluservalueteacher->department,
+
+                                    'phone' => $moodeluservalueteacher->phone1,
+
+                                    'moodle_phone' => $moodeluservalueteacher->phone2,
+
+                                    'adress' => $moodeluservalueteacher->address,
+
+                                    'firstaccess' => $moodeluservalueteacher->firstaccess,
+
+                                    'lastaccess' => $moodeluservalueteacher->lastaccess,
+
+                                    'lastlogin' => $moodeluservalueteacher->lastlogin,
+
+                                    'lastip' => $moodeluservalueteacher->lastip,
+
+                                    'user_groups_name' => $usergroupsname,
+
+                                    'groups_data' => $groupsname,
+
+                                    'can_create_user' => $cancreateuser,
+
+                                    'designation' => $userdesignation,
+
+                                    'user_approval' => $userapproval,
+
+                                    'user_type' => $usertype,
+
+                                    'userrole' => $userrole,
+
+                                    'designation_id' => $userdesignation,
+
+                                    'enrol' => $moodeluservalue->enrolmethod,
+
+                                    'timeend' => $moodeluservalue->timeend,
+
+                                    'timestart' => $moodeluservalue->timestart,
+
+                                    'userid' => $moodeluservalue->userid,
+
+                                    'enrol_status' => $moodeluservalue->enrol_status,
+
+                                    'academicprogram' => $academicprogram,
+
+                                    'auth' => $moodeluservalue->auth,
+
+                                    'confirmed' => $moodeluservalue->confirmed,
+
+                                    'deleted' => $moodeluservalue->deleted,
+
+                                    'suspended' => $moodeluservalue->suspended,
+
+                                    'timecreated' => $moodeluservalue->timecreated,
+
+                                    'timemodified' => $moodeluservalue->timemodified,
+
+                                    'enrol_sortorder' => $moodeluservalue->enrol_sortorder
+                                );
+                            }
+                        }
+                    }
+                }
+
+                $activityid = $activityidarr[3];
+
+                $modulegeneraldata = $DB->get_record('course_modules', array('id' => $activityid));
+
+                $secctiondescription = $activityidarr[5];
+
+                $activitydescription = $activityidarr[6];
+
+                $coursedetailsagain = $DB->get_record('course', array('id' => $courseidagain));
+
+                $useridscohort = chop($useridscohort, ",");
+
+                if (!empty($useridscohort)) {
+
+                    $cohortdata = $DB->get_records_sql(" SELECT {cohort}.name
+                    FROM {cohort_members}
+                    left join {cohort} on {cohort}.id={cohort_members}.cohortid
+                    WHERE userid IN ($useridscohort) ");
+
+                    if (!empty($cohortdata)) {
+                        foreach ($cohortdata as $key => $value) {
+                            $cohortname .= $value->name . ',';
+                        }
+                        $cohortname = chop($cohortname, ",");
+                    }
+                }
+
+                $groupname = '';
+                $categorydata = $DB->get_records_sql("SELECT * FROM {course_categories}");
+
+                $gradecategories = $DB->get_records_sql("SELECT * FROM {grade_categories}
+                WHERE courseid = ?
+                ORDER BY depth ASC", [$courseidagain]);
+                $gradeitems = $DB->get_records_sql("SELECT * FROM {grade_items} WHERE courseid = ?", [$courseidagain]);
+
+                $tempdata = explode('$$', $activityset);
+
+                $tagdata = [];
+
+                if (!empty($tempdata[3])) {
+                    $itemidd = $tempdata[3];
+
+                    $tagdata = $DB->get_records_sql(
+                        "SELECT {tag}.* ,{user}.email, {tag_instance}.contextid,
+
+                    {tag_instance}.itemtype, {tag_instance}.ordering, {tag_instance}.tiuserid,
+                    {tag_instance}.itemid
+                    FROM {tag_instance}
+                    join {tag} on {tag_instance}.tagid = {tag}.id join {user} ON {user}.id = {tag}.userid
+                    where {tag_instance}.itemid = ?",
+                        [$itemidd]
+                    );
+                }
+
+                $post = [
+
+                    'grade_categories' => json_encode($gradecategories),
+
+                    'grade_items' => json_encode($gradeitems),
+
+                    'tagdata' => base64_encode(json_encode($tagdata)),
+
+                    'moodle_users_students' => json_encode($moodleuserstudentarrayy),
+
+                    'moodle_users_teachers' => json_encode($moodleuserteacherarrayy),
+
+                    'course_section_activity' => $activityset,
+
+                    'coursehierarchy' => json_encode($coursehierarchy),
+
+                    'is_quiz_task' => 0,
+
+                    'group_name' => $groupname,
+
+                    'project_description' => $coursedetailsagain->summary,
+
+                    'course_format' => $coursedetailsagain->format,
+
+                    'subproject_description' => $secctiondescription,
+
+                    'task_description' => $activitydescription,
+
+                    'course_id' => $coursedetailsagain->id,
+
+                    'syncidnumber' => $coursedetailsagain->idnumber,
+
+                    'course_category' => $coursedetailsagain->category,
+
+                    'shortname' => $coursedetailsagain->shortname,
+
+                    'cohortname' => $cohortname,
+
+                    'category' => $coursedetailsagain->category,
+
+                    'course_visible' => $coursedetailsagain->visible,
+
+                    'cat_data' => json_encode($categorydata),
+
+                    'startdate' => $coursedetailsagain->startdate,
+
+                    'activity_start_date' => $activitystartdate,
+
+                    'activity_end_date' => $activityenddate,
+
+                    'enddate' => $coursedetailsagain->enddate,
+
+                    'activity_type' => $activitytype,
+
+                    'activity_url' => $activityurl,
+
+                    'quiztype' => $quiztypesync,
+
+                    'quizdiff' => $quizdiffsync,
+
+                    'arfulldata' => $arfulldata,
+
+                    'showdescription' => $modulegeneraldata->showdescription,
+
+                    'visible' => $modulegeneraldata->visible,
+
+                    'idnumber' => $modulegeneraldata->idnumber,
+
+                    'completion' => $modulegeneraldata->completion,
+
+                    'completionexpected' => $modulegeneraldata->completionexpected,
+
+                    'completionview' => $modulegeneraldata->completionview,
+
+                    'completiongradeitemnumber' => $modulegeneraldata->completiongradeitemnumber,
+
+                    'availability' => $modulegeneraldata->availability,
+
+                    'groupmode' => $modulegeneraldata->groupmode,
+
+                    'groupingid' => $modulegeneraldata->groupingid,
+
+                ];
+
+                $configtoolleeloolxpsync = get_config('tool_leeloolxp_sync');
+
+                $liacnsekey = $configtoolleeloolxpsync->leeloolxp_synclicensekey;
+
+                $curl = new curl;
+
+                $postdata = array('license_key' => $liacnsekey);
+
+                $url = 'https://leeloolxp.com/api_moodle.php/?action=page_info';
+
+                $options = array(
+
+                    'CURLOPT_RETURNTRANSFER' => true,
+
+                    'CURLOPT_HEADER' => false,
+
+                    'CURLOPT_POST' => count($postdata),
+
+                );
+
+                $output = $curl->post($url, $postdata, $options);
+
+                $infoleeloolxp = json_decode($output);
+
+                if ($infoleeloolxp->status != 'false') {
+                    $teamniourl = $infoleeloolxp->data->install_url;
+                }
+
+                $url = $teamniourl . '/admin/sync_moodle_course/index';
+
+                $curl = new curl;
+
+
+                $options = array(
+
+                    'CURLOPT_RETURNTRANSFER' => true,
+
+                    'CURLOPT_HEADER' => false,
+
+                    'CURLOPT_POST' => count($post),
+                    'CURLOPT_HTTPHEADER' => array(
+                        'Leeloolxptoken: ' . get_config('local_leeloolxpapi')->leelooapitoken . ''
+                    )
+                );
+
+                if (!$response = $curl->post($url, $post, $options)) {
+                    return true;
+                }
+
+                $response = json_decode($response, true);
+
+                $courseid = $courseidagain;
+
+                $sectionid = 0;
+
+                if (!empty($response)) {
+                    foreach ($response as $key => $teamniotaskid) {
+                        if ($teamniotaskid != '0') {
+                            $alreadyexistquery = $DB->get_record_sql("SELECT id FROM {tool_leeloolxp_sync}
+
+                            where teamnio_task_id = ?", [$teamniotaskid]);
+
+                            if (empty($alreadyexistquery)) {
+                                $DB->execute("INSERT INTO {tool_leeloolxp_sync}
+
+                                ( courseid, sectionid, activityid, enabled, teamnio_task_id, is_quiz)
+
+                                VALUES ( ?, ?, ?, '1', ?,'0')", [$courseid, $sectionid, $activityid, $teamniotaskid]);
+                            }
+
+                            $msg = get_string('sychronizationed_success', 'tool_leeloolxp_sync');
+                        } else {
+
+                            $activityidmoodlearr = $activityid;
+
+                            $DB->execute("Update {tool_leeloolxp_sync}  set enabled = '1'
+
+                            where activityid = ?", [$activityidmoodlearr]);
+
+                            $msg = get_string('sychronizationed_success', 'tool_leeloolxp_sync');
+                        }
+                    }
+                } else {
+                    $msg = get_string('course_exists', 'tool_leeloolxp_sync');
+                }
+
+                $i++;
+            }
+        }
+        if (!empty($dataArray[1])) {
+            $reqquizsync = $dataArray[1];
+            foreach ($reqquizsync as $key => $value) {
+                $DB->execute("Update {tool_leeloolxp_sync}  set is_quiz = '1'
+
+                where activityid = ?", [$value]);
+
+                $isqpost = [
+
+                    'activity_id' => $value,
+
+                ];
+
+                $url = $teamniourl . '/admin/sync_moodle_course/is_quiz_update';
+
+                $curl = new curl;
+
+                $options = array(
+
+                    'CURLOPT_RETURNTRANSFER' => true,
+
+                    'CURLOPT_HEADER' => false,
+
+                    'CURLOPT_POST' => count($isqpost),
+                    'CURLOPT_HTTPHEADER' => array(
+                        'Leeloolxptoken: ' . get_config('local_leeloolxpapi')->leelooapitoken . ''
+                    )
+                );
+
+                if (!$response = $curl->post($url, $isqpost, $options)) {
+                    return true;
+                }
+            }
+        }
+
+        return json_encode($dataArray[0]);
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function sync_course_activities_returns() {
+        return new external_value(PARAM_TEXT, 'Returns data');
+    }
+
+    /**
+     * Returns description of method parameters
+     * @return external_function_parameters
+     */
+    public static function resync_activity_course_parameters() {
+        return new external_function_parameters(
+            array(
+                'id' => new external_value(PARAM_RAW, 'id', VALUE_DEFAULT, null),
+                'action' => new external_value(PARAM_RAW, 'action', VALUE_DEFAULT, null),
+                'type' => new external_value(PARAM_RAW, 'type', VALUE_DEFAULT, null),
+            )
+        );
+    }
+
+    /**
+     * Sync course from Leeloo to Moodle
+     *
+     * @param string $id id
+     * @param string $action action
+     * @param string $type type
+     * @return string welcome message
+     */
+    public static function resync_activity_course($id = '', $action = '', $type = '') {
+
+        global $DB, $CFG;
+        // Parameter validation.
+        // REQUIRED.
+        $params = self::validate_parameters(
+            self::resync_activity_course_parameters(),
+            array(
+                'id' => $id,
+                'action' => $action,
+                'type' => $type,
+            )
+        );
+
+        $paramsArr = json_decode($id, true);
+
+        $tempArr = [
+            'id' => $paramsArr,
+            'action' => $action,
+            'type' => $type,
+        ];
+
+        $configtoolleeloolxpsync = get_config('tool_leeloolxp_sync');
+
+        $liacnsekey = $configtoolleeloolxpsync->leeloolxp_synclicensekey;
+
+        $curl = new curl;
+
+        $postdata = array('license_key' => $liacnsekey);
+
+        $url = 'https://leeloolxp.com/api_moodle.php/?action=page_info';
+
+        $options = array(
+
+            'CURLOPT_RETURNTRANSFER' => true,
+
+            'CURLOPT_HEADER' => false,
+
+            'CURLOPT_POST' => count($postdata),
+
+        );
+
+        $output = $curl->post($url, $postdata, $options);
+
+        $infoleeloolxp = json_decode($output);
+
+        if ($infoleeloolxp->status != 'false') {
+            $teamniourl = $infoleeloolxp->data->install_url;
+        }
+
+        if ($type  == '1' || $type  == 1) { // AR
+            if ($action == 'resync') {
+                $reactivityid = $activityid = $paramsArr['id'];
+                $activityname = $reqactivityname = $paramsArr['activity_name'];
+                $courseid = $reqcourseid = $paramsArr['course_id'];
+                $tagsdata = $DB->get_records('tag_instance', array('itemid' => $activityid, 'itemtype' => 'course_modules'));
+
+                $tagsfinaldata = [];
+
+                if (!empty($tagsdata)) {
+                    foreach ($tagsdata as $keyy => $valueee) {
+                        $dbtagdata = $DB->get_record('tag', array('id' => $valueee->tagid));
+
+                        if (!empty($dbtagdata)) {
+                            $dbtagdata->contextid = $valueee->contextid;
+                            $tagsfinaldata[] = $dbtagdata;
+                        }
+                    }
+                }
+
+                $syncactivitydescription = '';
+
+                $coursedetails = $DB->get_record('course', array('id' => $courseid)); // Fetch all exist course from.
+
+                $coursename = $coursedetails->fullname;
+
+                $table = 'course_sections'; // Section table name.
+
+                $sections = $DB->get_records($table, array('course' => $courseid)); // Fetch sections of each course.
+
+                $courseresyncactivity = get_course($courseid);
+
+                $sectionsone = $sections;
+
+                $modinfo = get_fast_modinfo($courseresyncactivity);
+
+                if (!empty($sectionsone)) {
+                    foreach ($sectionsone as $sectionkey1 => $sectionsdetailss) {
+                        if ($sectionsdetailss->name != '') {
+                            $modulescourse = $DB->get_records(
+                                "course_modules",
+
+                                array('section' => $sectionsdetailss->id)
+                            ); // Fecth modules and instaced of modules.
+
+                            if (!empty($modulescourse)) {
+                                foreach ($modulescourse as $coursemoduledetails) {
+                                    $moduleid = $coursemoduledetails->module;
+
+                                    $instance = $coursemoduledetails->instance;
+
+                                    $completionexpected = $coursemoduledetails->completionexpected;
+
+                                    $completionview = $coursemoduledetails->completionview;
+
+                                    $completiongradeitemnumber = $coursemoduledetails->completiongradeitemnumber;
+
+                                    $modules = $DB->get_records("modules", array('id' => $moduleid)); // Fetch modules for real table name.
+
+                                    if (!empty($modules)) {
+                                        foreach ($modules as $key => $value) {
+                                            $tbll = $value->name;
+
+                                            $moduledetail = $DB->get_records(
+                                                $tbll,
+
+                                                array('id' => $instance)
+                                            ); // Fetch activities and resources.
+
+                                            if (!empty($moduledetail)) {
+                                                foreach ($moduledetail as $key => $valuefinal) {
+                                                    $activityids = $DB->get_record(
+                                                        'course_modules',
+
+                                                        array('instance' => $instance, 'module' => $moduleid)
+                                                    );
+
+                                                    $cm = $modinfo->cms[$activityids->id];
+
+                                                    if ($activityids->id == $activityid) {
+                                                        if (isset($valuefinal->intro)) {
+                                                            $syncactivitydescription = $valuefinal->intro;
+                                                        }
+
+                                                        if ($tbll == 'lesson') {
+                                                            if ($valuefinal->available != 0) {
+                                                                $activitystartdates = $valuefinal->available;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->deadline != 0) {
+                                                                $activityenddates = $valuefinal->deadline;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'quiz') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeclose != 0) {
+                                                                $activityenddates = $valuefinal->timeclose;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'assign') {
+                                                            if ($valuefinal->allowsubmissionsfromdate != 0) {
+                                                                $activitystartdates = $valuefinal->allowsubmissionsfromdate;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->duedate != 0) {
+                                                                $activityenddates = $valuefinal->duedate;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'chat') {
+                                                            if ($valuefinal->chattime != 0) {
+                                                                $activitystartdates = $valuefinal->chattime;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->chattime != 0) {
+                                                                $activityenddates = $valuefinal->chattime;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'choice') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeclose != 0) {
+                                                                $activityenddates = $valuefinal->timeclose;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'data') {
+                                                            if ($valuefinal->timeavailablefrom != 0) {
+                                                                $activitystartdates = $valuefinal->timeavailablefrom;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeavailableto != 0) {
+                                                                $activityenddates = $valuefinal->timeavailableto;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'feedback') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeclose != 0) {
+                                                                $activityenddates = $valuefinal->timeclose;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'forum') {
+                                                            if ($valuefinal->duedate != 0) {
+                                                                $activitystartdates = $valuefinal->duedate;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->cutoffdate != 0) {
+                                                                $activityenddates = $valuefinal->cutoffdate;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'leeloolxpvc') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activityenddates = $valuefinal->timeopen;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbll == 'workshop') {
+                                                            if ($valuefinal->submissionstart != 0) {
+                                                                $activitystartdates = $valuefinal->submissionstart;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->submissionend != 0) {
+                                                                $activityenddates = $valuefinal->submissionend;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'scorm') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeclose != 0) {
+                                                                $activityenddates = $valuefinal->timeclose;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else {
+
+                                                            $activitystartdates = $coursedetails->startdate;
+
+                                                            if ($completionexpected != 0) {
+                                                                $activityenddates = $completionexpected;
+                                                            } else {
+                                                                $activityenddates = $coursedetails->enddate;
+                                                            }
+                                                        }
+
+                                                        $activitytype = $tbll;
+                                                    }
+                                                } // loop close for activity and resources
+                                            } // if close for module_detail
+                                        } //  loop close for  modules.
+                                    } // single module condition close
+                                } // modules_course loop
+                            } // modules_course  condition
+                        } // section name black if clsoe (codition)
+                    }
+                }
+
+                $modulegeneraldata = $DB->get_record('course_modules', array('id' => $activityid));
+
+                $sequencetempdata = $DB->get_record('course_sections', array('id' => $modulegeneraldata->section));
+
+                $sequence = '';
+
+                if (!empty($sequencetempdata) && !empty($sequencetempdata->sequence)) {
+                    $sequence = $sequencetempdata->sequence;
+                }
+
+                $post = [
+
+                    'activity_id' => $activityid,
+
+                    'tags_data' => json_encode($tagsfinaldata),
+
+                    'email' => base64_encode($USER->email),
+
+                    'activity_name' => $activityname,
+
+                    'activitydescription' => $syncactivitydescription,
+
+                    'activity_start_date' => date("Y-m-d", @$activitystartdates),
+
+                    'activity_end_date' => date("Y-m-d", @$activityenddates),
+
+                    'activity_type' => @$activitytype,
+
+                    'showdescription' => $modulegeneraldata->showdescription,
+
+                    'visible' => $modulegeneraldata->visible,
+
+                    'idnumber' => $modulegeneraldata->idnumber,
+
+                    'completion' => $modulegeneraldata->completion,
+
+                    'completionexpected' => $modulegeneraldata->completionexpected,
+
+                    'completionview' => $modulegeneraldata->completionview,
+
+                    'completiongradeitemnumber' => $modulegeneraldata->completiongradeitemnumber,
+
+                    'availability' => $modulegeneraldata->availability,
+
+                    'groupmode' => $modulegeneraldata->groupmode,
+
+                    'groupingid' => $modulegeneraldata->groupingid,
+
+                    'section_id' => $modulegeneraldata->section,
+
+                    'sequence' => $sequence,
+
+                ];
+
+                $curl = new curl;
+
+                $url = $teamniourl . '/admin/sync_moodle_course/activity_sync';
+
+                $options = array(
+
+                    'CURLOPT_RETURNTRANSFER' => true,
+
+                    'CURLOPT_HEADER' => false,
+
+                    'CURLOPT_POST' => count($post),
+                    'CURLOPT_HTTPHEADER' => array(
+                        'Leeloolxptoken: ' . get_config('local_leeloolxpapi')->leelooapitoken . ''
+                    )
+                );
+
+                if (!$response = $curl->post($url, $post, $options)) {
+                    return false;
+                }
+                return true;
+            } else {
+                $activityidmoodlearr = $requnsyncid = $paramsArr['id'];
+                $activityidmoodlearr = $requnsyncid;
+
+                $post = ['activityid' => $activityidmoodlearr]; // Added by abdul.
+
+                $curl = new curl;
+
+                $url = $teamniourl . '/admin/sync_moodle_course/unsyncactivity';
+
+                $options = array(
+
+                    'CURLOPT_RETURNTRANSFER' => true,
+
+                    'CURLOPT_HEADER' => false,
+
+                    'CURLOPT_POST' => count($post),
+
+                    'CURLOPT_HTTPHEADER' => array(
+                        'Leeloolxptoken: ' . get_config('local_leeloolxpapi')->leelooapitoken . ''
+                    )
+                );
+
+                if (!$response = $curl->post($url, $post, $options)) {
+                    return true;
+                }
+
+                $DB->execute("DELETE FROM {tool_leeloolxp_sync} where activityid = ?", [$activityidmoodlearr]);
+            }
+        } else { // Course
+            //file_put_contents(dirname(__FILE__) . "/structurecreator.txt", print_r($tempArr, true));
+            $courseid = $reqid = $paramsArr['id'];
+            if ($action == 'resync') {
+                if (!empty($courseid)) {
+                    $courseidresync = $reqcourseidresync = $courseid;
+
+                    $coursedetails = $DB->get_record('course', array('id' => $courseidresync)); // Fetch all exist course from.
+
+                    $projectdescription = $coursedetails->summary;
+
+                    $idnumber = $coursedetails->idnumber;
+
+                    $shortname = $coursedetails->shortname;
+
+                    $coursename = $coursedetails->fullname;
+
+                    $table = 'course_sections'; // Section table name.
+
+                    $sections = $DB->get_records_sql("SELECT * FROM {course_sections} where course = ? and name != ''", [$courseidresync]);
+
+                    $course = get_course($courseidresync);
+
+                    $modinfo = get_fast_modinfo($course);
+
+                    $arrmainone = array();
+
+                    $oldsectionsname = '';
+
+                    if (!empty($sections)) {
+                        foreach ($sections as $sectionkey => $sectionsdetails) {
+                            if ($sectionsdetails->name == '') {
+                                $sectionsdetails->name = get_string('topic', 'tool_leeloolxp_sync') . $sectionsdetails->section;
+                            }
+                            if ($sectionsdetails->name != '' && $sectionsdetails->sequence != '') {
+                                $modulescourse = $DB->get_records("course_modules", array('section' => $sectionsdetails->id));
+
+                                if (!empty($modulescourse)) {
+                                    foreach ($modulescourse as $coursemoduledetails) {
+                                        $moduleid = $coursemoduledetails->module;
+
+                                        $instance = $coursemoduledetails->instance;
+
+                                        $completionexpected = $coursemoduledetails->completionexpected;
+
+                                        $completionview = $coursemoduledetails->completionview;
+
+                                        $completiongradeitemnumber = $coursemoduledetails->completiongradeitemnumber;
+
+                                        $modules = $DB->get_records("modules", array('id' => $moduleid));
+
+                                        if (!empty($modules)) {
+                                            foreach ($modules as $key => $value) {
+                                                $tbl = $value->name;
+
+                                                $moduledetail = $DB->get_records($tbl, array('id' => $instance));
+
+                                                if (!empty($moduledetail)) {
+                                                    foreach ($moduledetail as $key => $valuefinal) {
+                                                        $syncactivitydescription = '';
+
+                                                        $activityids = $DB->get_record(
+                                                            'course_modules',
+
+                                                            array('instance' => $instance, 'module' => $moduleid)
+                                                        );
+
+                                                        $sectionsdetails->name;
+
+                                                        $cm = $modinfo->cms[$activityids->id];
+
+                                                        $oldsectionsname = $sectionsdetails->name;
+
+                                                        if (isset($valuefinal->intro)) {
+                                                            $syncactivitydescription = $valuefinal->intro;
+                                                        }
+
+                                                        if ($tbl == 'lesson') {
+                                                            if ($valuefinal->available != 0) {
+                                                                $activitystartdates = $valuefinal->available;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->deadline != 0) {
+                                                                $activityenddates = $valuefinal->deadline;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'quiz') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeclose != 0) {
+                                                                $activityenddates = $valuefinal->timeclose;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'assign') {
+                                                            if ($valuefinal->allowsubmissionsfromdate != 0) {
+                                                                $activitystartdates = $valuefinal->allowsubmissionsfromdate;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->duedate != 0) {
+                                                                $activityenddates = $valuefinal->duedate;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'chat') {
+                                                            if ($valuefinal->chattime != 0) {
+                                                                $activitystartdates = $valuefinal->chattime;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->chattime != 0) {
+                                                                $activityenddates = $valuefinal->chattime;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'choice') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeclose != 0) {
+                                                                $activityenddates = $valuefinal->timeclose;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'data') {
+                                                            if ($valuefinal->timeavailablefrom != 0) {
+                                                                $activitystartdates = $valuefinal->timeavailablefrom;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeavailableto != 0) {
+                                                                $activityenddates = $valuefinal->timeavailableto;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'feedback') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeclose != 0) {
+                                                                $activityenddates = $valuefinal->timeclose;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'forum') {
+                                                            if ($valuefinal->duedate != 0) {
+                                                                $activitystartdates = $valuefinal->duedate;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->cutoffdate != 0) {
+                                                                $activityenddates = $valuefinal->cutoffdate;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'leeloolxpvc') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activityenddates = $valuefinal->timeopen;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'workshop') {
+                                                            if ($valuefinal->submissionstart != 0) {
+                                                                $activitystartdates = $valuefinal->submissionstart;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->submissionend != 0) {
+                                                                $activityenddates = $valuefinal->submissionend;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else if ($tbl == 'scorm') {
+                                                            if ($valuefinal->timeopen != 0) {
+                                                                $activitystartdates = $valuefinal->timeopen;
+                                                            } else {
+                                                                $activitystartdates = $coursedetails->startdate;
+                                                            }
+
+                                                            if ($valuefinal->timeclose != 0) {
+                                                                $activityenddates = $valuefinal->timeclose;
+                                                            } else {
+                                                                if ($completionexpected != 0) {
+                                                                    $activityenddates = $completionexpected;
+                                                                } else {
+                                                                    $activityenddates = $coursedetails->enddate;
+                                                                }
+                                                            }
+                                                        } else {
+
+                                                            $activitystartdates = $coursedetails->startdate;
+
+                                                            if ($completionexpected != 0) {
+                                                                $activityenddates = $completionexpected;
+                                                            } else {
+                                                                $activityenddates = $coursedetails->enddate;
+                                                            }
+                                                        }
+
+                                                        $modulegeneraldata = $DB->get_record('course_modules', array('id' => $activityids->id));
+
+                                                        $arrmainone[$activityids->id] =
+
+                                                            array(
+                                                                'name' => $valuefinal->name,
+
+                                                                'activitydescription' => $syncactivitydescription,
+
+                                                                'activity_start_date' => $activitystartdates,
+
+                                                                'activity_end_date' => $activityenddates,
+
+                                                                'showdescription' => $modulegeneraldata->showdescription,
+
+                                                                'visible' => $modulegeneraldata->visible,
+
+                                                                'idnumber' => $modulegeneraldata->idnumber,
+
+                                                                'completion' => $modulegeneraldata->completion,
+
+                                                                'completionexpected' => $modulegeneraldata->completionexpected,
+
+                                                                'completionview' => $modulegeneraldata->completionview,
+
+                                                                'completiongradeitemnumber' => $modulegeneraldata->completiongradeitemnumber,
+
+                                                                'availability' => $modulegeneraldata->availability,
+
+                                                                'groupmode' => $modulegeneraldata->groupmode,
+
+                                                                'groupingid' => $modulegeneraldata->groupingid,
+
+                                                                'section_id' => $modulegeneraldata->section,
+                                                            );
+                                                    } // Loop close for activity and resources.
+                                                } // If close for module_detail.
+                                            } //  Loop close for  modules.
+                                        } // Single module condition close.
+                                    } // Modules_course loop.
+                                } // Modules_course  condition.
+                            } // section name black if clsoe (codition).
+                        }
+                    }
+
+                    $categorydata = $DB->get_records_sql("SELECT * FROM {course_categories}");
+
+                    $post = [
+
+                        'course_id' => $courseidresync,
+
+                        'course_name' => $coursename,
+
+                        'activity_array' => json_encode($arrmainone),
+
+                        'start_date' => $coursedetails->startdate,
+
+                        'project_description' => $projectdescription,
+
+                        'course_format' => $coursedetails->format,
+
+                        'end_date' => $coursedetails->enddate,
+
+                        'visible' => $coursedetails->visible,
+
+                        'course_category' => $coursedetails->category,
+
+                        'moodle_course_id' => $idnumber,
+
+                        'shortname' => $shortname,
+
+                        'cat_data' => json_encode($categorydata),
+
+                        'sections' => json_encode($sections),
+
+                    ];
+
+                    $curl = new curl;
+
+                    $url = $teamniourl . '/admin/sync_moodle_course/resync_course';
+
+                    $options = array(
+
+                        'CURLOPT_RETURNTRANSFER' => true,
+
+                        'CURLOPT_HEADER' => false,
+
+                        'CURLOPT_POST' => count($post),
+                        'CURLOPT_HTTPHEADER' => array(
+                            'Leeloolxptoken: ' . get_config('local_leeloolxpapi')->leelooapitoken . ''
+                        )
+                    );
+
+                    $curl->post($url, $post, $options);
+
+                    $msg = get_string('resychronizationed_success', 'tool_leeloolxp_sync');
+
+                    if (isset($reqredirect)) {
+                        if ($reqredirect == 'courseview') {
+                            $urltogo = $CFG->wwwroot . '/course/view.php?id=' . $courseidresync . '&sync=1';
+
+                            redirect($urltogo);
+                        }
+                    }
+                }
+            } else {
+                $courseid = $reqid;
+
+                $post = ['course_id' => $courseid];
+
+                $curl = new curl;
+
+                $url = $teamniourl . '/admin/sync_moodle_course/unsynccourse';
+
+                $options = array(
+
+                    'CURLOPT_RETURNTRANSFER' => true,
+
+                    'CURLOPT_HEADER' => false,
+
+                    'CURLOPT_POST' => count($post),
+
+                    'CURLOPT_HTTPHEADER' => array(
+                        'Leeloolxptoken: ' . get_config('local_leeloolxpapi')->leelooapitoken . ''
+                    )
+                );
+
+                if (!$response = $curl->post($url, $post, $options)) {
+                    return true;
+                }
+
+                $DB->execute("DELETE FROM {tool_leeloolxp_sync} where courseid = ?", [$courseid]);
+            }
+        }
+
+        return json_encode($tempArr);
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+    public static function resync_activity_course_returns() {
+        return new external_value(PARAM_TEXT, 'Returns data');
+    }
 }

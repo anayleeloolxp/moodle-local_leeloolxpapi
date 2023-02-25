@@ -356,6 +356,27 @@ $functions = array(
         'description' => 'Quizzes Settings',
         'type' => 'write',
     ),
+    'local_leeloolxpapi_fetch_category_courses' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'fetch_category_courses',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Fetch category courses',
+        'type' => 'write',
+    ),
+    'local_leeloolxpapi_sync_course_activities' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'sync_course_activities',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Fetch category courses',
+        'type' => 'write',
+    ),
+    'local_leeloolxpapi_resync_activity_course' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'resync_activity_course',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Fetch category courses',
+        'type' => 'write',
+    ),
 );
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
@@ -404,6 +425,9 @@ $services = array(
             'local_leeloolxpapi_structurecreator',
             'local_leeloolxpapi_checkintegration',
             'local_leeloolxpapi_quizzes_settings',
+            'local_leeloolxpapi_fetch_category_courses',
+            'local_leeloolxpapi_sync_course_activities',
+            'local_leeloolxpapi_resync_activity_course',
         ),
         'restrictedusers' => 0,
         'enabled' => 1,
