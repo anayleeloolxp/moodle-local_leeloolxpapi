@@ -6208,7 +6208,6 @@ class local_leeloolxpapi_external extends external_api {
 
             $sql = "SELECT id,fullname,idnumber FROM {course} where category = $categoryid ";
             $coursedetail = $DB->get_records_sql($sql);
-            //file_put_contents(dirname(__FILE__) . "/structurecreator.txt", print_r($categoryidarr, true));
             return json_encode($coursedetail);
         } else {
             $courseid = $categoryid;
@@ -6609,7 +6608,6 @@ class local_leeloolxpapi_external extends external_api {
         );
 
         $dataArray = json_decode($data_array, true);
-        //file_put_contents(dirname(__FILE__) . "/structurecreator.txt", print_r($dataArray, true));
 
         if (!empty($dataArray[0])) {
             $alldata = $dataArray[0];
@@ -7887,7 +7885,6 @@ class local_leeloolxpapi_external extends external_api {
                 $DB->execute("DELETE FROM {tool_leeloolxp_sync} where activityid = ?", [$activityidmoodlearr]);
             }
         } else { // Course
-            //file_put_contents(dirname(__FILE__) . "/structurecreator.txt", print_r($tempArr, true));
             $courseid = $reqid = $paramsArr['id'];
             if ($action == 'resync') {
                 if (!empty($courseid)) {
