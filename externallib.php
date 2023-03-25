@@ -4793,6 +4793,7 @@ class local_leeloolxpapi_external extends external_api {
             $units = $structuredata->units;
             $unitsleelooid = $structuredata->unitsid;
             $unitmoodleid = $structuredata->unitmoodleid;
+            $aronly = $structuredata->aronly;
 
             $returnidsarray = [];
             $returnarids = [];
@@ -4803,29 +4804,34 @@ class local_leeloolxpapi_external extends external_api {
                     if (!empty($valuess)) {
                         $sectiondata = array();
 
-                        $sectiondata['course'] = $courseid;
-                        $sectiondata['name'] = $valuess;
-                        $sectiondata['summaryformat'] = 1;
-                        $sectiondata['visible'] = 1;
-                        $sectiondata['availability'] = null;
-                        $sectiondata['timemodified'] = time();
+                        if (!empty($aronly)) {
 
-                        $sectionorder++;
-                        $sectionorderskillset = $sectionorder;
-                        $sectiondata['section'] = $sectionorder;
-                        self::check_update_course_section($courseid, $sectionorder);
-
-                        if (empty($skillsetmoodleid[$keyss])) {
-
-                            $sectiondata['sequence'] = '';
-                            $sectiondata = (object) $sectiondata;
-
-                            $sectionid = $DB->insert_record('course_sections', $sectiondata);
-                            $returnidsarray[] = [$skillsetsleelooid[$keyss] => $sectionid];
+                            $sectionid = $skillsetmoodleid[$keyss];
                         } else {
-                            $sectiondata = (object) $sectiondata;
-                            $sectiondata->id = $skillsetmoodleid[$keyss];
-                            $sectionid = $DB->update_record('course_sections', $sectiondata);
+                            $sectiondata['course'] = $courseid;
+                            $sectiondata['name'] = $valuess;
+                            $sectiondata['summaryformat'] = 1;
+                            $sectiondata['visible'] = 1;
+                            $sectiondata['availability'] = null;
+                            $sectiondata['timemodified'] = time();
+
+                            $sectionorder++;
+                            $sectionorderskillset = $sectionorder;
+                            $sectiondata['section'] = $sectionorder;
+                            self::check_update_course_section($courseid, $sectionorder);
+
+                            if (empty($skillsetmoodleid[$keyss])) {
+
+                                $sectiondata['sequence'] = '';
+                                $sectiondata = (object) $sectiondata;
+
+                                $sectionid = $DB->insert_record('course_sections', $sectiondata);
+                                $returnidsarray[] = [$skillsetsleelooid[$keyss] => $sectionid];
+                            } else {
+                                $sectiondata = (object) $sectiondata;
+                                $sectiondata->id = $skillsetmoodleid[$keyss];
+                                $sectionid = $DB->update_record('course_sections', $sectiondata);
+                            }
                         }
 
                         if (!empty($skills[$keyss])) {
@@ -4833,100 +4839,104 @@ class local_leeloolxpapi_external extends external_api {
                                 if (!empty($valueskills)) {
 
                                     $sectiondata = array();
+                                    if (!empty($aronly)) {
 
-                                    $sectiondata['course'] = $courseid;
-                                    $sectiondata['name'] = $valueskills;
-                                    $sectiondata['summaryformat'] = 1;
-                                    $sectiondata['visible'] = 1;
-                                    $sectiondata['availability'] = null;
-                                    $sectiondata['timemodified'] = time();
-
-                                    $sectionorder++;
-                                    $sectionorderskill = $sectionorder;
-                                    $sectiondata['section'] = $sectionorder;
-                                    self::check_update_course_section($courseid, $sectionorder);
-
-                                    if (empty($skillmoodleid[$keyss][$keyskills])) {
-                                        $sectiondata['sequence'] = '';
-
-                                        $sectiondata = (object) $sectiondata;
-
-                                        $lastid = $DB->insert_record('course_sections', $sectiondata);
-                                        $returnidsarray[] = [$skillsleelooid[$keyss][$keyskills] => $lastid];
-
-                                        $tempobject = new stdClass();
-                                        $tempobject->courseid = $courseid;
-                                        $tempobject->format = 'flexsections';
-                                        $tempobject->sectionid = $lastid;
-                                        $tempobject->name = 'collapsed';
-                                        $tempobject->value = 0;
-                                        $DB->insert_record('course_format_options', $tempobject);
-
-                                        $tempobject = new stdClass();
-                                        $tempobject->courseid = $courseid;
-                                        $tempobject->format = 'flexsections';
-                                        $tempobject->sectionid = $lastid;
-                                        $tempobject->name = 'parent';
-                                        $tempobject->value = $sectionorderskillset;
-                                        $DB->insert_record('course_format_options', $tempobject);
-
-                                        $tempobject = new stdClass();
-                                        $tempobject->courseid = $courseid;
-                                        $tempobject->format = 'flexsections';
-                                        $tempobject->sectionid = $lastid;
-                                        $tempobject->name = 'visibleold';
-                                        $tempobject->value = 1;
-                                        $DB->insert_record('course_format_options', $tempobject);
+                                        $lastid = $skillmoodleid[$keyss][$keyskills];
                                     } else {
+                                        $sectiondata['course'] = $courseid;
+                                        $sectiondata['name'] = $valueskills;
+                                        $sectiondata['summaryformat'] = 1;
+                                        $sectiondata['visible'] = 1;
+                                        $sectiondata['availability'] = null;
+                                        $sectiondata['timemodified'] = time();
 
-                                        // Update AR names also if Skills name has changed.
-                                        $tempdata = $DB->get_record(
-                                            'course_sections',
-                                            ['id' => $skillmoodleid[$keyss][$keyskills]]
-                                        );
+                                        $sectionorder++;
+                                        $sectionorderskill = $sectionorder;
+                                        $sectiondata['section'] = $sectionorder;
+                                        self::check_update_course_section($courseid, $sectionorder);
 
-                                        if ($tempdata->name != $valueskills) {
-                                            $quizdataarr = $DB->get_records(
-                                                'quiz',
-                                                ['course' => $courseid, 'name' => $tempdata->name]
+                                        if (empty($skillmoodleid[$keyss][$keyskills])) {
+                                            $sectiondata['sequence'] = '';
+
+                                            $sectiondata = (object) $sectiondata;
+
+                                            $lastid = $DB->insert_record('course_sections', $sectiondata);
+                                            $returnidsarray[] = [$skillsleelooid[$keyss][$keyskills] => $lastid];
+
+                                            $tempobject = new stdClass();
+                                            $tempobject->courseid = $courseid;
+                                            $tempobject->format = 'flexsections';
+                                            $tempobject->sectionid = $lastid;
+                                            $tempobject->name = 'collapsed';
+                                            $tempobject->value = 0;
+                                            $DB->insert_record('course_format_options', $tempobject);
+
+                                            $tempobject = new stdClass();
+                                            $tempobject->courseid = $courseid;
+                                            $tempobject->format = 'flexsections';
+                                            $tempobject->sectionid = $lastid;
+                                            $tempobject->name = 'parent';
+                                            $tempobject->value = $sectionorderskillset;
+                                            $DB->insert_record('course_format_options', $tempobject);
+
+                                            $tempobject = new stdClass();
+                                            $tempobject->courseid = $courseid;
+                                            $tempobject->format = 'flexsections';
+                                            $tempobject->sectionid = $lastid;
+                                            $tempobject->name = 'visibleold';
+                                            $tempobject->value = 1;
+                                            $DB->insert_record('course_format_options', $tempobject);
+                                        } else {
+
+                                            // Update AR names also if Skills name has changed.
+                                            $tempdata = $DB->get_record(
+                                                'course_sections',
+                                                ['id' => $skillmoodleid[$keyss][$keyskills]]
                                             );
-                                            if (!empty($quizdataarr)) {
-                                                foreach ($quizdataarr as $keytemppp => $quizdataa) {
-                                                    $tempdataobj = array();
-                                                    $tempdataobj['name'] = $valueskills;
-                                                    $tempdataobj['id'] = $quizdataa->id;
-                                                    $tempdataobj = (object) $tempdataobj;
-                                                    $DB->update_record('quiz', $tempdataobj);
 
-                                                    $gradedataa = $DB->get_record(
-                                                        'grade_items',
-                                                        [
-                                                            'courseid' => $courseid,
-                                                            'itemname' => $tempdata->name,
-                                                            'iteminstance' => $quizdataa->id
-                                                        ]
-                                                    );
-
-                                                    if (!empty($gradedataa)) {
+                                            if ($tempdata->name != $valueskills) {
+                                                $quizdataarr = $DB->get_records(
+                                                    'quiz',
+                                                    ['course' => $courseid, 'name' => $tempdata->name]
+                                                );
+                                                if (!empty($quizdataarr)) {
+                                                    foreach ($quizdataarr as $keytemppp => $quizdataa) {
                                                         $tempdataobj = array();
-                                                        $tempdataobj['itemname'] = $valueskills;
-                                                        $tempdataobj['id'] = $gradedataa->id;
+                                                        $tempdataobj['name'] = $valueskills;
+                                                        $tempdataobj['id'] = $quizdataa->id;
                                                         $tempdataobj = (object) $tempdataobj;
-                                                        $DB->update_record('grade_items', $tempdataobj);
+                                                        $DB->update_record('quiz', $tempdataobj);
+
+                                                        $gradedataa = $DB->get_record(
+                                                            'grade_items',
+                                                            [
+                                                                'courseid' => $courseid,
+                                                                'itemname' => $tempdata->name,
+                                                                'iteminstance' => $quizdataa->id
+                                                            ]
+                                                        );
+
+                                                        if (!empty($gradedataa)) {
+                                                            $tempdataobj = array();
+                                                            $tempdataobj['itemname'] = $valueskills;
+                                                            $tempdataobj['id'] = $gradedataa->id;
+                                                            $tempdataobj = (object) $tempdataobj;
+                                                            $DB->update_record('grade_items', $tempdataobj);
+                                                        }
                                                     }
                                                 }
                                             }
+
+                                            $sectiondata = (object) $sectiondata;
+                                            $lastid = $sectiondata->id = $skillmoodleid[$keyss][$keyskills];
+                                            $DB->update_record('course_sections', $sectiondata);
+
+                                            // Update format table also
+                                            $DB->execute(
+                                                "update {course_format_options} set value = ? WHERE courseid = ? AND name = ? AND sectionid = ?  AND format = ? ",
+                                                [$sectionorderskillset, $courseid, 'parent', $lastid, 'flexsections']
+                                            );
                                         }
-
-                                        $sectiondata = (object) $sectiondata;
-                                        $lastid = $sectiondata->id = $skillmoodleid[$keyss][$keyskills];
-                                        $DB->update_record('course_sections', $sectiondata);
-
-                                        // Update format table also
-                                        $DB->execute(
-                                            "update {course_format_options} set value = ? WHERE courseid = ? AND name = ? AND sectionid = ?  AND format = ? ",
-                                            [$sectionorderskillset, $courseid, 'parent', $lastid, 'flexsections']
-                                        );
                                     }
 
                                     // Add multiple quizzes.
@@ -5035,98 +5045,102 @@ class local_leeloolxpapi_external extends external_api {
                                             if (!empty($valueunits)) {
 
                                                 $sectiondata = array();
+                                                if (!empty($aronly)) {
 
-                                                $sectiondata['course'] = $courseid;
-                                                $sectiondata['name'] = $valueunits;
-                                                $sectiondata['summaryformat'] = 1;
-                                                $sectiondata['visible'] = 1;
-                                                $sectiondata['availability'] = null;
-                                                $sectiondata['timemodified'] = time();
-                                                $sectionorder++;
-                                                $sectiondata['section'] = $sectionorder;
-                                                self::check_update_course_section($courseid, $sectionorder);
-
-                                                if (empty($unitmoodleid[$keyss][$keyskills][$keyunits])) {
-                                                    $sectiondata['sequence'] = '';
-
-                                                    $sectiondata = (object) $sectiondata;
-
-                                                    $lastid = $DB->insert_record('course_sections', $sectiondata);
-                                                    $returnidsarray[] = [$unitsleelooid[$keyss][$keyskills][$keyunits] => $lastid];
-
-                                                    $tempobject = new stdClass();
-                                                    $tempobject->courseid = $courseid;
-                                                    $tempobject->format = 'flexsections';
-                                                    $tempobject->sectionid = $lastid;
-                                                    $tempobject->name = 'collapsed';
-                                                    $tempobject->value = 0;
-                                                    $DB->insert_record('course_format_options', $tempobject);
-
-                                                    $tempobject = new stdClass();
-                                                    $tempobject->courseid = $courseid;
-                                                    $tempobject->format = 'flexsections';
-                                                    $tempobject->sectionid = $lastid;
-                                                    $tempobject->name = 'parent';
-                                                    $tempobject->value = $sectionorderskill;
-                                                    $DB->insert_record('course_format_options', $tempobject);
-
-                                                    $tempobject = new stdClass();
-                                                    $tempobject->courseid = $courseid;
-                                                    $tempobject->format = 'flexsections';
-                                                    $tempobject->sectionid = $lastid;
-                                                    $tempobject->name = 'visibleold';
-                                                    $tempobject->value = 1;
-                                                    $DB->insert_record('course_format_options', $tempobject);
+                                                    $lastid = $unitmoodleid[$keyss][$keyskills][$keyunits];
                                                 } else {
+                                                    $sectiondata['course'] = $courseid;
+                                                    $sectiondata['name'] = $valueunits;
+                                                    $sectiondata['summaryformat'] = 1;
+                                                    $sectiondata['visible'] = 1;
+                                                    $sectiondata['availability'] = null;
+                                                    $sectiondata['timemodified'] = time();
+                                                    $sectionorder++;
+                                                    $sectiondata['section'] = $sectionorder;
+                                                    self::check_update_course_section($courseid, $sectionorder);
 
-                                                    // Update AR names also if Skills name has changed.
-                                                    $tempdata = $DB->get_record(
-                                                        'course_sections',
-                                                        ['id' => $unitmoodleid[$keyss][$keyskills][$keyunits]]
-                                                    );
-                                                    if ($tempdata->name != $valueunits) {
-                                                        $quizdataarr = $DB->get_records(
-                                                            'quiz',
-                                                            ['course' => $courseid, 'name' => $tempdata->name]
+                                                    if (empty($unitmoodleid[$keyss][$keyskills][$keyunits])) {
+                                                        $sectiondata['sequence'] = '';
+
+                                                        $sectiondata = (object) $sectiondata;
+
+                                                        $lastid = $DB->insert_record('course_sections', $sectiondata);
+                                                        $returnidsarray[] = [$unitsleelooid[$keyss][$keyskills][$keyunits] => $lastid];
+
+                                                        $tempobject = new stdClass();
+                                                        $tempobject->courseid = $courseid;
+                                                        $tempobject->format = 'flexsections';
+                                                        $tempobject->sectionid = $lastid;
+                                                        $tempobject->name = 'collapsed';
+                                                        $tempobject->value = 0;
+                                                        $DB->insert_record('course_format_options', $tempobject);
+
+                                                        $tempobject = new stdClass();
+                                                        $tempobject->courseid = $courseid;
+                                                        $tempobject->format = 'flexsections';
+                                                        $tempobject->sectionid = $lastid;
+                                                        $tempobject->name = 'parent';
+                                                        $tempobject->value = $sectionorderskill;
+                                                        $DB->insert_record('course_format_options', $tempobject);
+
+                                                        $tempobject = new stdClass();
+                                                        $tempobject->courseid = $courseid;
+                                                        $tempobject->format = 'flexsections';
+                                                        $tempobject->sectionid = $lastid;
+                                                        $tempobject->name = 'visibleold';
+                                                        $tempobject->value = 1;
+                                                        $DB->insert_record('course_format_options', $tempobject);
+                                                    } else {
+
+                                                        // Update AR names also if Skills name has changed.
+                                                        $tempdata = $DB->get_record(
+                                                            'course_sections',
+                                                            ['id' => $unitmoodleid[$keyss][$keyskills][$keyunits]]
                                                         );
-                                                        if (!empty($quizdataarr)) {
-                                                            foreach ($quizdataarr as $keytemppp => $quizdataa) {
-                                                                $tempdataobj = array();
-                                                                $tempdataobj['name'] = $valueunits;
-                                                                $tempdataobj['id'] = $quizdataa->id;
-                                                                $tempdataobj = (object) $tempdataobj;
-                                                                $DB->update_record('quiz', $tempdataobj);
-
-                                                                $gradedataa = $DB->get_record(
-                                                                    'grade_items',
-                                                                    [
-                                                                        'courseid' => $courseid,
-                                                                        'itemname' => $tempdata->name,
-                                                                        'iteminstance' => $quizdataa->id
-                                                                    ]
-                                                                );
-
-                                                                if (!empty($gradedataa)) {
+                                                        if ($tempdata->name != $valueunits) {
+                                                            $quizdataarr = $DB->get_records(
+                                                                'quiz',
+                                                                ['course' => $courseid, 'name' => $tempdata->name]
+                                                            );
+                                                            if (!empty($quizdataarr)) {
+                                                                foreach ($quizdataarr as $keytemppp => $quizdataa) {
                                                                     $tempdataobj = array();
-                                                                    $tempdataobj['itemname'] = $valueunits;
-                                                                    $tempdataobj['id'] = $gradedataa->id;
+                                                                    $tempdataobj['name'] = $valueunits;
+                                                                    $tempdataobj['id'] = $quizdataa->id;
                                                                     $tempdataobj = (object) $tempdataobj;
-                                                                    $DB->update_record('grade_items', $tempdataobj);
+                                                                    $DB->update_record('quiz', $tempdataobj);
+
+                                                                    $gradedataa = $DB->get_record(
+                                                                        'grade_items',
+                                                                        [
+                                                                            'courseid' => $courseid,
+                                                                            'itemname' => $tempdata->name,
+                                                                            'iteminstance' => $quizdataa->id
+                                                                        ]
+                                                                    );
+
+                                                                    if (!empty($gradedataa)) {
+                                                                        $tempdataobj = array();
+                                                                        $tempdataobj['itemname'] = $valueunits;
+                                                                        $tempdataobj['id'] = $gradedataa->id;
+                                                                        $tempdataobj = (object) $tempdataobj;
+                                                                        $DB->update_record('grade_items', $tempdataobj);
+                                                                    }
                                                                 }
                                                             }
                                                         }
+
+                                                        $sectiondata = (object) $sectiondata;
+                                                        $lastid = $sectiondata->id = $unitmoodleid[$keyss][$keyskills][$keyunits];
+                                                        $DB->update_record('course_sections', $sectiondata);
+
+                                                        // Update format table also
+
+                                                        $DB->execute(
+                                                            "update {course_format_options} set value = ? WHERE courseid = ? AND name = ? AND sectionid = ? AND format = ? ",
+                                                            [$sectionorderskill, $courseid, 'parent', $lastid, 'flexsections']
+                                                        );
                                                     }
-
-                                                    $sectiondata = (object) $sectiondata;
-                                                    $lastid = $sectiondata->id = $unitmoodleid[$keyss][$keyskills][$keyunits];
-                                                    $DB->update_record('course_sections', $sectiondata);
-
-                                                    // Update format table also
-
-                                                    $DB->execute(
-                                                        "update {course_format_options} set value = ? WHERE courseid = ? AND name = ? AND sectionid = ? AND format = ? ",
-                                                        [$sectionorderskill, $courseid, 'parent', $lastid, 'flexsections']
-                                                    );
                                                 }
 
                                                 // Add/Edit AR for Unit.
