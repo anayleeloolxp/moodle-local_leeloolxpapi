@@ -377,6 +377,13 @@ $functions = array(
         'description' => 'Fetch category courses',
         'type' => 'write',
     ),
+    'local_leeloolxpapi_sync_activity_section' => array(
+        'classname' => 'local_leeloolxpapi_external',
+        'methodname' => 'sync_activity_section',
+        'classpath' => 'local/leeloolxpapi/externallib.php',
+        'description' => 'Fetch category courses',
+        'type' => 'write',
+    ),
 );
 
 // We define the services to install as pre-build services. A pre-build service is not editable by administrator.
@@ -428,6 +435,7 @@ $services = array(
             'local_leeloolxpapi_fetch_category_courses',
             'local_leeloolxpapi_sync_course_activities',
             'local_leeloolxpapi_resync_activity_course',
+            'local_leeloolxpapi_sync_activity_section',
         ),
         'restrictedusers' => 0,
         'enabled' => 1,
