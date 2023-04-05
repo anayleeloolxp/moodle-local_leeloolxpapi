@@ -9463,30 +9463,91 @@ class local_leeloolxpapi_external extends external_api {
                 }
             }
 
-            if (!empty($taskdata['activity_id'])) {
+            if ($taskdata['task_type'] == 'page') {
+                if (!empty($taskdata['activity_id'])) {
+                    $contentpage = '';
+                    if (!empty($taskdata['page_content'])) {
+                        $lasttype = '';
+                        foreach ($taskdata['page_content'] as $keytempar => $valuetemparrr) {
+                            if ($lasttype != $valuetemparrr['type']) {
+                                $lasttype = $valuetemparrr['type'];
+                                $contentpage .= '<p>' . ucfirst($valuetemparrr['type']) . ':-</p>';
+                            }
+                            $contentpage .= '<p>' . $valuetemparrr['content'] . '</p>';
+                        }
+                    }
 
-                $quizzesdata = $DB->get_record('course_modules', ['id' => $taskdata['activity_id']]);
+                    $quizzesdata = $DB->get_record('course_modules', ['id' => $taskdata['activity_id']]);
+                    $dataupdate = [];
+                    $dataupdate['name'] = $taskdata['task_name'];
+                    $dataupdate['content'] = $contentpage;
+                    $dataupdate['id'] = $quizzesdata->instance;
 
-                $dataupdate['name'] = $taskdata['task_name'];
-                $dataupdate['timeopen'] = strtotime($taskdata['task_start_date']);
-                $dataupdate['timeclose'] = strtotime($taskdata['due_date']);
-                $dataupdate['id'] = $quizzesdata->instance;
+                    $dataupdate = (object) $dataupdate;
+                    $DB->update_record('page', $dataupdate);
+                    $activityid = $taskdata['activity_id'];
+                    $returnarr = [];
+                } else {
+                    $returnarr = self::save_ar_data(
+                        $taskdata['section_id'],
+                        $taskdata['task_name'],
+                        $taskdata['task_id'],
+                        '1',
+                        $taskdata['task_start_date'],
+                        $taskdata['due_date'],
+                        $taskdata['course_id'],
+                        $taskdata['task_type'],
+                        $userid
+                    );
+                    foreach ($returnarr['0'] as $keytempar => $valuetempar) {
+                        $activityid = $valuetempar;
+                        if (!empty($taskdata['page_content'])) {
+                            $lasttype = '';
+                            foreach ($taskdata['page_content'] as $keytempar => $valuetemparrr) {
+                                if ($lasttype != $valuetemparrr['type']) {
+                                    $lasttype = $valuetemparrr['type'];
+                                    $contentpage .= '<p>' . ucfirst($valuetemparrr['type']) . ':-</p>';
+                                }
+                                $contentpage .= '<p>' . $valuetemparrr['content'] . '</p>';
+                            }
+                            $quizzesdata = $DB->get_record('course_modules', ['id' => $activityid]);
+                            $dataupdate = [];
+                            $dataupdate['name'] = $taskdata['task_name'];
+                            $dataupdate['content'] = $contentpage;
+                            $dataupdate['id'] = $quizzesdata->instance;
 
-                $dataupdate = (object) $dataupdate;
-                $DB->update_record('quiz', $dataupdate);
-                $returnarr = [];
+                            $dataupdate = (object) $dataupdate;
+                            $DB->update_record('page', $dataupdate);
+                        }
+                    }
+                }
             } else {
-                $returnarr = self::save_ar_data(
-                    $taskdata['section_id'],
-                    $taskdata['task_name'],
-                    $taskdata['task_id'],
-                    '1',
-                    $taskdata['task_start_date'],
-                    $taskdata['due_date'],
-                    $taskdata['course_id'],
-                    $taskdata['quiztype'],
-                    $userid
-                );
+
+                if (!empty($taskdata['activity_id'])) {
+
+                    $quizzesdata = $DB->get_record('course_modules', ['id' => $taskdata['activity_id']]);
+
+                    $dataupdate['name'] = $taskdata['task_name'];
+                    $dataupdate['timeopen'] = strtotime($taskdata['task_start_date']);
+                    $dataupdate['timeclose'] = strtotime($taskdata['due_date']);
+                    $dataupdate['id'] = $quizzesdata->instance;
+
+                    $dataupdate = (object) $dataupdate;
+                    $DB->update_record('quiz', $dataupdate);
+                    $returnarr = [];
+                } else {
+                    $returnarr = self::save_ar_data(
+                        $taskdata['section_id'],
+                        $taskdata['task_name'],
+                        $taskdata['task_id'],
+                        '1',
+                        $taskdata['task_start_date'],
+                        $taskdata['due_date'],
+                        $taskdata['course_id'],
+                        $taskdata['quiztype'],
+                        $userid
+                    );
+                }
             }
 
             if (!empty($leeloodata['questions_data'])) {
