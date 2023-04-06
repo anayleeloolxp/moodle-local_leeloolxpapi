@@ -8576,6 +8576,7 @@ class local_leeloolxpapi_external extends external_api {
                                                     if (!empty($taskdata['activity_id'])) {
                                                         if (!empty($taskdata['page_content'])) {
                                                             $lasttype = '';
+                                                            $contentpage = '';
                                                             foreach ($taskdata['page_content'] as $keytempar => $valuetemparrr) {
                                                                 if ($lasttype != $valuetemparrr['type']) {
                                                                     $lasttype = $valuetemparrr['type'];
@@ -8610,6 +8611,7 @@ class local_leeloolxpapi_external extends external_api {
                                                             $activityid = $valuetempar;
                                                             if (!empty($taskdata['page_content'])) {
                                                                 $lasttype = '';
+                                                                $contentpage = '';
                                                                 foreach ($taskdata['page_content'] as $keytempar => $valuetemparrr) {
                                                                     if ($lasttype != $valuetemparrr['type']) {
                                                                         $lasttype = $valuetemparrr['type'];
@@ -8975,6 +8977,7 @@ class local_leeloolxpapi_external extends external_api {
                                                                     $contentpage = '';
                                                                     if (!empty($taskdata['page_content'])) {
                                                                         $lasttype = '';
+                                                                        $contentpage = '';
                                                                         foreach ($taskdata['page_content'] as $keytempar => $valuetemparrr) {
                                                                             if ($lasttype != $valuetemparrr['type']) {
                                                                                 $lasttype = $valuetemparrr['type'];
@@ -9010,6 +9013,7 @@ class local_leeloolxpapi_external extends external_api {
                                                                         $activityid = $valuetempar;
                                                                         if (!empty($taskdata['page_content'])) {
                                                                             $lasttype = '';
+                                                                            $contentpage = '';
                                                                             foreach ($taskdata['page_content'] as $keytempar => $valuetemparrr) {
                                                                                 if ($lasttype != $valuetemparrr['type']) {
                                                                                     $lasttype = $valuetemparrr['type'];
@@ -9468,6 +9472,7 @@ class local_leeloolxpapi_external extends external_api {
                     $contentpage = '';
                     if (!empty($taskdata['page_content'])) {
                         $lasttype = '';
+                        $contentpage = '';
                         foreach ($taskdata['page_content'] as $keytempar => $valuetemparrr) {
                             if ($lasttype != $valuetemparrr['type']) {
                                 $lasttype = $valuetemparrr['type'];
@@ -9503,6 +9508,7 @@ class local_leeloolxpapi_external extends external_api {
                         $activityid = $valuetempar;
                         if (!empty($taskdata['page_content'])) {
                             $lasttype = '';
+                            $contentpage = '';
                             foreach ($taskdata['page_content'] as $keytempar => $valuetemparrr) {
                                 if ($lasttype != $valuetemparrr['type']) {
                                     $lasttype = $valuetemparrr['type'];
